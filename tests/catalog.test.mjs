@@ -120,3 +120,23 @@ test('Git history emits optional branch and file detail arguments', () => {
     "git --literal-pathspecs log --oneline -n 5 --name-status --end-of-options 'refs/heads/release/v1' -- 'src/app.js'");
   assert.ok(buildSnippet(snippet, { ...defaults, fileChanges: 'true' }).error);
 });
+
+test('the first-release catalog covers each of the four starting languages', () => {
+  for (const language of ['Git', 'JavaScript', 'C#', 'XPath']) {
+    assert.ok(findSnippets('', language).length >= 3, language);
+  }
+});
+
+test('new text snippets encode literal values and reject invalid XPath names', () => {
+  const map = byId('js-map-property');
+  assert.equal(buildSnippet(map, { property: 'a"b' }).output,
+    'const values = items.map((item) => item["a\\"b"]);');
+  const contains = byId('xpath-contains-text');
+  assert.match(buildSnippet(contains, { element: 'a', text: `Bob's "guide"` }).output, /concat\(/);
+  assert.ok(buildSnippet(contains, { element: 'a b', text: 'guide' }).error);
+});
+
+test('C# builder supports case choices and signed thresholds', () => {
+  assert.match(buildSnippet(byId('csharp-distinct-strings'), { ignoreCase: false }).output, /StringComparer\.Ordinal\)/);
+  assert.match(buildSnippet(byId('csharp-any-above'), { threshold: '-2' }).output, /item > -2/);
+});

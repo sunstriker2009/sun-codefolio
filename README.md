@@ -31,7 +31,11 @@ In the running workspace, open **View a file’s commit history** and enter a pa
 
 Enter the name and select **Save variant**. Reopen the snippet later and select the saved name to restore the fields. You can edit the values and copy the new command, or save the edited values again.
 
-The catalog lives in `app/catalog.mjs`. Each entry defines its language, search keywords, example, editable fields, and code generator. Run the catalog checks with Node.js 24.
+### Maintain the catalog
+
+Add entries to `app/catalog.mjs`. Give each snippet a stable ID, language, search aliases and use cases, a worked example with prerequisites and expected behavior, and related snippet IDs. Define typed fields and defaults, then verify the generated example against its target shell, runtime, or evaluator before opening a PR.
+
+Run the catalog checks with Node.js 24.
 
 ```sh
 node --test tests/catalog.test.mjs

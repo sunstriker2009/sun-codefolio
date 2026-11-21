@@ -7,7 +7,7 @@
 | M0 · Starter workspace | Complete | Six starter snippets, keyword search, language filters, a live builder, and locally saved variants |
 | M1 · Search and shareable reference | Complete | Find a snippet by task or syntax and open a shareable page with a worked example |
 | M2 · Typed builder and reusable variants | Complete | Customize a snippet with typed controls and reliably reopen, edit, and copy saved values |
-| M3 · First release | Next | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
+| M3 · First release | In progress | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
 
 ## M0 · Starter workspace
 
@@ -38,4 +38,11 @@
 2. Verify direct links, search, both builder workflows, and variant persistence in real browsers. Include desktop Chromium and mobile Safari, keyboard navigation, narrow layouts, and the manual copy fallback when native clipboard access is unavailable.
 3. Choose the initial hosting target and verify direct links and clipboard access on its HTTPS origin. Document local startup, how to add a catalog entry, browser-local storage behavior, and the release checks.
 
-**Complete when** CI is green, the browser checks pass, each of the four language groups meets the catalog target, and the approved release URL has passed a smoke test. Accounts and cross-device variant sync are follow-up decisions.
+### Release verification
+
+- [x] Three snippets per language. The twelve worked examples were checked with Git, Node.js, .NET 10, and an XPath evaluator.
+- [x] Desktop Chromium passed direct links, keyboard search, clipboard copy, manual copy fallback, saved-variant persistence, and a 390px layout on localhost.
+- [ ] Verify search, both builder workflows, and copy behavior in iOS Safari.
+- [ ] Confirm the initial hosting target and smoke-test the approved HTTPS URL.
+
+**Complete when** CI is green and the browser and hosting checks above pass. Accounts and cross-device variant sync are follow-up decisions.
