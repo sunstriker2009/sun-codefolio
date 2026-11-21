@@ -1,6 +1,7 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=snippet-full-screen-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=variant-backup-1';
 import { restoreValues } from './parameters.mjs';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-full-screen-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-backup-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-backup-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -24,6 +25,10 @@ const copy = byId('copy');
 const save = byId('save-variant');
 const nameInput = byId('variant-name');
 const variantList = byId('variants');
+const exportVariants = byId('export-variants');
+const importVariants = byId('import-variants');
+const backupFile = byId('variant-backup-file');
+const transferStatus = byId('variant-transfer-status');
 const builderStatus = byId('builder-status');
 const variantStatus = byId('variant-status');
 const storageKey = 'codefolio.variants.v1';
@@ -329,12 +334,26 @@ function updateOutput() {
   }
 }
 
-function readVariants() {
-  const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
-  if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) {
-    throw new Error('Invalid saved variants');
+function readVariantStore() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
+    if (isRecord(stored)) return stored;
+  } catch {
+    // Storage can be blocked, or the browser may contain invalid data.
   }
+  throw new Error('Saved variants couldn’t be read from this browser.');
+}
 
+function writeVariantStore(stored) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(stored));
+  } catch {
+    throw new Error('Saved variants couldn’t be written to this browser.');
+  }
+}
+
+function readVariants() {
+  const stored = readVariantStore();
   const variants = stored[selected.id] ?? [];
   if (!Array.isArray(variants) || variants.some((variant) => typeof variant?.name !== 'string')) {
     throw new Error('Invalid saved variants');
@@ -360,7 +379,7 @@ function showVariants() {
   for (const variant of variants) {
     const row = document.createElement('li');
     const load = button(variant.name, () => {
-      const validObject = variant.values && typeof variant.values === 'object' && !Array.isArray(variant.values);
+      const validObject = isRecord(variant.values);
       const values = restoreValues(selected, validObject ? variant.values : {});
       for (const control of parameterControls()) {
         setControlValue(control, values[control.name]);
@@ -388,7 +407,7 @@ function modifyVariants(change) {
   try {
     const { stored, variants } = readVariants();
     stored[selected.id] = change(variants);
-    localStorage.setItem(storageKey, JSON.stringify(stored));
+    writeVariantStore(stored);
     showVariants();
     return true;
   } catch {
@@ -397,14 +416,65 @@ function modifyVariants(change) {
   }
 }
 
+exportVariants.addEventListener('click', () => {
+  let backup;
+  try {
+    backup = exportVariantBackup(readVariantStore());
+  } catch {
+    transferStatus.textContent = 'Saved variants couldn’t be exported.';
+    return;
+  }
+  if (!backup.count) {
+    transferStatus.textContent = 'Save a variant before exporting.';
+    return;
+  }
+
+  const href = URL.createObjectURL(new Blob([backup.json], { type: 'application/json' }));
+  const download = document.createElement('a');
+  download.href = href;
+  download.download = 'codefolio-variants.json';
+  document.body.append(download);
+  download.click();
+  download.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1000);
+  transferStatus.textContent = 'Exported ' + backup.count + ' saved ' + (backup.count === 1 ? 'variant.' : 'variants.');
+});
+
+importVariants.addEventListener('click', () => backupFile.click());
+
+backupFile.addEventListener('change', async () => {
+  const file = backupFile.files[0];
+  if (!file) return;
+  backupFile.value = '';
+  importVariants.disabled = true;
+  transferStatus.textContent = 'Reading backup…';
+  try {
+    const imported = readVariantBackup(await file.text());
+    const { variants, added, renamed, duplicates, unavailable } = mergeVariantBackup(readVariantStore(), imported, snippets);
+    if (added) writeVariantStore(variants);
+    const summary = ['Imported ' + added + ' ' + (added === 1 ? 'variant.' : 'variants.')];
+    if (renamed) summary.push(renamed + ' renamed to keep existing variants.');
+    if (duplicates) summary.push(duplicates + ' already saved.');
+    if (unavailable) summary.push(unavailable + ' skipped because the snippets are unavailable.');
+    transferStatus.textContent = summary.join(' ');
+    if (selected) showVariants();
+  } catch (error) {
+    transferStatus.textContent = error.message;
+  } finally {
+    importVariants.disabled = false;
+  }
+});
+
 search.addEventListener('input', () => {
   currentPage = 1;
   updateResults();
 });
 window.addEventListener('storage', (event) => {
-  if (event.key !== favoritesStorageKey && event.key !== null) return;
-  favorites = readFavorites();
-  updateResults();
+  if (event.key === favoritesStorageKey || event.key === null) {
+    favorites = readFavorites();
+    updateResults();
+  }
+  if ((event.key === storageKey || event.key === null) && selected) showVariants();
 });
 window.addEventListener('popstate', () => {
   scope = history.state?.catalogScope ?? allSnippets;

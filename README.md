@@ -33,6 +33,8 @@ In the running workspace, open **View a file’s commit history** and enter a pa
 
 Enter the name and select **Save variant**. Reopen the snippet later and select the saved name to restore the fields. You can edit the values and copy the new command, or save the edited values again.
 
+In **Saved variants**, use **Export all variants** to download a JSON file containing variants from every snippet. Use **Import variants** and select the file in the browser where you want to restore them. Matching variants are skipped. If a saved name already has different settings, the imported variant gets an “(imported)” suffix.
+
 ### Maintain the catalog
 
 Add entries to `app/catalog.mjs`. Give each snippet a stable ID, language, topic, search aliases and use cases, a worked example with prerequisites and expected behavior, and related snippet IDs. Define typed fields and defaults, then verify the generated example against its target shell, runtime, or evaluator before opening a PR.
