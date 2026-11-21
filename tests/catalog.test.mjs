@@ -16,7 +16,7 @@ test('all published examples have valid defaults and distinct IDs and fields', (
 });
 
 test('search matches multiple terms across metadata and respects language filters', () => {
-  assert.deepEqual(findSnippets('  GiT HISTORY  ', 'Git').map((snippet) => snippet.id), ['git-file-history']);
+  assert.equal(findSnippets('  GiT HISTORY  ', 'Git')[0].id, 'git-file-history');
   assert.deepEqual(findSnippets('filter array').map((snippet) => snippet.id), ['js-filter-array']);
   assert.deepEqual(findSnippets('git history', 'XPath'), []);
   assert.deepEqual(findSnippets(''), snippets);
@@ -139,4 +139,30 @@ test('new text snippets encode literal values and reject invalid XPath names', (
 test('C# builder supports case choices and signed thresholds', () => {
   assert.match(buildSnippet(byId('csharp-distinct-strings'), { ignoreCase: false }).output, /StringComparer\.Ordinal\)/);
   assert.match(buildSnippet(byId('csharp-any-above'), { threshold: '-2' }).output, /item > -2/);
+});
+
+test('Git history and Regex entries are findable by task and syntax', () => {
+  assert.equal(findSnippets('find the commit that introduced a line', 'Git')[0].id, 'git-line-history');
+  assert.equal(findSnippets('git log -L')[0].id, 'git-line-history');
+  assert.equal(findSnippets('review changes between two releases')[0].id, 'git-tag-commits');
+  assert.equal(findSnippets('extract a log level', 'C#')[0].id, 'csharp-regex-named-group');
+  assert.equal(findSnippets('Regex.Replace(')[0].id, 'csharp-regex-reformat-date');
+  assert.equal(findSnippets('Regex.IsMatch(')[0].id, 'csharp-regex-repeated-words');
+});
+
+test('Git line history passes paths with spaces and apostrophes as one argument', () => {
+  const path = "src/my team's [draft].js";
+  const { output } = buildSnippet(byId('git-line-history'), { path, line: '4' });
+  const args = execFileSync('bash', ['-c', 'git() { printf "%s\\n" "$@"; }; ' + output], { encoding: 'utf8' });
+  assert.deepEqual(args.trimEnd().split('\n'), ['log', '-L', '4,4:' + path]);
+});
+
+test('C# Regex builders escape input and enforce a bounded match timeout', () => {
+  const snippet = byId('csharp-regex-named-group');
+  const parameters = defaultValues(snippet);
+  const { output } = buildSnippet(snippet, { ...parameters, input: 'a"b\\c\u2028d', timeout: '50' });
+  assert.ok(output.includes('"a\\"b\\\\c\\u2028d"'));
+  assert.ok(output.includes('TimeSpan.FromMilliseconds(50)'));
+  assert.equal(buildSnippet(snippet, { ...parameters, timeout: 0 }).fieldId, 'timeout');
+  assert.equal(buildSnippet(snippet, { ...parameters, timeout: 5001 }).fieldId, 'timeout');
 });

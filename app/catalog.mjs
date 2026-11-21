@@ -12,6 +12,16 @@ function xpathLiteral(value) {
 
 const xpathNamePattern = '[A-Za-z_][A-Za-z0-9_.\\-]*';
 
+function csharpStringLiteral(value) {
+  return JSON.stringify(value).replace(/[\u0085\u2028\u2029]/g, (character) =>
+    '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
+}
+
+const regexTimeoutField = {
+  id: 'timeout', type: 'integer', label: 'Match timeout (milliseconds)', default: 250,
+  min: 10, max: 5000, hint: 'Enter a match timeout from 10 to 5000 milliseconds.',
+};
+
 export const snippets = [
   {
     id: 'git-file-history',
@@ -20,7 +30,7 @@ export const snippets = [
     effects: "Reads commit history for the selected branch and path. File change details show the status and path of changed files.",
     aliases: ["git log --oneline", "file history"],
     useCases: ["Find old changes to a file", "See which commits changed a path"],
-    relatedIds: ["git-branch-list", "git-compare-branch"],
+    relatedIds: ["git-branch-list", "git-compare-branch", "git-line-history"],
     language: 'Git',
     title: 'View a file’s commit history',
     description: 'List commits that changed a file. Leave the branch blank to use the current history, or enter a local branch name. Use a path relative to the repository root.',
@@ -109,7 +119,7 @@ export const snippets = [
     effects: "Enumerates up to the requested number of elements and materializes a new list.",
     aliases: ["Enumerable.Take", "LINQ Take"],
     useCases: ["Get the first N items from a collection"],
-    relatedIds: ["csharp-distinct-strings", "csharp-any-above"],
+    relatedIds: ["csharp-distinct-strings", "csharp-any-above", "csharp-regex-named-group"],
     language: 'C#',
     title: 'Take the first items from a sequence',
     description: 'Use LINQ to take up to a fixed number of items from an enumerable called items. Calling ToList materializes the result.',
@@ -245,6 +255,123 @@ export const snippets = [
       { id: 'child', type: 'text', label: 'Child name', default: 'item', pattern: xpathNamePattern, hint: 'Use an unprefixed ASCII element name.' },
     ],
     render: ({ parent, child }) => '//' + parent + '/' + child,
+  },
+  {
+    id: 'git-line-history',
+    language: 'Git',
+    title: 'Trace changes to a line',
+    description: 'Follow a line backward from the current commit to see when it was added or changed.',
+    keywords: 'git log -L line history commit introduced changed blame patch origin',
+    aliases: ['git log -L', 'line history'],
+    useCases: ['Find the commit that introduced a line', 'See what a specific line used to contain'],
+    relatedIds: ['git-file-history', 'git-tag-commits'],
+    example: 'Trace line 3 of src/app.js back through its history.',
+    prerequisites: 'Git and a POSIX shell. Run from the repository root. The file and line must exist in HEAD.',
+    expected: 'Commit messages and patches for the selected line, starting with the most recent change.',
+    effects: 'Reads the commit history for the selected line.',
+    fields: [
+      { id: 'path', type: 'text', label: 'File path', default: 'src/app.js' },
+      { id: 'line', type: 'integer', label: 'Line number', default: 3, min: 1, max: 999999, hint: 'Enter a line number from 1 to 999999.' },
+    ],
+    render: ({ path, line }) => 'git log -L ' + shellLiteral(line + ',' + line + ':' + path),
+  },
+  {
+    id: 'git-tag-commits',
+    language: 'Git',
+    title: 'Review commits between two tags',
+    description: 'List commits reachable from the target tag that are outside the base tag’s history.',
+    keywords: 'git log release tag tags range two-dot compare changelog notes',
+    aliases: ['git log tag range', 'commits between tags'],
+    useCases: ['Review changes between two releases', 'Prepare release notes from Git tags'],
+    relatedIds: ['git-compare-branch', 'git-line-history'],
+    example: 'List commits in v1.1.0 that are outside the history of v1.0.0.',
+    prerequisites: 'Git and a POSIX shell. Both tags must exist in the local repository.',
+    expected: 'One line per included commit, with a short hash and subject.',
+    effects: 'Reads commit history.',
+    fields: [
+      { id: 'base', type: 'text', label: 'Base tag', default: 'v1.0.0' },
+      { id: 'target', type: 'text', label: 'Target tag', default: 'v1.1.0' },
+    ],
+    render: ({ base, target }) => 'git log --oneline --end-of-options '
+      + shellLiteral('refs/tags/' + base.trim() + '..refs/tags/' + target.trim()) + ' --',
+  },
+  {
+    id: 'csharp-regex-named-group',
+    language: 'C#',
+    title: 'Extract a named Regex group from a log line',
+    description: 'Match a structured line and read one named capture, with a null result if the group did not match.',
+    keywords: 'csharp dotnet regex regular expressions named capture groups parse log level',
+    aliases: ['Regex.Match', 'named capture group'],
+    useCases: ['Extract a log level from a structured line', 'Read a named group from a regular expression'],
+    relatedIds: ['csharp-regex-reformat-date', 'csharp-regex-repeated-words'],
+    example: 'Extract the level from WARN Disk latency is high.',
+    prerequisites: 'System and System.Text.RegularExpressions in scope. Supply an input string and a pattern that defines the selected group.',
+    expected: 'The default inputs produce WARN. A line with no capture in the selected group produces null.',
+    effects: 'Reads the input. The regex API can throw RegexMatchTimeoutException if a match exceeds the configured timeout.',
+    fields: [
+      { id: 'input', type: 'text', label: 'Input text', default: 'WARN Disk latency is high', allowEmpty: true },
+      { id: 'pattern', type: 'text', label: '.NET regex pattern', default: String.raw`^(?<level>[A-Z]+)\s+(?<message>.+)$` },
+      { id: 'group', type: 'text', label: 'Group name', default: 'level', pattern: '[A-Za-z][A-Za-z0-9]*', hint: 'Use a group name starting with an ASCII letter, followed by letters or digits.' },
+      regexTimeoutField,
+    ],
+    render: ({ input, pattern, group, timeout }) => [
+      'var match = Regex.Match(' + csharpStringLiteral(input) + ', ' + csharpStringLiteral(pattern) + ',',
+      '    RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(' + timeout + '));',
+      'var group = match.Groups[' + csharpStringLiteral(group) + '];',
+      'var value = group.Success ? group.Value : null;',
+    ].join('\n'),
+  },
+  {
+    id: 'csharp-regex-reformat-date',
+    language: 'C#',
+    title: 'Reformat date text with Regex substitutions',
+    description: 'Use Regex.Replace and named captures to rearrange the year, month, and day in date-shaped text.',
+    keywords: 'csharp dotnet regex regular expressions replace named capture template date format substitution',
+    aliases: ['Regex.Replace', 'regex named substitutions'],
+    useCases: ['Reorder date components in text', 'Build a replacement string from named captures'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-repeated-words'],
+    example: 'Rewrite Due 2026-11-21 as Due 21/11/2026.',
+    prerequisites: 'System and System.Text.RegularExpressions in scope. The default replacement uses the day, month, and year named groups.',
+    expected: 'The default inputs produce Due 21/11/2026. The pattern matches digit shapes, so dates such as 2026-02-31 also match.',
+    effects: 'Creates a string with all matching date shapes rewritten. A match can throw RegexMatchTimeoutException.',
+    fields: [
+      { id: 'input', type: 'text', label: 'Input text', default: 'Due 2026-11-21', allowEmpty: true },
+      { id: 'replacement', type: 'text', label: 'Replacement template', default: '${day}/${month}/${year}', allowEmpty: true },
+      regexTimeoutField,
+    ],
+    render: ({ input, replacement, timeout }) => [
+      'var result = Regex.Replace(' + csharpStringLiteral(input) + ',',
+      '    ' + csharpStringLiteral(String.raw`\b(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})\b`) + ',',
+      '    ' + csharpStringLiteral(replacement) + ', RegexOptions.CultureInvariant,',
+      '    TimeSpan.FromMilliseconds(' + timeout + '));',
+    ].join('\n'),
+  },
+  {
+    id: 'csharp-regex-repeated-words',
+    language: 'C#',
+    title: 'Find repeated words with a Regex backreference',
+    description: 'Capture a word and use a named backreference to find it again immediately after whitespace.',
+    keywords: 'csharp dotnet regex regular expressions backreference repeated duplicate consecutive words',
+    aliases: ['Regex.IsMatch', 'regex backreference'],
+    useCases: ['Detect accidental duplicate words in a sentence', 'Find two consecutive copies of the same word'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-reformat-date'],
+    example: 'Find the repeated word in Read the The instructions.',
+    prerequisites: 'System and System.Text.RegularExpressions in scope. Enable Ignore case to match repeats with different capitalization.',
+    expected: 'The default inputs produce true. Turning off Ignore case produces false for the same sentence.',
+    effects: 'Reads the input and reports whether a match exists. A match can throw RegexMatchTimeoutException.',
+    fields: [
+      { id: 'input', type: 'text', label: 'Input text', default: 'Read the The instructions.', allowEmpty: true },
+      { id: 'ignoreCase', type: 'toggle', label: 'Ignore case', default: true },
+      regexTimeoutField,
+    ],
+    render: ({ input, ignoreCase, timeout }) => {
+      const options = 'RegexOptions.CultureInvariant' + (ignoreCase ? ' | RegexOptions.IgnoreCase' : '');
+      return [
+        'var hasRepeatedWord = Regex.IsMatch(' + csharpStringLiteral(input) + ',',
+        '    ' + csharpStringLiteral(String.raw`\b(?<word>[\p{L}\p{M}]+)\s+\k<word>\b`) + ',',
+        '    ' + options + ', TimeSpan.FromMilliseconds(' + timeout + '));',
+      ].join('\n');
+    },
   },
 ];
 
