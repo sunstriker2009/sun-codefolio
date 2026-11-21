@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=snippet-tags-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=snippet-sort-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=snippet-tags-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-tags-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=snippet-sort-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-sort-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=snippet-tags-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=snippet-sort-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -288,9 +288,10 @@ function updateResults({ fromHistory = false } = {}) {
   if (showingFavorites) filtered = matches.filter(({ id }) => favorites.has(id));
   if (showingVariants) filtered = matches.filter(({ id }) => savedGroups?.get(id).length);
   const { id, snippet } = readSnippetLink(location.search, snippets);
-  const linkedIndex = searching ? -1 : filtered.indexOf(snippet);
+  const ordered = sortSnippetResults(filtered, favorites);
+  const linkedIndex = searching ? -1 : ordered.indexOf(snippet);
   if (linkedIndex >= 0) currentPage = Math.floor(linkedIndex / snippetsPerPage) + 1;
-  const { page, pageCount, items } = paginateSnippets(filtered, currentPage);
+  const { page, pageCount, items } = paginateSnippets(ordered, currentPage);
   currentPage = page;
 
   const view = viewName();

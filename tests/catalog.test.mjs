@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
-import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnippets, snippets, snippetsPerPage } from '../app/catalog.mjs';
+import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from '../app/catalog.mjs';
 import { restoreValues } from '../app/parameters.mjs';
 import { exportVariantBackup, mergeVariantBackup, readVariantBackup } from '../app/variant-backup.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
@@ -352,4 +352,17 @@ test('personal tag search matches case-insensitively at every catalog level', ()
   assert.deepEqual(findTaggedSnippets(snippets, tags, 'release', 'topic', scope), []);
   assert.deepEqual(findTaggedSnippets(snippets, tags, 'audit', 'topic', scope).map(({ id }) => id), [regex]);
   assert.deepEqual(findTaggedSnippets(findSnippets('git log --oneline'), tags, 'release', 'global', scope).map(({ id }) => id), [git]);
+});
+
+test('result sorting puts favorites first and orders both groups alphabetically without mutating the matches', () => {
+  const entries = [
+    { id: 'z', title: 'Zulu' },
+    { id: 'c', title: 'chess' },
+    { id: 'b', title: 'Bravo' },
+    { id: 'a', title: 'Alpha' },
+  ];
+  const favorites = new Set(['z', 'b']);
+  assert.deepEqual(sortSnippetResults(entries, favorites).map(({ id }) => id), ['b', 'z', 'a', 'c']);
+  assert.deepEqual(entries.map(({ id }) => id), ['z', 'c', 'b', 'a']);
+  assert.deepEqual(sortSnippetResults(entries, new Set()).map(({ id }) => id), ['a', 'b', 'c', 'z']);
 });
