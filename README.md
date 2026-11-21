@@ -3,7 +3,7 @@
 
 ![CodeFolio by Sun](branding/assets/readme-banner.png)
 
-code management
+A searchable library for customizing and reusing code snippets.
 <!-- SUN BRANDING END -->
 
 ## Snippet workspace
