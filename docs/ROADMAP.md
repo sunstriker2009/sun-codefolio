@@ -8,6 +8,7 @@
 | M1 · Search and shareable reference | Complete | Find a snippet by task or syntax and open a shareable page with a worked example |
 | M2 · Typed builder and reusable variants | Complete | Customize a snippet with typed controls and reliably reopen, edit, and copy saved values |
 | M3 · First release | Complete | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
+| M4 · Catalog expansion | Complete | Two Git history tasks and a focused C# Regex collection |
 
 ## M0 · Starter workspace
 
@@ -46,3 +47,9 @@
 - [x] Verified [CodeFolio on GitHub Pages](https://sunstriker2009.github.io/sun-codefolio/) over HTTPS. Chrome passed search, direct snippet links after reload, copy to clipboard, and saving and reloading a named variant.
 
 **Complete when** CI is green and the browser and hosting checks above pass. Accounts and cross-device variant sync are follow-up decisions.
+
+## M4 · Git history and C# Regex
+
+- Trace changes to a line with Git and review the commits between two release tags.
+- Extract a named group from a structured line, rearrange date components with substitutions, and detect repeated words with a backreference in C#.
+- Each entry has a worked example, a configurable builder, and a stable link. Search tests cover plain-language and syntax queries. The generated examples were checked against Git and .NET 10.
