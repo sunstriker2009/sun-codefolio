@@ -1,10 +1,12 @@
-import { buildSnippet, defaultValues, findSnippets, snippets } from './catalog.mjs';
+import { browseSnippets, buildSnippet, defaultValues, snippets } from './catalog.mjs';
 import { restoreValues } from './parameters.mjs';
 import { readSnippetLink, snippetHref } from './snippet-links.mjs';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
-const filters = byId('filters');
+const menu = byId('catalog-menu');
+const menuToggle = byId('menu-toggle');
+const browseHeading = byId('browse-heading');
 const results = byId('results');
 const detail = byId('detail');
 const builder = byId('builder');
@@ -18,7 +20,8 @@ const builderStatus = byId('builder-status');
 const variantStatus = byId('variant-status');
 const storageKey = 'codefolio.variants.v1';
 
-let language = '';
+const allSnippets = { language: '', topic: '' };
+let scope = history.state?.catalogScope ?? allSnippets;
 let selected;
 
 function button(label, onClick) {
@@ -29,17 +32,56 @@ function button(label, onClick) {
   return element;
 }
 
-const filterButtons = new Map(
-  ['', ...new Set(snippets.map((snippet) => snippet.language))].map((option) => [
-    option,
-    button(option || 'All', () => {
-      language = option;
-      updateResults();
-    }),
-  ])
-);
+const menuButtons = [];
+const languages = new Map();
+for (const { language, topic } of snippets) {
+  if (!languages.has(language)) languages.set(language, new Set());
+  languages.get(language).add(topic);
+}
 
-filters.append(...filterButtons.values());
+function setMenuOpen(open) {
+  menuToggle.setAttribute('aria-expanded', open);
+}
+
+function browseScope(nextScope) {
+  const url = new URL(location.href);
+  url.searchParams.delete('snippet');
+  if (scope.language !== nextScope.language || scope.topic !== nextScope.topic || url.href !== location.href) {
+    history.pushState({ catalogScope: nextScope }, '', url);
+  }
+  scope = nextScope;
+  search.value = '';
+  updateResults({ fromHistory: true });
+  if (getComputedStyle(menuToggle).display !== 'none') {
+    setMenuOpen(false);
+    browseHeading.focus();
+  }
+}
+
+function menuItem(label, itemScope) {
+  const control = button(label, () => browseScope(itemScope));
+  menuButtons.push({ control, itemScope });
+  return control;
+}
+
+menu.append(menuItem('All snippets', allSnippets));
+for (const [language, topics] of languages) {
+  const group = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = language;
+  group.dataset.language = language;
+  group.open = scope.language === language;
+  const items = document.createElement('div');
+  items.className = 'menu-items';
+  items.append(menuItem('All ' + language, { language, topic: '' }));
+  for (const topic of [...topics].sort((left, right) => left.localeCompare(right))) {
+    items.append(menuItem(topic, { language, topic }));
+  }
+  group.append(summary, items);
+  menu.append(group);
+}
+
+menuToggle.addEventListener('click', () => setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true'));
 
 function snippetLink(snippet) {
   const link = document.createElement('a');
@@ -50,7 +92,7 @@ function snippetLink(snippet) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
       || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (location.href !== link.href) history.pushState(null, '', link.href);
+    if (location.href !== link.href) history.pushState({ catalogScope: scope }, '', link.href);
     updateResults();
     byId('snippet-title').focus();
   });
@@ -58,10 +100,19 @@ function snippetLink(snippet) {
 }
 
 function updateResults({ fromHistory = false } = {}) {
-  const shownSnippets = findSnippets(search.value, language);
+  const searching = Boolean(search.value.trim());
+  const shownSnippets = browseSnippets(search.value, scope);
   const { id, snippet } = readSnippetLink(location.search);
-  for (const [option, control] of filterButtons) {
-    control.setAttribute('aria-pressed', option === language);
+  const scopeLabel = [scope.language, scope.topic].filter(Boolean).join(' / ');
+  browseHeading.textContent = searching ? 'Search results' : scopeLabel || 'All snippets';
+  for (const { control, itemScope } of menuButtons) {
+    control.setAttribute('aria-pressed',
+      !searching && itemScope.language === scope.language && itemScope.topic === scope.topic);
+  }
+  for (const group of menu.querySelectorAll('details')) {
+    const active = !searching && group.dataset.language === scope.language;
+    group.classList.toggle('active-language', active);
+    if (fromHistory && active) group.open = true;
   }
 
   const count = shownSnippets.length;
@@ -77,7 +128,7 @@ function updateResults({ fromHistory = false } = {}) {
     link.className = 'result';
     if (entry === selected) link.setAttribute('aria-current', 'page');
     const languageLabel = document.createElement('span');
-    languageLabel.textContent = entry.language;
+    languageLabel.textContent = entry.language + ' · ' + entry.topic;
     link.append(languageLabel);
     row.append(link);
     return row;
@@ -91,7 +142,7 @@ function selectSnippet(snippet) {
   if (!snippet) return;
 
   byId('snippet-title').textContent = snippet.title;
-  byId('snippet-language').textContent = snippet.language;
+  byId('snippet-language').textContent = snippet.language + ' · ' + snippet.topic;
   byId('snippet-description').textContent = snippet.description;
   byId('example-context').textContent = snippet.example;
   byId('example').textContent = buildSnippet(snippet, defaultValues(snippet)).output;
@@ -250,7 +301,10 @@ function modifyVariants(change) {
 }
 
 search.addEventListener('input', () => updateResults());
-window.addEventListener('popstate', () => updateResults({ fromHistory: true }));
+window.addEventListener('popstate', () => {
+  scope = history.state?.catalogScope ?? allSnippets;
+  updateResults({ fromHistory: true });
+});
 fields.addEventListener('input', updateOutput);
 
 copy.addEventListener('click', async () => {
