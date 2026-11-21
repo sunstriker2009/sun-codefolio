@@ -33,7 +33,7 @@ In the running workspace, open **View a file’s commit history** and enter a pa
 
 Enter the name and select **Save variant**. Reopen the snippet later and select the saved name to restore the fields. You can edit the values and copy the new command, or save the edited values again.
 
-In the catalog menu, choose **Saved variants** inside a language to list and load variants for that language. Select a topic such as Regex to narrow the view. **Export variants** downloads a JSON backup for the current selection, and **Import variants** restores only entries in that selection. For a backup across all languages, use the top-level **Saved variants** entry. Import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
+In the catalog menu, choose **All**, **Saved**, or **Favorites**, then use the language and topic navigation below to set the scope. **Saved** lists variants in the current selection. **Export** downloads a JSON backup, and **Import** restores only entries in that selection. Choose **All languages** while in **Saved** for an all-language backup. Import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
 
 ### Maintain the catalog
 
