@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=snippet-sort-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=result-accents-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=snippet-sort-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-sort-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=result-accents-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=result-accents-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=snippet-sort-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=result-accents-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -333,10 +333,25 @@ function updateResults({ fromHistory = false } = {}) {
     const row = document.createElement('li');
     const link = snippetLink(entry);
     link.className = 'result';
+    link.dataset.catalog = entry.language;
     if (entry === selected) link.setAttribute('aria-current', 'page');
+
+    const caption = document.createElement('span');
+    caption.className = 'result-caption';
+    caption.textContent = entry.title;
+    if (favorites.has(entry.id)) {
+      const star = document.createElement('span');
+      star.className = 'result-star';
+      star.setAttribute('role', 'img');
+      star.setAttribute('aria-label', 'Favorite');
+      star.textContent = '★';
+      caption.prepend(star);
+    }
+
     const languageLabel = document.createElement('span');
+    languageLabel.className = 'result-meta';
     languageLabel.textContent = entry.language + ' · ' + entry.topic;
-    link.append(languageLabel);
+    link.replaceChildren(caption, languageLabel);
     row.append(link);
     if (showingVariants) row.append(variantLinks(entry, savedGroups.get(entry.id)));
     return row;
