@@ -98,3 +98,12 @@ textarea { resize: vertical; }
 .toggle-field label { margin: 0; }
 .toggle-field input { order: -1; width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
 [aria-invalid="true"] { border-color: var(--accent); }
+
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: .3rem; margin-top: .6rem; }
+.pagination button { padding: .35rem .45rem; }
+.pagination button, #page-number { font-size: .8rem; }
+#page-number { color: var(--muted); }
+.detail-heading { display: flex; gap: .65rem; align-items: start; justify-content: space-between; }
+#favorite { flex: 0 0 auto; padding: .4rem .55rem; font-size: .85rem; }
+#favorite[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--selected); }
+.favorite-feedback { margin-bottom: .5rem; color: var(--accent); font-size: .85rem; }

@@ -1,6 +1,6 @@
-import { browseSnippets, buildSnippet, defaultValues, snippets } from './catalog.mjs?v=catalog-nav-2';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=catalog-favorites-1';
 import { restoreValues } from './parameters.mjs';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-nav-2';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-favorites-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -8,6 +8,11 @@ const menu = byId('catalog-menu');
 const disclosure = byId('catalog-disclosure');
 const compactNavigation = matchMedia('(max-width: 720px)');
 const browseHeading = byId('browse-heading');
+const pagination = byId('pagination');
+const previousPage = byId('previous-page');
+const nextPage = byId('next-page');
+const favorite = byId('favorite');
+const favoriteStatus = byId('favorite-status');
 const results = byId('results');
 const detail = byId('detail');
 const builder = byId('builder');
@@ -20,10 +25,28 @@ const variantList = byId('variants');
 const builderStatus = byId('builder-status');
 const variantStatus = byId('variant-status');
 const storageKey = 'codefolio.variants.v1';
+const favoritesStorageKey = 'codefolio.favorites.v1';
 
 const allSnippets = { language: '', topic: '' };
+const favoritesScope = { ...allSnippets, favorites: true };
 let scope = history.state?.catalogScope ?? allSnippets;
+let currentPage = history.state?.catalogPage ?? 1;
+let favorites = readFavorites();
 let selected;
+
+function readFavorites() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(favoritesStorageKey) ?? '[]');
+    return new Set(Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function sameScope(left, right) {
+  return left.language === right.language && left.topic === right.topic
+    && Boolean(left.favorites) === Boolean(right.favorites);
+}
 
 function button(label, onClick) {
   const element = document.createElement('button');
@@ -40,15 +63,20 @@ for (const { language, topic } of snippets) {
   languages.get(language).add(topic);
 }
 
-function browseScope(nextScope) {
+function changeBrowsePage(page, nextScope = scope) {
   const url = new URL(location.href);
   url.searchParams.delete('snippet');
-  if (scope.language !== nextScope.language || scope.topic !== nextScope.topic || url.href !== location.href) {
-    history.pushState({ catalogScope: nextScope }, '', url);
+  if (!sameScope(scope, nextScope) || page !== currentPage || url.href !== location.href) {
+    history.pushState({ catalogScope: nextScope, catalogPage: page }, '', url);
   }
   scope = nextScope;
-  search.value = '';
+  currentPage = page;
   updateResults({ fromHistory: true });
+}
+
+function browseScope(nextScope) {
+  search.value = '';
+  changeBrowsePage(1, nextScope);
   if (compactNavigation.matches) {
     disclosure.open = false;
     browseHeading.focus();
@@ -61,7 +89,7 @@ function menuItem(label, itemScope) {
   return control;
 }
 
-menu.append(menuItem('All snippets', allSnippets));
+menu.append(menuItem('All snippets', allSnippets), menuItem('Favorites', favoritesScope));
 for (const [language, topics] of languages) {
   const group = document.createElement('details');
   const summary = document.createElement('summary');
@@ -90,7 +118,7 @@ function snippetLink(snippet) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
       || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (location.href !== link.href) history.pushState({ catalogScope: scope }, '', link.href);
+    if (location.href !== link.href) history.pushState({ catalogScope: scope, catalogPage: currentPage }, '', link.href);
     updateResults();
     byId('snippet-title').focus();
   });
@@ -99,13 +127,19 @@ function snippetLink(snippet) {
 
 function updateResults({ fromHistory = false } = {}) {
   const searching = Boolean(search.value.trim());
-  const shownSnippets = browseSnippets(search.value, scope);
+  const showingFavorites = !searching && scope.favorites;
+  const matches = browseSnippets(search.value, scope);
+  const filtered = showingFavorites ? matches.filter(({ id }) => favorites.has(id)) : matches;
   const { id, snippet } = readSnippetLink(location.search, snippets);
-  const scopeLabel = [scope.language, scope.topic].filter(Boolean).join(' / ');
+  const linkedIndex = searching ? -1 : filtered.indexOf(snippet);
+  if (linkedIndex >= 0) currentPage = Math.floor(linkedIndex / snippetsPerPage) + 1;
+  const { page, pageCount, items } = paginateSnippets(filtered, currentPage);
+  currentPage = page;
+
+  const scopeLabel = scope.favorites ? 'Favorites' : [scope.language, scope.topic].filter(Boolean).join(' / ');
   browseHeading.textContent = searching ? 'Search results' : scopeLabel || 'All snippets';
   for (const { control, itemScope } of menuButtons) {
-    control.setAttribute('aria-pressed',
-      !searching && itemScope.language === scope.language && itemScope.topic === scope.topic);
+    control.setAttribute('aria-pressed', !searching && sameScope(itemScope, scope));
   }
   for (const group of menu.querySelectorAll('details')) {
     const active = !searching && group.dataset.language === scope.language;
@@ -113,14 +147,22 @@ function updateResults({ fromHistory = false } = {}) {
     if (fromHistory && active) group.open = true;
   }
 
-  const count = shownSnippets.length;
+  const count = filtered.length;
   byId('result-count').textContent = count + (count === 1 ? ' snippet' : ' snippets');
   byId('no-results').hidden = count > 0;
+  byId('no-results').textContent = showingFavorites
+    ? 'Mark a snippet as a favorite to see it here.'
+    : 'Try a different search term.';
   byId('unknown-snippet').hidden = id === null || Boolean(snippet);
-  const preferred = !fromHistory && shownSnippets.includes(selected) ? selected : shownSnippets[0];
+  pagination.hidden = pageCount <= 1;
+  previousPage.disabled = page <= 1;
+  nextPage.disabled = page >= pageCount;
+  byId('page-number').textContent = 'Page ' + page + ' of ' + pageCount;
+  const preferred = !fromHistory && items.includes(selected) ? selected : items[0];
   selectSnippet(id === null ? preferred : snippet);
+  updateFavoriteButton();
 
-  results.replaceChildren(...shownSnippets.map((entry) => {
+  results.replaceChildren(...items.map((entry) => {
     const row = document.createElement('li');
     const link = snippetLink(entry);
     link.className = 'result';
@@ -136,6 +178,7 @@ function updateResults({ fromHistory = false } = {}) {
 function selectSnippet(snippet) {
   if (selected === snippet) return;
   selected = snippet;
+  favoriteStatus.hidden = true;
   detail.hidden = !snippet;
   if (!snippet) return;
 
@@ -159,6 +202,41 @@ function selectSnippet(snippet) {
   updateOutput();
   showVariants();
 }
+
+function updateFavoriteButton() {
+  const starred = Boolean(selected && favorites.has(selected.id));
+  favorite.setAttribute('aria-pressed', starred);
+  favorite.querySelector('span').textContent = starred ? '★' : '☆';
+}
+
+favorite.addEventListener('click', () => {
+  const updated = readFavorites();
+  if (updated.has(selected.id)) {
+    updated.delete(selected.id);
+  } else {
+    updated.add(selected.id);
+  }
+  try {
+    localStorage.setItem(favoritesStorageKey, JSON.stringify([...updated]));
+  } catch {
+    favoriteStatus.textContent = 'Favorites couldn’t be saved in this browser.';
+    favoriteStatus.hidden = false;
+    return;
+  }
+  favoriteStatus.hidden = true;
+  favorites = updated;
+  updateResults();
+  if (detail.hidden) browseHeading.focus();
+});
+
+function movePage(offset, control, otherControl) {
+  changeBrowsePage(currentPage + offset);
+  if (pagination.hidden) browseHeading.focus();
+  else if (control.disabled) otherControl.focus();
+}
+
+previousPage.addEventListener('click', () => movePage(-1, previousPage, nextPage));
+nextPage.addEventListener('click', () => movePage(1, nextPage, previousPage));
 
 function setControlValue(control, value) {
   if (control.type === 'checkbox') {
@@ -298,9 +376,18 @@ function modifyVariants(change) {
   }
 }
 
-search.addEventListener('input', () => updateResults());
+search.addEventListener('input', () => {
+  currentPage = 1;
+  updateResults();
+});
+window.addEventListener('storage', (event) => {
+  if (event.key !== favoritesStorageKey && event.key !== null) return;
+  favorites = readFavorites();
+  updateResults();
+});
 window.addEventListener('popstate', () => {
   scope = history.state?.catalogScope ?? allSnippets;
+  currentPage = history.state?.catalogPage ?? 1;
   updateResults({ fromHistory: true });
 });
 fields.addEventListener('input', updateOutput);

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
-import { browseSnippets, buildSnippet, defaultValues, findSnippets, snippets } from '../app/catalog.mjs';
+import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnippets, snippets, snippetsPerPage } from '../app/catalog.mjs';
 import { restoreValues } from '../app/parameters.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
 
@@ -204,4 +204,17 @@ test('a search uses the full All ranking regardless of the active language or to
   assert.equal(browseSnippets(query, scope)[0].id, 'git-line-history');
   assert.equal(browseSnippets('items.Take(', scope)[0].topic, 'LINQ');
   assert.deepEqual(browseSnippets('  ', scope), browseSnippets('', scope));
+});
+
+test('pagination preserves result order and clamps an out-of-range page', () => {
+  const matches = findSnippets('a');
+  assert.ok(matches.length > snippetsPerPage);
+  const first = paginateSnippets(matches, 1);
+  const second = paginateSnippets(matches, 2);
+  assert.deepEqual(first.items, matches.slice(0, snippetsPerPage));
+  assert.deepEqual(second.items, matches.slice(snippetsPerPage, snippetsPerPage * 2));
+  const last = paginateSnippets(matches, 999);
+  assert.equal(last.page, last.pageCount);
+  assert.deepEqual(last.items, matches.slice((last.page - 1) * snippetsPerPage));
+  assert.deepEqual(paginateSnippets([], 8), { page: 1, pageCount: 1, items: [] });
 });

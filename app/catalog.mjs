@@ -506,3 +506,12 @@ export function browseSnippets(query, { language, topic } = {}) {
   return snippets.filter((snippet) =>
     (!language || snippet.language === language) && (!topic || snippet.topic === topic));
 }
+
+export const snippetsPerPage = 8;
+
+export function paginateSnippets(entries, requestedPage) {
+  const pageCount = Math.max(1, Math.ceil(entries.length / snippetsPerPage));
+  const page = Number.isInteger(requestedPage) ? Math.max(1, Math.min(requestedPage, pageCount)) : 1;
+  const start = (page - 1) * snippetsPerPage;
+  return { page, pageCount, items: entries.slice(start, start + snippetsPerPage) };
+}
