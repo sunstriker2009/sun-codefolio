@@ -507,6 +507,14 @@ export function browseSnippets(query, { language, topic } = {}) {
     (!language || snippet.language === language) && (!topic || snippet.topic === topic));
 }
 
+const titleOrder = new Intl.Collator('en', { sensitivity: 'base' });
+
+export function sortSnippetResults(entries, favorites) {
+  return [...entries].sort((left, right) =>
+    Number(favorites.has(right.id)) - Number(favorites.has(left.id))
+    || titleOrder.compare(left.title, right.title));
+}
+
 export const snippetsPerPage = 8;
 
 export function paginateSnippets(entries, requestedPage) {
