@@ -14,7 +14,7 @@ CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse
 
 ### Tags
 
-Add or remove tags in a snippet’s **Tags** section. Tags stay in the current browser. Open **Filters** and use **Search by tag** with **All catalogs**, the current catalog, or the current topic. Remove an active filter using its chip. Select a catalog or topic in the navigation to make that scope available.
+Use **+** beside **Tags** to add a tag, or remove an existing tag from its chip. Tags stay in the current browser. Open **Filters** and use **Search by tag** with **All catalogs**, the current catalog, or the current topic. Remove an active filter using its chip. Select a catalog or topic in the navigation to make that scope available.
 
 ### Run locally
 

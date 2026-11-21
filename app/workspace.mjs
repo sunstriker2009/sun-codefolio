@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=snippet-actions-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=compact-tags-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=snippet-actions-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-actions-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=compact-tags-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=compact-tags-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=snippet-actions-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=compact-tags-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -14,6 +14,8 @@ const activeFilters = byId('active-filters');
 const tagSearch = byId('tag-search');
 const tagScope = byId('tag-scope');
 const tagName = byId('tag-name');
+const tagEditor = byId('tag-editor');
+const tagToggle = byId('toggle-tag-editor');
 const tagList = byId('snippet-tags');
 const tagStatus = byId('tag-status');
 const menu = byId('catalog-menu');
@@ -333,7 +335,7 @@ function showTags() {
       if (!changeTags((names) => names.filter((tag) => tagKey(tag) !== tagKey(name)))) return;
       if (selected === snippet) {
         tagStatus.textContent = 'Removed tag ' + name + '.';
-        tagName.focus();
+        (tagEditor.hidden ? tagToggle : tagName).focus();
       } else {
         browseHeading.focus();
       }
@@ -471,7 +473,7 @@ function selectSnippet(snippet) {
   byId('snippet-title').textContent = snippet.title;
   byId('snippet-language').textContent = snippet.language + ' · ' + snippet.topic;
   byId('snippet-description').textContent = snippet.description;
-  tagName.value = '';
+  setTagEditorOpen(false);
   tagStatus.textContent = '';
   showTags();
   byId('example-context').textContent = snippet.example;
@@ -765,7 +767,29 @@ backupFile.addEventListener('change', async () => {
   }
 });
 
-byId('tag-editor').addEventListener('submit', (event) => {
+function setTagEditorOpen(open) {
+  tagEditor.hidden = !open;
+  tagToggle.setAttribute('aria-expanded', open);
+  if (!open) tagName.value = '';
+}
+
+tagToggle.addEventListener('click', () => {
+  const open = tagEditor.hidden;
+  setTagEditorOpen(open);
+  tagStatus.textContent = '';
+  if (open) tagName.focus();
+});
+
+tagEditor.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  event.stopPropagation();
+  setTagEditorOpen(false);
+  tagStatus.textContent = '';
+  tagToggle.focus();
+});
+
+tagEditor.addEventListener('submit', (event) => {
   event.preventDefault();
   const name = cleanTag(tagName.value);
   if (!name) {
@@ -777,8 +801,9 @@ byId('tag-editor').addEventListener('submit', (event) => {
     return;
   }
   if (changeTags((names) => names.some((tag) => tagKey(tag) === tagKey(name)) ? names : [...names, name])) {
-    tagName.value = '';
+    setTagEditorOpen(false);
     tagStatus.textContent = 'Added tag ' + name + '.';
+    tagToggle.focus();
   }
 });
 
