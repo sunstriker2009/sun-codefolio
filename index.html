@@ -7,8 +7,17 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css">
-  <script type="module" src="./app/workspace.mjs"></script>
+  <link rel="stylesheet" href="./app/styles.css?v=catalog-nav-2">
+  <script type="module">
+    const status = document.getElementById('workspace-status');
+    import('./app/workspace.mjs?v=catalog-nav-2').then(
+      () => { status.hidden = true; },
+      (error) => {
+        status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
+        console.error(error);
+      },
+    );
+  </script>
 </head>
 <body>
   <header class="site-header">
@@ -26,12 +35,13 @@
     </section>
     <div class="layout">
       <div class="catalog-sidebar">
-        <div class="catalog-navigation">
-          <button type="button" id="menu-toggle" aria-expanded="false" aria-controls="catalog-menu">Browse catalog</button>
+        <details id="catalog-disclosure" class="catalog-navigation">
+          <summary>Browse catalog</summary>
           <nav id="catalog-menu" aria-label="Snippet catalog"></nav>
-        </div>
+        </details>
         <section aria-labelledby="browse-heading" class="browse">
           <h2 id="browse-heading" tabindex="-1">All snippets</h2>
+          <p id="workspace-status" class="muted" role="status">Loading snippets…</p>
           <p id="result-count" class="muted" role="status"></p>
           <ul id="results" class="results"></ul>
           <p id="no-results" class="muted" hidden>Try a different search term.</p>

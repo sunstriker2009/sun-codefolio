@@ -1,11 +1,12 @@
-import { browseSnippets, buildSnippet, defaultValues, snippets } from './catalog.mjs';
+import { browseSnippets, buildSnippet, defaultValues, snippets } from './catalog.mjs?v=catalog-nav-2';
 import { restoreValues } from './parameters.mjs';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-nav-2';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
 const menu = byId('catalog-menu');
-const menuToggle = byId('menu-toggle');
+const disclosure = byId('catalog-disclosure');
+const compactNavigation = matchMedia('(max-width: 720px)');
 const browseHeading = byId('browse-heading');
 const results = byId('results');
 const detail = byId('detail');
@@ -39,10 +40,6 @@ for (const { language, topic } of snippets) {
   languages.get(language).add(topic);
 }
 
-function setMenuOpen(open) {
-  menuToggle.setAttribute('aria-expanded', open);
-}
-
 function browseScope(nextScope) {
   const url = new URL(location.href);
   url.searchParams.delete('snippet');
@@ -52,8 +49,8 @@ function browseScope(nextScope) {
   scope = nextScope;
   search.value = '';
   updateResults({ fromHistory: true });
-  if (getComputedStyle(menuToggle).display !== 'none') {
-    setMenuOpen(false);
+  if (compactNavigation.matches) {
+    disclosure.open = false;
     browseHeading.focus();
   }
 }
@@ -81,7 +78,8 @@ for (const [language, topics] of languages) {
   menu.append(group);
 }
 
-menuToggle.addEventListener('click', () => setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true'));
+disclosure.open = !compactNavigation.matches;
+compactNavigation.addEventListener('change', (event) => { disclosure.open = !event.matches; });
 
 function snippetLink(snippet) {
   const link = document.createElement('a');
@@ -102,7 +100,7 @@ function snippetLink(snippet) {
 function updateResults({ fromHistory = false } = {}) {
   const searching = Boolean(search.value.trim());
   const shownSnippets = browseSnippets(search.value, scope);
-  const { id, snippet } = readSnippetLink(location.search);
+  const { id, snippet } = readSnippetLink(location.search, snippets);
   const scopeLabel = [scope.language, scope.topic].filter(Boolean).join(' / ');
   browseHeading.textContent = searching ? 'Search results' : scopeLabel || 'All snippets';
   for (const { control, itemScope } of menuButtons) {
