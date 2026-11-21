@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
   actions: write
-  pull-requests: read
+  pull-requests: write
 concurrency:
   group: branding-install-${{ github.ref }}
   cancel-in-progress: false
@@ -20,8 +20,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: true
+      - name: Create branding publication token
+        id: branding-token
+        if: vars.SUN_BRANDING_APP_ID != ''
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        with:
+          app-id: ${{ vars.SUN_BRANDING_APP_ID }}
+          private-key: ${{ secrets.SUN_BRANDING_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       # Pinned to the reviewed FOUNDRY action; no source scripts from the ZIP execute.
-      - uses: sunstriker2009/sun-foundry/actions/install-branding-zip@02b97be1cfb415fcf3d9af8a8f94bd84c37a53e7
+      - uses: sunstriker2009/sun-foundry/actions/install-branding-zip@da243224cc819cbf4925317083971be303509dd2
         with:
           validation-workflows: ci.yml,pr-title.yml
+          update-readme: 'true'
+          publish-pr: 'true'
+          publication-token: ${{ steps.branding-token.outputs.token }}
