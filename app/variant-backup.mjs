@@ -60,10 +60,36 @@ function conflictName(name, attempt) {
   return name.slice(0, maxNameLength - suffix.length).replace(/[\uD800-\uDBFF]$/, '') + suffix;
 }
 
+function categoryKey({ language, topic }) {
+  return JSON.stringify([language, topic]);
+}
+
+function rememberName(names, name, snippetId, values) {
+  const entries = names.get(name) ?? new Map();
+  entries.set(snippetId, values);
+  names.set(name, entries);
+}
+
+function categoryNames(stored, snippets, category) {
+  const names = new Map();
+  for (const snippet of snippets) {
+    if (categoryKey(snippet) !== category) continue;
+    const entries = stored[snippet.id] ?? [];
+    if (!Array.isArray(entries) || entries.some((item) => typeof item?.name !== 'string')) {
+      throw new Error('Your existing saved variants could not be read.');
+    }
+    for (const entry of entries) {
+      rememberName(names, entry.name, snippet.id, comparableValues(snippet, entry.values));
+    }
+  }
+  return names;
+}
+
 export function mergeVariantBackup(stored, imported, snippets) {
   const variants = { ...stored };
   const counts = { added: 0, renamed: 0, duplicates: 0, unavailable: 0 };
   const catalogById = new Map(snippets.map((snippet) => [snippet.id, snippet]));
+  const namesByCategory = new Map();
 
   for (const [id, entries] of Object.entries(imported)) {
     if (!entries.length) continue;
@@ -73,28 +99,28 @@ export function mergeVariantBackup(stored, imported, snippets) {
       continue;
     }
 
-    const current = stored[id] ?? [];
-    if (!Array.isArray(current) || current.some((item) => typeof item?.name !== 'string')) {
-      throw new Error('Your existing saved variants could not be read.');
+    const category = categoryKey(snippet);
+    if (!namesByCategory.has(category)) {
+      namesByCategory.set(category, categoryNames(stored, snippets, category));
     }
-    const byName = new Map(current.map((entry) => [entry.name, comparableValues(snippet, entry.values)]));
-    const combined = [...current];
+    const names = namesByCategory.get(category);
+    const combined = [...(stored[id] ?? [])];
 
     for (const variant of entries) {
       const values = comparableValues(snippet, variant.values);
       let name = variant.name;
       let attempt = 0;
-      while (byName.has(name) && byName.get(name) !== values) {
+      while (names.has(name) && names.get(name).get(id) !== values) {
         name = conflictName(variant.name, ++attempt);
       }
-      if (byName.has(name)) {
+      if (names.has(name)) {
         counts.duplicates++;
         continue;
       }
       if (attempt) counts.renamed++;
       counts.added++;
       combined.push({ name, values: variant.values });
-      byName.set(name, values);
+      rememberName(names, name, id, values);
     }
     variants[id] = combined;
   }

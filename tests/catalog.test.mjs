@@ -279,3 +279,43 @@ test('renaming conflicts keeps long variant names within the builder limit', () 
   assert.equal(new Set(merged.variants[id].map((item) => item.name)).size, 3);
   assert.doesNotThrow(() => readVariantBackup(exportVariantBackup(merged.variants).json));
 });
+
+test('variant import checks names across snippets in the same language and topic only', () => {
+  const capture = 'csharp-regex-named-group';
+  const replace = 'csharp-regex-reformat-date';
+  const repeat = 'csharp-regex-repeated-words';
+  const linq = 'csharp-take-items';
+  const name = 'Review';
+  const stored = {
+    [capture]: [{ name, values: { group: 'level' } }],
+    [repeat]: [{ name: 'Review (imported)', values: { ignoreCase: false } }],
+  };
+  const incoming = {
+    [replace]: [{ name, values: {} }],
+    [linq]: [{ name, values: { limit: 5 } }],
+  };
+  const merged = mergeVariantBackup(stored, incoming, snippets);
+  assert.equal(merged.added, 2);
+  assert.equal(merged.renamed, 1);
+  assert.equal(merged.variants[replace][0].name, 'Review (imported 2)');
+  assert.equal(merged.variants[linq][0].name, name);
+  assert.deepEqual(merged.variants[capture], stored[capture]);
+  assert.deepEqual(merged.variants[repeat], stored[repeat]);
+  const repeated = mergeVariantBackup(merged.variants, incoming, snippets);
+  assert.equal(repeated.added, 0);
+  assert.equal(repeated.duplicates, 2);
+});
+
+test('variant import detects a same-snippet duplicate when another snippet has a legacy name collision', () => {
+  const capture = 'csharp-regex-named-group';
+  const replace = 'csharp-regex-reformat-date';
+  const name = 'Review';
+  const stored = {
+    [capture]: [{ name, values: { group: 'level' } }],
+    [replace]: [{ name, values: {} }],
+  };
+  const merged = mergeVariantBackup(stored, { [capture]: stored[capture] }, snippets);
+  assert.equal(merged.duplicates, 1);
+  assert.equal(merged.added, 0);
+  assert.deepEqual(merged.variants, stored);
+});

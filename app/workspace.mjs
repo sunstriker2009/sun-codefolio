@@ -1,7 +1,7 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=variant-backup-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=variant-backup-2';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-backup-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-backup-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-backup-2';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-backup-2';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
