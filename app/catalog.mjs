@@ -29,6 +29,7 @@ function regexOptions(ignoreCase) {
 export const snippets = [
   {
     id: 'git-file-history',
+    topic: 'History',
     prerequisites: "Git and a POSIX shell. Run from the repository root.",
     expected: "Up to five lines with a short commit hash and subject, newest first, for commits that changed src/app.js.",
     effects: "Reads commit history for the selected branch and path. File change details show the status and path of changed files.",
@@ -56,6 +57,7 @@ export const snippets = [
   },
   {
     id: 'git-branch-list',
+    topic: 'Branches and tags',
     prerequisites: "Git in a local repository.",
     expected: "With the default sort order, up to three short branch names ordered by the date of each branch’s latest commit.",
     effects: "Reads local branch references.",
@@ -82,6 +84,7 @@ export const snippets = [
   },
   {
     id: 'js-filter-array',
+    topic: 'Arrays',
     prerequisites: "An array named items. Each element should be an object.",
     expected: "For [{ status: \"active\" }, { status: \"archived\" }], matches contains only the active record.",
     effects: "Creates a new array that shares references to the matching objects.",
@@ -102,6 +105,7 @@ export const snippets = [
   },
   {
     id: 'js-join-array',
+    topic: 'Text formatting',
     prerequisites: "An array named items.",
     expected: "For [\"alpha\", \"beta\", \"gamma\"], joined is \"alpha, beta, gamma\".",
     effects: "Creates a string and coerces non-string elements to text where applicable.",
@@ -118,6 +122,7 @@ export const snippets = [
   },
   {
     id: 'csharp-take-items',
+    topic: 'LINQ',
     prerequisites: "A sequence named items and System.Linq in scope.",
     expected: "For twelve input elements, firstItems is a list containing the first ten in input order.",
     effects: "Enumerates up to the requested number of elements and materializes a new list.",
@@ -136,6 +141,7 @@ export const snippets = [
   },
   {
     id: 'xpath-match-attribute',
+    topic: 'Value matching',
     prerequisites: "An XML or HTML document and an XPath 1.0 evaluator.",
     expected: "For a document with one data-state=\"ready\" element and one data-state=\"queued\" element, only the ready element matches.",
     effects: "Evaluates the document and returns matching element nodes.",
@@ -155,6 +161,7 @@ export const snippets = [
   },
   {
     id: 'git-compare-branch',
+    topic: 'Branches and tags',
     language: 'Git',
     title: 'Summarize changes between branches',
     description: 'Compare the tip of a local branch with the current commit and show a summary by path.',
@@ -172,6 +179,7 @@ export const snippets = [
   },
   {
     id: 'js-map-property',
+    topic: 'Arrays',
     language: 'JavaScript',
     title: 'Extract a property from each array item',
     description: 'Create an array of values from one property on each object.',
@@ -188,6 +196,7 @@ export const snippets = [
   },
   {
     id: 'csharp-distinct-strings',
+    topic: 'LINQ',
     language: 'C#',
     title: 'Remove duplicate strings from a sequence',
     description: 'Use LINQ with an ordinal comparer to deduplicate strings. Choose whether case matters.',
@@ -205,6 +214,7 @@ export const snippets = [
   },
   {
     id: 'csharp-any-above',
+    topic: 'LINQ',
     language: 'C#',
     title: 'Check whether any number exceeds a threshold',
     description: 'Use LINQ to test whether at least one item is greater than an integer threshold.',
@@ -224,6 +234,7 @@ export const snippets = [
   },
   {
     id: 'xpath-contains-text',
+    topic: 'Value matching',
     language: 'XPath',
     title: 'Find named elements containing text',
     description: 'Select elements of a given name whose normalized text contains a case-sensitive phrase.',
@@ -243,6 +254,7 @@ export const snippets = [
   },
   {
     id: 'xpath-direct-children',
+    topic: 'Tree navigation',
     language: 'XPath',
     title: 'Select direct children by element name',
     description: 'Find named elements immediately inside a named parent.',
@@ -262,6 +274,7 @@ export const snippets = [
   },
   {
     id: 'git-line-history',
+    topic: 'History',
     language: 'Git',
     title: 'Trace changes to a line',
     description: 'Follow a line backward from the current commit to see when it was added or changed.',
@@ -281,6 +294,7 @@ export const snippets = [
   },
   {
     id: 'git-tag-commits',
+    topic: 'Branches and tags',
     language: 'Git',
     title: 'Review commits between two tags',
     description: 'List commits reachable from the target tag that are outside the base tag’s history.',
@@ -301,6 +315,7 @@ export const snippets = [
   },
   {
     id: 'csharp-regex-named-group',
+    topic: 'Regex',
     language: 'C#',
     title: 'Extract a named Regex group from a log line',
     description: 'Match a structured line and read one named capture, with a null result if the group did not match.',
@@ -327,6 +342,7 @@ export const snippets = [
   },
   {
     id: 'csharp-regex-reformat-date',
+    topic: 'Regex',
     language: 'C#',
     title: 'Reformat date text with Regex substitutions',
     description: 'Use Regex.Replace and named captures to rearrange the year, month, and day in date-shaped text.',
@@ -352,6 +368,7 @@ export const snippets = [
   },
   {
     id: 'csharp-regex-repeated-words',
+    topic: 'Regex',
     language: 'C#',
     title: 'Find repeated words with a Regex backreference',
     description: 'Capture a word and use a named backreference to find it again immediately after whitespace.',
@@ -378,6 +395,7 @@ export const snippets = [
   },
   {
     id: 'csharp-regex-generated',
+    topic: 'Regex',
     language: 'C#',
     title: 'Validate ticket IDs with GeneratedRegex',
     description: 'Generate a reusable regex at compile time to validate a ticket prefix followed by a fixed number of digits.',
@@ -410,6 +428,7 @@ export const snippets = [
   },
   {
     id: 'csharp-regex-escape-literal',
+    topic: 'Regex',
     language: 'C#',
     title: 'Search for literal text with Regex.Escape',
     description: 'Use a user-supplied term as literal text inside a regex. Optionally search for the term after a label.',
@@ -480,4 +499,10 @@ export function findSnippets(query, language) {
     .filter(({ score }) => score > 0)
     .sort((left, right) => right.score - left.score)
     .map(({ snippet }) => snippet);
+}
+
+export function browseSnippets(query, { language, topic } = {}) {
+  if (query.trim()) return findSnippets(query);
+  return snippets.filter((snippet) =>
+    (!language || snippet.language === language) && (!topic || snippet.topic === topic));
 }

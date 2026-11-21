@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
-import { buildSnippet, defaultValues, findSnippets, snippets } from '../app/catalog.mjs';
+import { browseSnippets, buildSnippet, defaultValues, findSnippets, snippets } from '../app/catalog.mjs';
 import { restoreValues } from '../app/parameters.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
 
@@ -184,4 +184,24 @@ test('literal Regex search escapes both the term and optional label', () => {
   assert.ok(output.includes('Regex.Escape("type[0]:") + @"\\s*" + Regex.Escape("a.b")'));
   assert.match(buildSnippet(snippet, { ...defaults, label: '' }).output, /var pattern = Regex.Escape\("C\+\+"\);/);
   assert.equal(findSnippets('Regex.Escape')[0].id, snippet.id);
+});
+
+test('catalog browsing includes a topic for every snippet and narrows by language or topic', () => {
+  assert.ok(snippets.every(({ topic }) => topic?.trim()));
+  const csharp = browseSnippets('', { language: 'C#' });
+  assert.deepEqual([...new Set(csharp.map(({ topic }) => topic))].sort(), ['LINQ', 'Regex']);
+  assert.deepEqual(
+    browseSnippets('', { language: 'C#', topic: 'Regex' }).map(({ id }) => id),
+    csharp.filter(({ topic }) => topic === 'Regex').map(({ id }) => id),
+  );
+  assert.deepEqual(browseSnippets('', { language: 'Git', topic: 'Regex' }), []);
+});
+
+test('a search uses the full All ranking regardless of the active language or topic', () => {
+  const scope = { language: 'C#', topic: 'Regex' };
+  const query = 'git log -L';
+  assert.deepEqual(browseSnippets(query, scope), findSnippets(query));
+  assert.equal(browseSnippets(query, scope)[0].id, 'git-line-history');
+  assert.equal(browseSnippets('items.Take(', scope)[0].topic, 'LINQ');
+  assert.deepEqual(browseSnippets('  ', scope), browseSnippets('', scope));
 });

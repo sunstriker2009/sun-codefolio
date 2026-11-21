@@ -10,7 +10,7 @@ A searchable library for customizing and reusing code snippets.
 
 [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
 
-CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Search by task or exact syntax, filter by language, then open a snippet for a worked example and a shareable link. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
+CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse the left menu by language and topic, or search the full catalog by task or exact syntax. Open a snippet for a worked example and a shareable link. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
 
 ### Run locally
 
@@ -35,7 +35,7 @@ Enter the name and select **Save variant**. Reopen the snippet later and select 
 
 ### Maintain the catalog
 
-Add entries to `app/catalog.mjs`. Give each snippet a stable ID, language, search aliases and use cases, a worked example with prerequisites and expected behavior, and related snippet IDs. Define typed fields and defaults, then verify the generated example against its target shell, runtime, or evaluator before opening a PR.
+Add entries to `app/catalog.mjs`. Give each snippet a stable ID, language, topic, search aliases and use cases, a worked example with prerequisites and expected behavior, and related snippet IDs. Define typed fields and defaults, then verify the generated example against its target shell, runtime, or evaluator before opening a PR.
 
 Run the catalog checks with Node.js 24.
 

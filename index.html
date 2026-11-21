@@ -21,17 +21,22 @@
     <section class="intro" aria-labelledby="page-title">
       <h1>Snippet library</h1>
       <p>Find a snippet, make it yours, and copy it into your workflow.</p>
-      <label for="search">Search snippets</label>
+      <label for="search">Search all snippets</label>
       <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
     </section>
     <div class="layout">
-      <section aria-labelledby="browse-heading" class="browse">
-        <h2 id="browse-heading">Browse snippets</h2>
-        <div id="filters" class="filters" role="group" aria-label="Filter by language"></div>
-        <p id="result-count" class="muted" role="status"></p>
-        <ul id="results" class="results"></ul>
-        <p id="no-results" class="muted" hidden>Try a different search or language.</p>
-      </section>
+      <div class="catalog-sidebar">
+        <div class="catalog-navigation">
+          <button type="button" id="menu-toggle" aria-expanded="false" aria-controls="catalog-menu">Browse catalog</button>
+          <nav id="catalog-menu" aria-label="Snippet catalog"></nav>
+        </div>
+        <section aria-labelledby="browse-heading" class="browse">
+          <h2 id="browse-heading" tabindex="-1">All snippets</h2>
+          <p id="result-count" class="muted" role="status"></p>
+          <ul id="results" class="results"></ul>
+          <p id="no-results" class="muted" hidden>Try a different search term.</p>
+        </section>
+      </div>
       <section id="detail" class="panel" aria-labelledby="snippet-title" hidden>
         <p id="snippet-language" class="language"></p>
         <h2 id="snippet-title" tabindex="-1"></h2>
