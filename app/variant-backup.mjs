@@ -24,8 +24,11 @@ function validateVariants(variants) {
   return variants;
 }
 
-export function exportVariantBackup(stored) {
-  const variants = Object.fromEntries(Object.entries(validateVariants(stored))
+export function exportVariantBackup(stored, snippetIds) {
+  const scoped = snippetIds
+    ? Object.fromEntries(Object.entries(stored).filter(([id]) => snippetIds.has(id)))
+    : stored;
+  const variants = Object.fromEntries(Object.entries(validateVariants(scoped))
     .filter(([, entries]) => entries.length > 0));
   return {
     count: Object.values(variants).reduce((count, entries) => count + entries.length, 0),
@@ -85,9 +88,9 @@ function categoryNames(stored, snippets, category) {
   return names;
 }
 
-export function mergeVariantBackup(stored, imported, snippets) {
+export function mergeVariantBackup(stored, imported, snippets, snippetIds) {
   const variants = { ...stored };
-  const counts = { added: 0, renamed: 0, duplicates: 0, unavailable: 0 };
+  const counts = { added: 0, renamed: 0, duplicates: 0, unavailable: 0, outsideScope: 0 };
   const catalogById = new Map(snippets.map((snippet) => [snippet.id, snippet]));
   const namesByCategory = new Map();
 
@@ -99,6 +102,10 @@ export function mergeVariantBackup(stored, imported, snippets) {
       continue;
     }
 
+    if (snippetIds && !snippetIds.has(id)) {
+      counts.outsideScope += entries.length;
+      continue;
+    }
     const category = categoryKey(snippet);
     if (!namesByCategory.has(category)) {
       namesByCategory.set(category, categoryNames(stored, snippets, category));
