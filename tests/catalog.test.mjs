@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnippets, snippets, snippetsPerPage } from '../app/catalog.mjs';
 import { restoreValues } from '../app/parameters.mjs';
+import { exportVariantBackup, mergeVariantBackup, readVariantBackup } from '../app/variant-backup.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
 
 const byId = (id) => snippets.find((snippet) => snippet.id === id);
@@ -217,4 +218,64 @@ test('pagination preserves result order and clamps an out-of-range page', () => 
   assert.equal(last.page, last.pageCount);
   assert.deepEqual(last.items, matches.slice((last.page - 1) * snippetsPerPage));
   assert.deepEqual(paginateSnippets([], 8), { page: 1, pageCount: 1, items: [] });
+});
+
+test('variant backups round-trip typed values for multiple snippets and skip empty lists', () => {
+  const stored = {
+    'git-file-history': [{ name: 'Daily', values: { path: 'work.txt', limit: 7, fileChanges: true } }],
+    'csharp-take-items': [{ name: 'Top 3', values: { limit: '3' } }],
+  };
+  const backup = exportVariantBackup({ ...stored, 'git-branch-list': [] });
+  assert.equal(backup.count, 2);
+  assert.deepEqual(readVariantBackup(backup.json), stored);
+  assert.equal(exportVariantBackup({}).count, 0);
+});
+
+test('invalid backup files fail before they can be merged', () => {
+  assert.throws(() => readVariantBackup('{unfinished'), /valid JSON/);
+  assert.throws(() => readVariantBackup('{"version":1}'), /exported by CodeFolio/);
+  assert.throws(() => readVariantBackup('{"format":"codefolio.saved-variants","version":2}'), /version/);
+  assert.throws(() => readVariantBackup(
+    '{"format":"codefolio.saved-variants","version":1,"variants":{"git-file-history":[{"name":"Daily","values":{"path":[]}}]}}',
+  ), /invalid saved variants/);
+});
+
+test('variant import preserves local settings, renames conflicts, and skips repeated imports', () => {
+  const git = 'git-file-history';
+  const stored = {
+    [git]: [{ name: 'Daily', values: { path: 'local.txt', limit: '5' } }],
+    'csharp-take-items': [{ name: 'Local only', values: { limit: 4 } }],
+  };
+  const changes = {
+    [git]: [
+      { name: 'Daily', values: { path: 'local.txt', limit: 5 } },
+      { name: 'Daily', values: { path: 'imported.txt', limit: 7 } },
+    ],
+    'removed-snippet': [{ name: 'Unknown', values: {} }],
+  };
+  const merged = mergeVariantBackup(stored, changes, snippets);
+  assert.equal(merged.added, 1);
+  assert.equal(merged.renamed, 1);
+  assert.equal(merged.duplicates, 1);
+  assert.equal(merged.unavailable, 1);
+  assert.deepEqual(merged.variants[git], [
+    stored[git][0], { name: 'Daily (imported)', values: changes[git][1].values },
+  ]);
+  assert.deepEqual(merged.variants['csharp-take-items'], stored['csharp-take-items']);
+  assert.equal(stored[git].length, 1);
+  const repeated = mergeVariantBackup(merged.variants, changes, snippets);
+  assert.equal(repeated.added, 0);
+  assert.equal(repeated.duplicates, 2);
+});
+
+test('renaming conflicts keeps long variant names within the builder limit', () => {
+  const id = 'csharp-take-items';
+  const name = '🟢'.repeat(40);
+  const repeated = { name, values: { limit: 3 } };
+  const stored = { [id]: [{ name, values: { limit: 5 } }] };
+  const merged = mergeVariantBackup(stored, { [id]: [repeated, { name, values: { limit: 4 } }] }, snippets);
+  assert.equal(merged.renamed, 2);
+  assert.ok(merged.variants[id].every((item) => item.name.length <= 80 && item.name.isWellFormed()));
+  assert.equal(new Set(merged.variants[id].map((item) => item.name)).size, 3);
+  assert.doesNotThrow(() => readVariantBackup(exportVariantBackup(merged.variants).json));
 });

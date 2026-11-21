@@ -136,3 +136,6 @@ body:has(#snippet-full-screen[open]) { overflow: hidden; }
 .full-screen-toolbar form { display: flex; justify-content: end; padding-block: .65rem; }
 #full-screen-content .panel { padding: 1.3rem 0 2.5rem; border: 0; background: transparent; }
 #full-screen-content #open-full-screen { display: none; }
+
+.variant-transfer { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+#variant-transfer-status:not(:empty) { margin-top: .45rem; font-size: .85rem; }
