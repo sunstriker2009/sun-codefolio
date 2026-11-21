@@ -1,7 +1,7 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=variant-catalog-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=catalog-view-row-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-catalog-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-catalog-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=catalog-view-row-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-view-row-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -26,7 +26,6 @@ const save = byId('save-variant');
 const nameInput = byId('variant-name');
 const variantList = byId('variants');
 const variantTools = byId('variant-tools');
-const variantTopic = byId('variant-topic');
 const exportVariants = byId('export-variants');
 const importVariants = byId('import-variants');
 const backupFile = byId('variant-backup-file');
@@ -37,8 +36,6 @@ const storageKey = 'codefolio.variants.v1';
 const favoritesStorageKey = 'codefolio.favorites.v1';
 
 const allSnippets = { language: '', topic: '' };
-const favoritesScope = { ...allSnippets, favorites: true };
-const savedVariantsScope = { ...allSnippets, savedVariants: true };
 let scope = history.state?.catalogScope ?? allSnippets;
 let currentPage = history.state?.catalogPage ?? 1;
 let favorites = readFavorites();
@@ -68,7 +65,7 @@ function button(label, onClick) {
   return element;
 }
 
-const menuButtons = [];
+const scopeButtons = [];
 const languages = new Map();
 for (const { language, topic } of snippets) {
   if (!languages.has(language)) languages.set(language, new Set());
@@ -87,26 +84,43 @@ function changeBrowsePage(page, nextScope = scope) {
   updateResults({ fromHistory: true });
 }
 
-function browseScope(nextScope) {
+function browseScope(nextScope, { closeMenu = true } = {}) {
   search.value = '';
   changeBrowsePage(1, nextScope);
-  if (compactNavigation.matches) {
+  if (closeMenu && compactNavigation.matches) {
     disclosure.open = false;
     browseHeading.focus();
   }
 }
 
-function menuItem(label, itemScope) {
-  const control = button(label, () => browseScope(itemScope));
-  menuButtons.push({ control, itemScope });
+function scopeItem(label, language, topic = '') {
+  const control = button(label, () => browseScope({ ...scope, language, topic }));
+  scopeButtons.push({ control, language, topic });
   return control;
 }
 
-menu.append(
-  menuItem('All snippets', allSnippets),
-  menuItem('Favorites', favoritesScope),
-  menuItem('Saved variants', savedVariantsScope),
-);
+function viewName() {
+  if (scope.savedVariants) return 'Saved';
+  if (scope.favorites) return 'Favorites';
+  return 'All';
+}
+
+const viewRow = document.createElement('ul');
+viewRow.className = 'catalog-views';
+viewRow.setAttribute('aria-label', 'Catalog views');
+const viewButtons = new Map();
+for (const label of ['All', 'Saved', 'Favorites']) {
+  const row = document.createElement('li');
+  const control = button(label, () => browseScope({
+    ...scope, savedVariants: label === 'Saved', favorites: label === 'Favorites',
+  }, { closeMenu: false }));
+  viewButtons.set(label, control);
+  row.append(control);
+  viewRow.append(row);
+}
+const divider = document.createElement('hr');
+divider.className = 'catalog-divider';
+menu.append(viewRow, divider, scopeItem('All languages', ''));
 for (const [language, topics] of languages) {
   const group = document.createElement('details');
   const summary = document.createElement('summary');
@@ -115,13 +129,10 @@ for (const [language, topics] of languages) {
   group.open = scope.language === language;
   const items = document.createElement('div');
   items.className = 'menu-items';
-  items.append(menuItem('All ' + language, { language, topic: '' }));
+  items.append(scopeItem('All ' + language, language));
   for (const topic of [...topics].sort((left, right) => left.localeCompare(right))) {
-    items.append(menuItem(topic, { language, topic }));
+    items.append(scopeItem(topic, language, topic));
   }
-  const saved = menuItem('Saved variants', { ...savedVariantsScope, language });
-  saved.setAttribute('aria-label', language + ' saved variants');
-  items.append(saved);
   group.append(summary, items);
   menu.append(group);
 }
@@ -150,18 +161,6 @@ function snippetLink(snippet) {
     openSnippet(snippet);
   });
   return link;
-}
-
-function setupVariantTools(showingVariants) {
-  variantTools.hidden = !showingVariants;
-  byId('variant-topic-field').hidden = !scope.language;
-  if (!showingVariants || !scope.language) return;
-  if (variantTopic.dataset.language !== scope.language) {
-    const topics = [...languages.get(scope.language)].sort((left, right) => left.localeCompare(right));
-    variantTopic.replaceChildren(new Option('All topics', ''), ...topics.map((topic) => new Option(topic)));
-    variantTopic.dataset.language = scope.language;
-  }
-  variantTopic.value = scope.topic;
 }
 
 function savedVariantGroups(matches) {
@@ -207,13 +206,16 @@ function updateResults({ fromHistory = false } = {}) {
   const { page, pageCount, items } = paginateSnippets(filtered, currentPage);
   currentPage = page;
 
-  const scopeLabel = [scope.language, scope.topic, scope.savedVariants ? 'Saved variants' : ''].filter(Boolean).join(' / ');
-  browseHeading.textContent = searching ? 'Search results' : scope.favorites ? 'Favorites' : scopeLabel || 'All snippets';
-  const menuScope = scope.savedVariants ? { ...scope, topic: '' } : scope;
-  for (const { control, itemScope } of menuButtons) {
-    control.setAttribute('aria-pressed', !searching && sameScope(itemScope, menuScope));
+  const view = viewName();
+  const scopeLabel = [scope.language, scope.topic, view === 'All' ? '' : view].filter(Boolean).join(' / ');
+  browseHeading.textContent = searching ? 'Search results' : scopeLabel || 'All snippets';
+  for (const [label, control] of viewButtons) {
+    control.setAttribute('aria-pressed', !searching && label === view);
   }
-  setupVariantTools(showingVariants);
+  for (const { control, language, topic } of scopeButtons) {
+    control.setAttribute('aria-pressed', !searching && scope.language === language && scope.topic === topic);
+  }
+  variantTools.hidden = !showingVariants;
   for (const group of menu.querySelectorAll('details')) {
     const active = !searching && group.dataset.language === scope.language;
     group.classList.toggle('active-language', active);
@@ -492,8 +494,6 @@ function modifyVariants(change) {
     return false;
   }
 }
-
-variantTopic.addEventListener('change', () => changeBrowsePage(1, { ...scope, topic: variantTopic.value }));
 
 function transferSnippetIds(transferScope) {
   if (!transferScope.language && !transferScope.topic) return undefined;
