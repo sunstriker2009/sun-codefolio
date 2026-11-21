@@ -52,4 +52,5 @@
 
 - Trace changes to a line with Git and review the commits between two release tags.
 - Extract a named group from a structured line, rearrange date components with substitutions, and detect repeated words with a backreference in C#.
+- The Regex collection also covers build-time generation for reusable ticket validation and literal searches with escaped input.
 - Each entry has a worked example, a configurable builder, and a stable link. Search tests cover plain-language and syntax queries. The generated examples were checked against Git and .NET 10.
