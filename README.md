@@ -42,3 +42,5 @@ Run the catalog checks with Node.js 24.
 ```sh
 node --test tests/catalog.test.mjs
 ```
+
+When changing the page markup or frontend modules together, update their asset version query strings in `index.html` and `app/workspace.mjs` so a browser can fetch the matching files after a Pages deployment.
