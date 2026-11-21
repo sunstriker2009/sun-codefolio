@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Find, customize, and reuse developer snippets in CodeFolio by Sun.">
+  <meta name="color-scheme" content="dark">
+  <title>CodeFolio by Sun</title>
+  <link rel="icon" href="./branding/assets/icons/icon-32.png">
+  <link rel="stylesheet" href="./app/styles.css">
+  <script type="module" src="./app/workspace.mjs"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container brand">
+      <img src="./branding/assets/icons/icon-64.png" width="38" height="38" alt="">
+      <span>CODEFOLIO <small>by Sun</small></span>
+    </div>
+  </header>
+  <main class="container">
+    <section class="intro" aria-labelledby="page-title">
+      <h1>Snippet library</h1>
+      <p>Find a snippet, make it yours, and copy it into your workflow.</p>
+      <label for="search">Search snippets</label>
+      <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
+    </section>
+    <div class="layout">
+      <section aria-labelledby="browse-heading" class="browse">
+        <h2 id="browse-heading">Browse snippets</h2>
+        <div id="filters" class="filters" role="group" aria-label="Filter by language"></div>
+        <p id="result-count" class="muted" role="status"></p>
+        <ul id="results" class="results"></ul>
+      </section>
+      <section id="detail" class="panel" aria-labelledby="snippet-title">
+        <p id="snippet-language" class="language"></p>
+        <h2 id="snippet-title" tabindex="-1"></h2>
+        <p id="snippet-description" class="muted"></p>
+        <h3>Example</h3>
+        <p id="example-context" class="muted"></p>
+        <pre><code id="example"></code></pre>
+        <h3>Builder</h3>
+        <form id="builder">
+          <div id="fields" class="fields"></div>
+          <div class="output-heading">
+            <label for="output">Generated snippet</label>
+            <button id="copy" type="button">Copy</button>
+          </div>
+          <textarea id="output" readonly rows="4" spellcheck="false"></textarea>
+          <p id="builder-status" class="status" role="status"></p>
+          <div class="save-row">
+            <div>
+              <label for="variant-name">Variant name</label>
+              <input id="variant-name" maxlength="80" required aria-describedby="variant-help"><small id="variant-help">Saving with the same name replaces that variant.</small>
+            </div>
+            <button type="submit">Save variant</button>
+          </div>
+          <p id="variant-status" class="status" role="status"></p>
+        </form>
+        <section aria-labelledby="variants-heading" class="variants-section">
+          <h3 id="variants-heading">Saved variants</h3>
+          <p id="variants-empty" class="muted">Save a named variant to reuse these values in this browser.</p>
+          <ul id="variants" class="variants"></ul>
+        </section>
+      </section>
+      <p id="empty" class="panel" hidden>Try a different search or language.</p>
+    </div>
+    <noscript><p>Enable JavaScript to search snippets and use the builder.</p></noscript>
+  </main>
+</body>
+</html>
