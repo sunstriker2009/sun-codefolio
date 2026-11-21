@@ -9,6 +9,9 @@ function xpathLiteral(value) {
 export const snippets = [
   {
     id: 'git-file-history',
+    prerequisites: "Git and a POSIX shell. Run from the repository root.",
+    expected: "Up to five lines with a short commit hash and subject, newest first, for commits that changed src/app.js.",
+    effects: "Reads commit history for the path in the current branch.",
     aliases: ["git log --oneline", "file history"],
     useCases: ["Find old changes to a file", "See which commits changed a path"],
     relatedIds: ["git-branch-list"],
@@ -25,6 +28,9 @@ export const snippets = [
   },
   {
     id: 'git-branch-list',
+    prerequisites: "Git in a local repository.",
+    expected: "Up to three short branch names, one per line, ordered by the date of each branch’s latest commit.",
+    effects: "Reads local branch references.",
     aliases: ["git branch list", "recent branches"],
     useCases: ["Find recently updated local branches"],
     relatedIds: ["git-file-history"],
@@ -41,6 +47,9 @@ export const snippets = [
   },
   {
     id: 'js-filter-array',
+    prerequisites: "An array named items. Each element should be an object.",
+    expected: "For [{ status: \"active\" }, { status: \"archived\" }], matches contains only the active record.",
+    effects: "Creates a new array that shares references to the matching objects.",
     aliases: ["Array.filter", "filter array"],
     useCases: ["Find objects with a matching field", "Keep records with a particular status"],
     relatedIds: ["js-join-array", "csharp-take-items"],
@@ -58,6 +67,9 @@ export const snippets = [
   },
   {
     id: 'js-join-array',
+    prerequisites: "An array named items.",
+    expected: "For [\"alpha\", \"beta\", \"gamma\"], joined is \"alpha, beta, gamma\".",
+    effects: "Creates a string and coerces non-string elements to text where applicable.",
     aliases: ["Array.join", "join array"],
     useCases: ["Turn a list of labels into comma-separated text"],
     relatedIds: ["js-filter-array"],
@@ -71,6 +83,9 @@ export const snippets = [
   },
   {
     id: 'csharp-take-items',
+    prerequisites: "A sequence named items and System.Linq in scope.",
+    expected: "For twelve input elements, firstItems is a list containing the first ten in input order.",
+    effects: "Enumerates up to the requested number of elements and materializes a new list.",
     aliases: ["Enumerable.Take", "LINQ Take"],
     useCases: ["Get the first N items from a collection"],
     relatedIds: ["js-filter-array"],
@@ -86,6 +101,9 @@ export const snippets = [
   },
   {
     id: 'xpath-match-attribute',
+    prerequisites: "An XML or HTML document and an XPath 1.0 evaluator.",
+    expected: "For a document with one data-state=\"ready\" element and one data-state=\"queued\" element, only the ready element matches.",
+    effects: "Evaluates the document and returns matching element nodes.",
     aliases: ["attribute selector", "attribute predicate"],
     useCases: ["Find HTML or XML elements with a matching attribute"],
     relatedIds: ["js-filter-array"],

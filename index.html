@@ -30,14 +30,23 @@
         <div id="filters" class="filters" role="group" aria-label="Filter by language"></div>
         <p id="result-count" class="muted" role="status"></p>
         <ul id="results" class="results"></ul>
+        <p id="no-results" class="muted" hidden>Try a different search or language.</p>
       </section>
-      <section id="detail" class="panel" aria-labelledby="snippet-title">
+      <section id="detail" class="panel" aria-labelledby="snippet-title" hidden>
         <p id="snippet-language" class="language"></p>
         <h2 id="snippet-title" tabindex="-1"></h2>
         <p id="snippet-description" class="muted"></p>
         <h3>Example</h3>
         <p id="example-context" class="muted"></p>
         <pre><code id="example"></code></pre>
+        <dl class="reference-details">
+          <dt>Prerequisites</dt>
+          <dd id="prerequisites"></dd>
+          <dt>Expected behavior</dt>
+          <dd id="expected"></dd>
+          <dt>Effects</dt>
+          <dd id="effects"></dd>
+        </dl>
         <h3>Builder</h3>
         <form id="builder">
           <div id="fields" class="fields"></div>
@@ -61,8 +70,12 @@
           <p id="variants-empty" class="muted">Save a named variant to reuse these values in this browser.</p>
           <ul id="variants" class="variants"></ul>
         </section>
+        <section aria-labelledby="related-heading" class="related-section">
+          <h3 id="related-heading">Related snippets</h3>
+          <ul id="related"></ul>
+        </section>
       </section>
-      <p id="empty" class="panel" hidden>Try a different search or language.</p>
+      <p id="unknown-snippet" class="panel" hidden>This snippet could not be found. Choose one from the library.</p>
     </div>
     <noscript><p>Enable JavaScript to search snippets and use the builder.</p></noscript>
   </main>

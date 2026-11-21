@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { buildSnippet, defaultValues, findSnippets, snippets } from '../app/catalog.mjs';
+import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
 
 const byId = (id) => snippets.find((snippet) => snippet.id === id);
 
@@ -79,4 +80,19 @@ test('syntax search preserves punctuation and ranks matching example code first'
   assert.deepEqual(findSnippets('//*[@').map(({ id }) => id), ['xpath-match-attribute']);
   assert.deepEqual(findSnippets('items.Take(', 'JavaScript'), []);
   assert.deepEqual(findSnippets('items.Take['), []);
+});
+
+test('every snippet has reference details and a shareable URL that resolves to it', () => {
+  for (const snippet of snippets) {
+    assert.ok(snippet.prerequisites && snippet.expected && snippet.effects, snippet.id);
+    const url = new URL(snippetHref(snippet.id), 'https://example.test/codefolio/');
+    assert.equal(url.pathname, '/codefolio/');
+    assert.deepEqual([...url.searchParams], [['snippet', snippet.id]]);
+    assert.equal(readSnippetLink(url.search).snippet, snippet);
+  }
+});
+
+test('an empty location means browse and an unknown link does not resolve', () => {
+  assert.deepEqual(readSnippetLink(''), { id: null, snippet: undefined });
+  assert.deepEqual(readSnippetLink('?snippet=missing'), { id: 'missing', snippet: undefined });
 });

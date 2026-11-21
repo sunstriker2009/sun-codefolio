@@ -5,8 +5,8 @@
 | Milestone | Status | Outcome |
 | --- | --- | --- |
 | M0 · Starter workspace | Complete | Six starter snippets, keyword search, language filters, a live builder, and locally saved variants |
-| M1 · Search and shareable reference | Next | Find a snippet by task or syntax and open a shareable page with a worked example |
-| M2 · Typed builder and reusable variants | Planned | Customize a snippet with typed controls and reliably reopen, edit, and copy saved values |
+| M1 · Search and shareable reference | Complete | Find a snippet by task or syntax and open a shareable page with a worked example |
+| M2 · Typed builder and reusable variants | Next | Customize a snippet with typed controls and reliably reopen, edit, and copy saved values |
 | M3 · First release | Planned | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
 
 ## M0 · Starter workspace
