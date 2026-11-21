@@ -7,7 +7,7 @@
 | M0 · Starter workspace | Complete | Six starter snippets, keyword search, language filters, a live builder, and locally saved variants |
 | M1 · Search and shareable reference | Complete | Find a snippet by task or syntax and open a shareable page with a worked example |
 | M2 · Typed builder and reusable variants | Complete | Customize a snippet with typed controls and reliably reopen, edit, and copy saved values |
-| M3 · First release | In progress | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
+| M3 · First release | Complete | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
 
 ## M0 · Starter workspace
 
@@ -42,7 +42,7 @@
 
 - [x] Three snippets per language. The twelve worked examples were checked with Git, Node.js, .NET 10, and an XPath evaluator.
 - [x] Desktop Chromium passed direct links, keyboard search, clipboard copy, manual copy fallback, saved-variant persistence, and a 390px layout on localhost.
-- [ ] Verify search, both builder workflows, and copy behavior in iOS Safari.
+- [x] The repository owner confirmed the live iPhone Safari check for search, parameter editing, clipboard copy, and reopening a saved variant after reload.
 - [x] Verified [CodeFolio on GitHub Pages](https://sunstriker2009.github.io/sun-codefolio/) over HTTPS. Chrome passed search, direct snippet links after reload, copy to clipboard, and saving and reloading a named variant.
 
 **Complete when** CI is green and the browser and hosting checks above pass. Accounts and cross-device variant sync are follow-up decisions.
