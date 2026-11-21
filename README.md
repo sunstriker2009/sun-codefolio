@@ -8,6 +8,8 @@ A searchable library for customizing and reusing code snippets.
 
 ## Snippet workspace
 
+[Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
+
 CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Search by task or exact syntax, filter by language, then open a snippet for a worked example and a shareable link. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
 
 ### Run locally

@@ -43,6 +43,6 @@
 - [x] Three snippets per language. The twelve worked examples were checked with Git, Node.js, .NET 10, and an XPath evaluator.
 - [x] Desktop Chromium passed direct links, keyboard search, clipboard copy, manual copy fallback, saved-variant persistence, and a 390px layout on localhost.
 - [ ] Verify search, both builder workflows, and copy behavior in iOS Safari.
-- [ ] Confirm the initial hosting target and smoke-test the approved HTTPS URL.
+- [x] Verified [CodeFolio on GitHub Pages](https://sunstriker2009.github.io/sun-codefolio/) over HTTPS. Chrome passed search, direct snippet links after reload, copy to clipboard, and saving and reloading a named variant.
 
 **Complete when** CI is green and the browser and hosting checks above pass. Accounts and cross-device variant sync are follow-up decisions.
