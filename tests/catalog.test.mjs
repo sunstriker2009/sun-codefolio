@@ -166,3 +166,22 @@ test('C# Regex builders escape input and enforce a bounded match timeout', () =>
   assert.equal(buildSnippet(snippet, { ...parameters, timeout: 0 }).fieldId, 'timeout');
   assert.equal(buildSnippet(snippet, { ...parameters, timeout: 5001 }).fieldId, 'timeout');
 });
+
+test('Regex source generation validates the ticket format and exposes compiler options', () => {
+  const snippet = byId('csharp-regex-generated');
+  const defaults = defaultValues(snippet);
+  const { output } = buildSnippet(snippet, { ...defaults, prefix: 'ENG', digits: '6', ignoreCase: true, timeout: 80 });
+  assert.match(output, /GeneratedRegex\("\\\\AENG-\[0-9\]\{6\}\\\\z", RegexOptions.CultureInvariant \| RegexOptions.IgnoreCase, 80\)/);
+  assert.ok(buildSnippet(snippet, { ...defaults, prefix: 'OPS+' }).error);
+  assert.ok(buildSnippet(snippet, { ...defaults, digits: 0 }).error);
+  assert.equal(findSnippets('GeneratedRegex')[0].id, snippet.id);
+});
+
+test('literal Regex search escapes both the term and optional label', () => {
+  const snippet = byId('csharp-regex-escape-literal');
+  const defaults = defaultValues(snippet);
+  const { output } = buildSnippet(snippet, { ...defaults, label: 'type[0]:', term: 'a.b' });
+  assert.ok(output.includes('Regex.Escape("type[0]:") + @"\\s*" + Regex.Escape("a.b")'));
+  assert.match(buildSnippet(snippet, { ...defaults, label: '' }).output, /var pattern = Regex.Escape\("C\+\+"\);/);
+  assert.equal(findSnippets('Regex.Escape')[0].id, snippet.id);
+});

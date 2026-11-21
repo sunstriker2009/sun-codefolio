@@ -22,6 +22,10 @@ const regexTimeoutField = {
   min: 10, max: 5000, hint: 'Enter a match timeout from 10 to 5000 milliseconds.',
 };
 
+function regexOptions(ignoreCase) {
+  return 'RegexOptions.CultureInvariant' + (ignoreCase ? ' | RegexOptions.IgnoreCase' : '');
+}
+
 export const snippets = [
   {
     id: 'git-file-history',
@@ -303,7 +307,7 @@ export const snippets = [
     keywords: 'csharp dotnet regex regular expressions named capture groups parse log level',
     aliases: ['Regex.Match', 'named capture group'],
     useCases: ['Extract a log level from a structured line', 'Read a named group from a regular expression'],
-    relatedIds: ['csharp-regex-reformat-date', 'csharp-regex-repeated-words'],
+    relatedIds: ['csharp-regex-reformat-date', 'csharp-regex-repeated-words', 'csharp-regex-generated', 'csharp-regex-escape-literal'],
     example: 'Extract the level from WARN Disk latency is high.',
     prerequisites: 'System and System.Text.RegularExpressions in scope. Supply an input string and a pattern that defines the selected group.',
     expected: 'The default inputs produce WARN. A line with no capture in the selected group produces null.',
@@ -365,11 +369,74 @@ export const snippets = [
       regexTimeoutField,
     ],
     render: ({ input, ignoreCase, timeout }) => {
-      const options = 'RegexOptions.CultureInvariant' + (ignoreCase ? ' | RegexOptions.IgnoreCase' : '');
       return [
         'var hasRepeatedWord = Regex.IsMatch(' + csharpStringLiteral(input) + ',',
         '    ' + csharpStringLiteral(String.raw`\b(?<word>[\p{L}\p{M}]+)\s+\k<word>\b`) + ',',
-        '    ' + options + ', TimeSpan.FromMilliseconds(' + timeout + '));',
+        '    ' + regexOptions(ignoreCase) + ', TimeSpan.FromMilliseconds(' + timeout + '));',
+      ].join('\n');
+    },
+  },
+  {
+    id: 'csharp-regex-generated',
+    language: 'C#',
+    title: 'Validate ticket IDs with GeneratedRegex',
+    description: 'Generate a reusable regex at compile time to validate a ticket prefix followed by a fixed number of digits.',
+    keywords: 'csharp dotnet regex source generator compile time partial method ticket id validate full string',
+    aliases: ['GeneratedRegex', '[GeneratedRegex(', 'regex source generator'],
+    useCases: ['Validate ticket identifiers in an application', 'Reuse a constant regex pattern across calls'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-escape-literal'],
+    example: 'Validate identifiers like OPS-0042 using the prefix OPS and four digits.',
+    prerequisites: 'A .NET 7 or later project. Put the generated class in its own source file and call TicketIds.Pattern().IsMatch(ticketId) within the project.',
+    expected: 'With the default settings, OPS-0042 matches. OPS-42, lowercase ops-0042, and OPS-0042 followed by a newline fail.',
+    effects: 'The SDK generates the implementation during the build. An evaluated match can throw RegexMatchTimeoutException.',
+    fields: [
+      { id: 'prefix', type: 'text', label: 'Ticket prefix', default: 'OPS', pattern: '[A-Z]{1,12}', hint: 'Use 1 to 12 uppercase ASCII letters.' },
+      { id: 'digits', type: 'integer', label: 'Digit count', default: 4, min: 1, max: 12, hint: 'Enter a digit count from 1 to 12.' },
+      { id: 'ignoreCase', type: 'toggle', label: 'Ignore case', default: false },
+      regexTimeoutField,
+    ],
+    render: ({ prefix, digits, ignoreCase, timeout }) => {
+      const pattern = '\\A' + prefix + '-[0-9]{' + digits + '}\\z';
+      return [
+        'using System.Text.RegularExpressions;',
+        '',
+        'internal static partial class TicketIds',
+        '{',
+        '    [GeneratedRegex(' + csharpStringLiteral(pattern) + ', ' + regexOptions(ignoreCase) + ', ' + timeout + ')]',
+        '    internal static partial Regex Pattern();',
+        '}',
+      ].join('\n');
+    },
+  },
+  {
+    id: 'csharp-regex-escape-literal',
+    language: 'C#',
+    title: 'Search for literal text with Regex.Escape',
+    description: 'Use a user-supplied term as literal text inside a regex. Optionally search for the term after a label.',
+    keywords: 'csharp dotnet regex escape literal user input punctuation metacharacters search label',
+    aliases: ['Regex.Escape', 'escape regex punctuation'],
+    useCases: ['Search for C++ without treating plus signs as operators', 'Match a value literally inside a structured line'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-generated'],
+    example: 'Match the literal value C++ after the language: label in Build language: C++.',
+    prerequisites: 'System and System.Text.RegularExpressions in scope. Enter a literal label or leave it empty to find the term anywhere.',
+    expected: 'The default inputs produce true. Replacing C++ with C# in the input produces false.',
+    effects: 'Escapes the label and term before matching. A match can throw RegexMatchTimeoutException.',
+    fields: [
+      { id: 'input', type: 'text', label: 'Input text', default: 'Build language: C++', allowEmpty: true },
+      { id: 'label', type: 'text', label: 'Label (optional)', default: 'language:', allowEmpty: true },
+      { id: 'term', type: 'text', label: 'Literal term', default: 'C++' },
+      { id: 'ignoreCase', type: 'toggle', label: 'Ignore case', default: false },
+      regexTimeoutField,
+    ],
+    render: ({ input, label, term, ignoreCase, timeout }) => {
+      const literal = 'Regex.Escape(' + csharpStringLiteral(term) + ')';
+      const pattern = label
+        ? 'Regex.Escape(' + csharpStringLiteral(label) + ') + @"\\s*" + ' + literal
+        : literal;
+      return [
+        'var pattern = ' + pattern + ';',
+        'var found = Regex.IsMatch(' + csharpStringLiteral(input) + ', pattern,',
+        '    ' + regexOptions(ignoreCase) + ', TimeSpan.FromMilliseconds(' + timeout + '));',
       ].join('\n');
     },
   },
