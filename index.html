@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=catalog-favorites-1">
+  <link rel="stylesheet" href="./app/styles.css?v=snippet-full-screen-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=catalog-favorites-1').then(
+    import('./app/workspace.mjs?v=snippet-full-screen-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -56,7 +56,10 @@
         <p id="snippet-language" class="language"></p>
         <div class="detail-heading">
           <h2 id="snippet-title" tabindex="-1"></h2>
-          <button type="button" id="favorite" aria-pressed="false"><span aria-hidden="true">☆</span> Favorite</button>
+          <div class="snippet-actions">
+            <button type="button" id="favorite" aria-pressed="false"><span aria-hidden="true">☆</span> Favorite</button>
+            <button type="button" id="open-full-screen" aria-haspopup="dialog">Full screen</button>
+          </div>
         </div>
         <p id="favorite-status" class="favorite-feedback" role="status" hidden></p>
         <p id="snippet-description" class="muted"></p>
@@ -99,6 +102,14 @@
           <ul id="related"></ul>
         </section>
       </section>
+      <dialog id="snippet-full-screen" aria-labelledby="snippet-title">
+        <header class="full-screen-toolbar">
+          <form method="dialog" class="container">
+            <button type="submit" autofocus>Exit full screen</button>
+          </form>
+        </header>
+        <div id="full-screen-content" class="container"></div>
+      </dialog>
       <p id="unknown-snippet" class="panel" hidden>This snippet could not be found. Choose one from the library.</p>
     </div>
     <noscript><p>Enable JavaScript to search snippets and use the builder.</p></noscript>

@@ -1,6 +1,6 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=catalog-favorites-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=snippet-full-screen-1';
 import { restoreValues } from './parameters.mjs';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-favorites-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-full-screen-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -15,6 +15,8 @@ const favorite = byId('favorite');
 const favoriteStatus = byId('favorite-status');
 const results = byId('results');
 const detail = byId('detail');
+const fullScreen = byId('snippet-full-screen');
+const openFullScreen = byId('open-full-screen');
 const builder = byId('builder');
 const fields = byId('fields');
 const output = byId('output');
@@ -33,6 +35,7 @@ let scope = history.state?.catalogScope ?? allSnippets;
 let currentPage = history.state?.catalogPage ?? 1;
 let favorites = readFavorites();
 let selected;
+let browseScroll;
 
 function readFavorites() {
   try {
@@ -180,7 +183,10 @@ function selectSnippet(snippet) {
   selected = snippet;
   favoriteStatus.hidden = true;
   detail.hidden = !snippet;
-  if (!snippet) return;
+  if (!snippet) {
+    if (fullScreen.open) fullScreen.close();
+    return;
+  }
 
   byId('snippet-title').textContent = snippet.title;
   byId('snippet-language').textContent = snippet.language + ' · ' + snippet.topic;
@@ -202,6 +208,21 @@ function selectSnippet(snippet) {
   updateOutput();
   showVariants();
 }
+
+openFullScreen.addEventListener('click', () => {
+  browseScroll = { left: window.scrollX, top: window.scrollY };
+  byId('full-screen-content').append(detail);
+  fullScreen.showModal();
+  fullScreen.scrollTop = 0;
+});
+
+fullScreen.addEventListener('close', () => {
+  fullScreen.before(detail);
+  if (!detail.hidden) {
+    window.scrollTo(browseScroll);
+    openFullScreen.focus({ preventScroll: true });
+  }
+});
 
 function updateFavoriteButton() {
   const starred = Boolean(selected && favorites.has(selected.id));
