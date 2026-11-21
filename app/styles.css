@@ -91,7 +91,19 @@ textarea { resize: vertical; }
   .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
   .catalog-sidebar { display: grid; gap: 1.25rem; min-width: 0; }
 }
+#back-to-results { display: none; }
 @media (max-width: 720px) {
+  .layout > #detail { display: none; }
+  .mobile-detail > .intro, .mobile-detail .catalog-sidebar { display: none; }
+  .mobile-detail .layout { padding-top: .75rem; }
+  .mobile-detail .layout > #detail { display: block; }
+  .mobile-detail .layout > #detail #back-to-results {
+    position: sticky;
+    top: .5rem;
+    z-index: 1;
+    display: inline-block;
+    margin-bottom: .65rem;
+  }
   .layout { grid-template-columns: minmax(0, 1fr); }
   #catalog-disclosure > summary {
     display: list-item;

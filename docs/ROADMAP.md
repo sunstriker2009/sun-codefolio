@@ -9,6 +9,7 @@
 | M2 · Typed builder and reusable variants | Complete | Customize a snippet with typed controls and reliably reopen, edit, and copy saved values |
 | M3 · First release | Complete | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
 | M4 · Catalog expansion | Complete | Two Git history tasks and a focused C# Regex collection |
+| M5 · UI refinement | In progress | Mobile snippet navigation, simpler search filters, and easier access to snippet actions |
 
 ## M0 · Starter workspace
 
@@ -54,3 +55,11 @@
 - Extract a named group from a structured line, rearrange date components with substitutions, and detect repeated words with a backreference in C#.
 - The Regex collection also covers build-time generation for reusable ticket validation and literal searches with escaped input.
 - Each entry has a worked example, a configurable builder, and a stable link. Search tests cover plain-language and syntax queries. The generated examples were checked against Git and .NET 10.
+
+## M5 · UI refinement
+
+Complete this pass before expanding the catalogs again.
+
+- [x] **Mobile snippet navigation.** Open snippets in a dedicated detail view on narrow screens. **Back to results** restores the search, tag filters, catalog, topic, page, and scroll position. Direct snippet links open the detail view, and desktop keeps the side-by-side layout.
+- [ ] **Search filter controls.** Keep text search prominent. Place tag and scope controls under **Filters** and show active filters as removable chips.
+- [ ] **Snippet actions.** Add **Copy link** near the title and **Jump to builder** after the example. Keep the generated-code copy action beside the output.

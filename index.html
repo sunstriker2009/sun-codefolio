@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=result-accents-1">
+  <link rel="stylesheet" href="./app/styles.css?v=mobile-snippet-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=result-accents-1').then(
+    import('./app/workspace.mjs?v=mobile-snippet-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -26,7 +26,7 @@
       <span>CODEFOLIO <small>by Sun</small></span>
     </div>
   </header>
-  <main class="container">
+  <main id="workspace" class="container">
     <section class="intro" aria-labelledby="page-title">
       <h1>Snippet library</h1>
       <p>Find a snippet, make it yours, and copy it into your workflow.</p>
@@ -76,6 +76,7 @@
         </section>
       </div>
       <section id="detail" class="panel" aria-labelledby="snippet-title" hidden>
+        <button type="button" id="back-to-results">← Back to results</button>
         <p id="snippet-language" class="language"></p>
         <div class="detail-heading">
           <h2 id="snippet-title" tabindex="-1"></h2>
