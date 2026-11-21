@@ -1,4 +1,5 @@
 import { buildSnippet, defaultValues, findSnippets, snippets } from './catalog.mjs';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -17,7 +18,6 @@ const storageKey = 'codefolio.variants.v1';
 
 let language = '';
 let selected;
-let shownSnippets = [];
 
 function button(label, onClick) {
   const element = document.createElement('button');
@@ -39,50 +39,53 @@ const filterButtons = new Map(
 
 filters.append(...filterButtons.values());
 
-function updateResults() {
-  shownSnippets = findSnippets(search.value, language);
+function snippetLink(snippet) {
+  const link = document.createElement('a');
+  link.href = snippetHref(snippet.id);
+  link.dataset.snippetId = snippet.id;
+  link.textContent = snippet.title;
+  link.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
+      || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (location.href !== link.href) history.pushState(null, '', link.href);
+    updateResults();
+    byId('snippet-title').focus();
+  });
+  return link;
+}
+
+function updateResults({ fromHistory = false } = {}) {
+  const shownSnippets = findSnippets(search.value, language);
+  const { id, snippet } = readSnippetLink(location.search);
   for (const [option, control] of filterButtons) {
     control.setAttribute('aria-pressed', option === language);
   }
 
   const count = shownSnippets.length;
   byId('result-count').textContent = count + (count === 1 ? ' snippet' : ' snippets');
-  if (!shownSnippets.includes(selected)) selectSnippet(shownSnippets[0]);
+  byId('no-results').hidden = count > 0;
+  byId('unknown-snippet').hidden = id === null || Boolean(snippet);
+  const preferred = !fromHistory && shownSnippets.includes(selected) ? selected : shownSnippets[0];
+  selectSnippet(id === null ? preferred : snippet);
 
-  results.replaceChildren(...shownSnippets.map((snippet) => {
+  results.replaceChildren(...shownSnippets.map((entry) => {
     const row = document.createElement('li');
-    const control = button('', () => {
-      selectSnippet(snippet);
-      if (matchMedia('(max-width: 720px)').matches) {
-        byId('snippet-title').focus();
-      }
-    });
-    control.className = 'result';
-    control.dataset.snippetId = snippet.id;
-    control.setAttribute('aria-controls', 'detail');
-    for (const text of [snippet.title, snippet.language]) {
-      const label = document.createElement('span');
-      label.textContent = text;
-      control.append(label);
-    }
-    row.append(control);
+    const link = snippetLink(entry);
+    link.className = 'result';
+    if (entry === selected) link.setAttribute('aria-current', 'page');
+    const languageLabel = document.createElement('span');
+    languageLabel.textContent = entry.language;
+    link.append(languageLabel);
+    row.append(link);
     return row;
   }));
-  markSelection();
-}
-
-function markSelection() {
-  for (const control of results.querySelectorAll('button')) {
-    control.setAttribute('aria-current', control.dataset.snippetId === selected?.id);
-  }
 }
 
 function selectSnippet(snippet) {
   if (selected === snippet) return;
   selected = snippet;
   detail.hidden = !snippet;
-  byId('empty').hidden = Boolean(snippet);
-  markSelection();
   if (!snippet) return;
 
   byId('snippet-title').textContent = snippet.title;
@@ -90,6 +93,14 @@ function selectSnippet(snippet) {
   byId('snippet-description').textContent = snippet.description;
   byId('example-context').textContent = snippet.example;
   byId('example').textContent = buildSnippet(snippet, defaultValues(snippet)).output;
+  for (const field of ['prerequisites', 'expected', 'effects']) {
+    byId(field).textContent = snippet[field];
+  }
+  byId('related').replaceChildren(...snippet.relatedIds.map((id) => {
+    const row = document.createElement('li');
+    row.append(snippetLink(snippets.find((entry) => entry.id === id)));
+    return row;
+  }));
 
   fields.replaceChildren(...snippet.fields.map((field) => {
     const row = document.createElement('div');
@@ -193,7 +204,8 @@ function modifyVariants(change) {
   }
 }
 
-search.addEventListener('input', updateResults);
+search.addEventListener('input', () => updateResults());
+window.addEventListener('popstate', () => updateResults({ fromHistory: true }));
 fields.addEventListener('input', updateOutput);
 
 copy.addEventListener('click', async () => {
