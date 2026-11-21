@@ -12,6 +12,10 @@ A searchable library for customizing and reusing code snippets.
 
 CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse the left menu by language and topic, or search the full catalog by task or exact syntax. Browse or search up to eight results per page. Open a snippet for a worked example and a shareable link. Use **Full screen** to focus on its example and builder. Mark it as a favorite to find it again in **Favorites** in the catalog menu. Favorites are saved in the current browser. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
 
+### Tags
+
+Add or remove tags in a snippet’s **Tags** section. Tags stay in the current browser. Use **Search by tag** with **All catalogs**, the current catalog, or the current topic. Select a catalog or topic in the navigation to make that scope available.
+
 ### Run locally
 
 Serve the repository root over HTTP, for example with Python 3.
@@ -33,7 +37,7 @@ In the running workspace, open **View a file’s commit history** and enter a pa
 
 Enter the name and select **Save variant**. Reopen the snippet later and select the saved name to restore the fields. You can edit the values and copy the new command, or save the edited values again.
 
-In the catalog menu, choose **All**, **Saved**, or **Favorites**, then use the language and topic navigation below to set the scope. **Saved** lists variants in the current selection. **Export** downloads a JSON backup, and **Import** restores only entries in that selection. Choose **All languages** while in **Saved** for an all-language backup. Import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
+In the catalog menu, choose **All**, **Saved**, or **Favorites**, then use the language and topic navigation below to set the scope. **Saved** lists variants in the current selection. **Export** downloads a JSON backup, and **Import** restores only entries in that selection. Choose **All catalogs** while in **Saved** for an all-language backup. Import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
 
 ### Maintain the catalog
 

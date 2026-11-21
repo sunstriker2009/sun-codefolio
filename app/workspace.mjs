@@ -1,10 +1,17 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=catalog-view-row-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=snippet-tags-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=catalog-view-row-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-view-row-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=snippet-tags-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-tags-1';
+
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=snippet-tags-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
+const tagSearch = byId('tag-search');
+const tagScope = byId('tag-scope');
+const tagName = byId('tag-name');
+const tagList = byId('snippet-tags');
+const tagStatus = byId('tag-status');
 const menu = byId('catalog-menu');
 const disclosure = byId('catalog-disclosure');
 const compactNavigation = matchMedia('(max-width: 720px)');
@@ -34,11 +41,13 @@ const builderStatus = byId('builder-status');
 const variantStatus = byId('variant-status');
 const storageKey = 'codefolio.variants.v1';
 const favoritesStorageKey = 'codefolio.favorites.v1';
+const tagsStorageKey = 'codefolio.snippet-tags.v1';
 
 const allSnippets = { language: '', topic: '' };
 let scope = history.state?.catalogScope ?? allSnippets;
 let currentPage = history.state?.catalogPage ?? 1;
 let favorites = readFavorites();
+let tags = readTags();
 let selected;
 let browseScroll;
 
@@ -120,7 +129,7 @@ for (const label of ['All', 'Saved', 'Favorites']) {
 }
 const divider = document.createElement('hr');
 divider.className = 'catalog-divider';
-menu.append(viewRow, divider, scopeItem('All languages', ''));
+menu.append(viewRow, divider, scopeItem('All catalogs', ''));
 for (const [language, topics] of languages) {
   const group = document.createElement('details');
   const summary = document.createElement('summary');
@@ -184,11 +193,89 @@ function variantLinks(entry, saved) {
   return list;
 }
 
+function readTags() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(tagsStorageKey) ?? '{}');
+    if (isRecord(stored)) {
+      return Object.fromEntries(Object.entries(stored).filter(([, names]) =>
+        Array.isArray(names) && names.every((name) => typeof name === 'string')));
+    }
+  } catch {
+    // The browser may block access to saved tags.
+  }
+  return {};
+}
+
+function updateTagOptions() {
+  const unique = new Map();
+  for (const tag of Object.values(tags).flat()) {
+    if (!unique.has(tagKey(tag))) unique.set(tagKey(tag), tag);
+  }
+  byId('known-tags').replaceChildren(...[...unique.values()]
+    .sort((left, right) => left.localeCompare(right))
+    .map((value) => new Option(value)));
+}
+
+function updateTagScope() {
+  const catalog = byId('tag-catalog');
+  const topic = byId('tag-topic');
+  catalog.disabled = !scope.language;
+  topic.disabled = !scope.topic;
+  catalog.textContent = scope.language ? 'Catalog · ' + scope.language : 'Current catalog';
+  topic.textContent = scope.topic ? 'Topic · ' + scope.topic : 'Current topic';
+  if (tagScope.selectedOptions[0]?.disabled || !tagScope.value) tagScope.value = 'global';
+}
+
+function showTags() {
+  tagList.replaceChildren();
+  for (const name of tags[selected.id] ?? []) {
+    const row = document.createElement('li');
+    const label = document.createElement('span');
+    label.textContent = name;
+    const remove = button('×', () => {
+      const snippet = selected;
+      if (!changeTags((names) => names.filter((tag) => tagKey(tag) !== tagKey(name)))) return;
+      if (selected === snippet) {
+        tagStatus.textContent = 'Removed tag ' + name + '.';
+        tagName.focus();
+      } else {
+        browseHeading.focus();
+      }
+    });
+    remove.setAttribute('aria-label', 'Remove tag ' + name);
+    row.append(label, remove);
+    tagList.append(row);
+  }
+}
+
+function changeTags(change) {
+  const stored = readTags();
+  stored[selected.id] = change(stored[selected.id] ?? []);
+  if (!stored[selected.id].length) delete stored[selected.id];
+  try {
+    localStorage.setItem(tagsStorageKey, JSON.stringify(stored));
+  } catch {
+    tagStatus.textContent = 'Tags couldn’t be saved in this browser.';
+    return false;
+  }
+  tags = stored;
+  updateTagOptions();
+  showTags();
+  if (tagSearch.value.trim()) updateResults();
+  return true;
+}
+
 function updateResults({ fromHistory = false } = {}) {
-  const searching = Boolean(search.value.trim());
+  updateTagScope();
+  const searchingTags = Boolean(tagSearch.value.trim());
+  const searchingText = Boolean(search.value.trim());
+  const searching = searchingText || searchingTags;
   const showingFavorites = !searching && scope.favorites;
   const showingVariants = !searching && scope.savedVariants;
-  const matches = browseSnippets(search.value, scope);
+  const matches = findTaggedSnippets(
+    browseSnippets(search.value, searchingTags ? allSnippets : scope),
+    tags, tagSearch.value, tagScope.value, scope,
+  );
   let savedGroups;
   if (showingVariants) {
     try {
@@ -208,16 +295,16 @@ function updateResults({ fromHistory = false } = {}) {
 
   const view = viewName();
   const scopeLabel = [scope.language, scope.topic, view === 'All' ? '' : view].filter(Boolean).join(' / ');
-  browseHeading.textContent = searching ? 'Search results' : scopeLabel || 'All snippets';
+  browseHeading.textContent = searchingTags ? 'Tag results' : searchingText ? 'Search results' : scopeLabel || 'All snippets';
   for (const [label, control] of viewButtons) {
     control.setAttribute('aria-pressed', !searching && label === view);
   }
   for (const { control, language, topic } of scopeButtons) {
-    control.setAttribute('aria-pressed', !searching && scope.language === language && scope.topic === topic);
+    control.setAttribute('aria-pressed', !searchingText && scope.language === language && scope.topic === topic);
   }
   variantTools.hidden = !showingVariants;
   for (const group of menu.querySelectorAll('details')) {
-    const active = !searching && group.dataset.language === scope.language;
+    const active = !searchingText && group.dataset.language === scope.language;
     group.classList.toggle('active-language', active);
     if (fromHistory && active) group.open = true;
   }
@@ -226,7 +313,7 @@ function updateResults({ fromHistory = false } = {}) {
   byId('result-count').textContent = count + (count === 1 ? ' snippet' : ' snippets')
     + (showingVariants ? ' with saved variants' : '');
   byId('no-results').hidden = count > 0;
-  let emptyMessage = 'Try a different search term.';
+  let emptyMessage = searchingTags ? 'No snippets match this tag search.' : 'Try a different search term.';
   if (showingFavorites) emptyMessage = 'Mark a snippet as a favorite to see it here.';
   if (showingVariants) {
     emptyMessage = savedGroups ? 'No saved variants in this selection.' : 'Saved variants couldn’t be read.';
@@ -268,6 +355,9 @@ function selectSnippet(snippet) {
   byId('snippet-title').textContent = snippet.title;
   byId('snippet-language').textContent = snippet.language + ' · ' + snippet.topic;
   byId('snippet-description').textContent = snippet.description;
+  tagName.value = '';
+  tagStatus.textContent = '';
+  showTags();
   byId('example-context').textContent = snippet.example;
   byId('example').textContent = buildSnippet(snippet, defaultValues(snippet)).output;
   for (const field of ['prerequisites', 'expected', 'effects']) {
@@ -477,7 +567,7 @@ function showVariants() {
 }
 
 function refreshVariants() {
-  if (scope.savedVariants && !search.value.trim()) updateResults();
+  if (scope.savedVariants && !search.value.trim() && !tagSearch.value.trim()) updateResults();
   if (selected) showVariants();
 }
 
@@ -559,6 +649,32 @@ backupFile.addEventListener('change', async () => {
   }
 });
 
+byId('tag-editor').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const name = cleanTag(tagName.value);
+  if (!name) {
+    tagStatus.textContent = 'Enter a tag name.';
+    return;
+  }
+  if ((tags[selected.id] ?? []).some((tag) => tagKey(tag) === tagKey(name))) {
+    tagStatus.textContent = 'This snippet already has that tag.';
+    return;
+  }
+  if (changeTags((names) => names.some((tag) => tagKey(tag) === tagKey(name)) ? names : [...names, name])) {
+    tagName.value = '';
+    tagStatus.textContent = 'Added tag ' + name + '.';
+  }
+});
+
+tagSearch.addEventListener('input', () => {
+  currentPage = 1;
+  updateResults();
+});
+tagScope.addEventListener('change', () => {
+  currentPage = 1;
+  updateResults();
+});
+
 search.addEventListener('input', () => {
   currentPage = 1;
   updateResults();
@@ -569,6 +685,12 @@ window.addEventListener('storage', (event) => {
     updateResults();
   }
   if (event.key === storageKey || event.key === null) refreshVariants();
+  if (event.key === tagsStorageKey || event.key === null) {
+    tags = readTags();
+    updateTagOptions();
+    if (selected) showTags();
+    if (tagSearch.value.trim()) updateResults();
+  }
 });
 window.addEventListener('popstate', () => {
   scope = history.state?.catalogScope ?? allSnippets;
@@ -614,4 +736,5 @@ builder.addEventListener('submit', (event) => {
   }
 });
 
+updateTagOptions();
 updateResults();

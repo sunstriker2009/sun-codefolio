@@ -148,3 +148,15 @@ body:has(#snippet-full-screen[open]) { overflow: hidden; }
 #variant-tools { margin: .65rem 0; }
 .saved-variant-links { list-style: none; display: grid; gap: .25rem; margin: .3rem 0 .25rem .7rem; padding: 0 0 0 .4rem; border-left: 1px solid var(--border); }
 .saved-variant-links button { width: 100%; padding: .4rem .55rem; text-align: left; font-size: .85rem; overflow-wrap: anywhere; }
+
+.tag-search { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: .65rem; max-width: 38rem; margin-top: .8rem; }
+.snippet-tags h3 { margin-top: .85rem; }
+.tag-editor { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem; }
+.tag-editor > div { flex: 1 1 10rem; min-width: 0; }
+.tag-editor button { flex-shrink: 0; }
+.tag-list { display: flex; flex-wrap: wrap; gap: .35rem; list-style: none; padding: 0; margin: 0 0 .45rem; }
+.tag-list:empty, #tag-status:empty { display: none; }
+.tag-list li { display: flex; align-items: center; gap: .2rem; min-width: 0; max-width: 100%; padding-left: .6rem; border: 1px solid var(--border); border-radius: .5rem; }
+.tag-list span { overflow-wrap: anywhere; }
+.tag-list button { padding: .2rem .5rem; border: 0; background: transparent; }
+#tag-status:not(:empty) { margin-top: .35rem; font-size: .85rem; }

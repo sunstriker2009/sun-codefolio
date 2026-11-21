@@ -5,6 +5,7 @@ import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnip
 import { restoreValues } from '../app/parameters.mjs';
 import { exportVariantBackup, mergeVariantBackup, readVariantBackup } from '../app/variant-backup.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
+import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs';
 
 const byId = (id) => snippets.find((snippet) => snippet.id === id);
 
@@ -338,4 +339,17 @@ test('backup export and import follow the selected language or topic', () => {
   assert.deepEqual(imported.variants, { [git]: stored[git], [regex]: stored[regex] });
   assert.equal(imported.added, 1);
   assert.equal(imported.outsideScope, 2);
+});
+
+test('personal tag search matches case-insensitively at every catalog level', () => {
+  const git = 'git-file-history', linq = 'csharp-take-items', regex = 'csharp-regex-named-group';
+  const tags = { [git]: ['Release review'], [linq]: ['Daily release'], [regex]: ['Audit'] };
+  const scope = { language: 'C#', topic: 'Regex' };
+  assert.equal(cleanTag('  Release   Review  '), 'Release Review');
+  assert.equal(tagKey('RELEASE Review'), 'release review');
+  assert.deepEqual(findTaggedSnippets(snippets, tags, 'RELEASE', 'global', scope).map(({ id }) => id), [git, linq]);
+  assert.deepEqual(findTaggedSnippets(snippets, tags, 'release', 'catalog', scope).map(({ id }) => id), [linq]);
+  assert.deepEqual(findTaggedSnippets(snippets, tags, 'release', 'topic', scope), []);
+  assert.deepEqual(findTaggedSnippets(snippets, tags, 'audit', 'topic', scope).map(({ id }) => id), [regex]);
+  assert.deepEqual(findTaggedSnippets(findSnippets('git log --oneline'), tags, 'release', 'global', scope).map(({ id }) => id), [git]);
 });

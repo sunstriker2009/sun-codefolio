@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=catalog-view-row-1">
+  <link rel="stylesheet" href="./app/styles.css?v=snippet-tags-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=catalog-view-row-1').then(
+    import('./app/workspace.mjs?v=snippet-tags-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -32,6 +32,21 @@
       <p>Find a snippet, make it yours, and copy it into your workflow.</p>
       <label for="search">Search all snippets</label>
       <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
+      <div class="tag-search">
+        <div>
+          <label for="tag-search">Search by tag</label>
+          <input id="tag-search" type="search" list="known-tags" autocomplete="off">
+          <datalist id="known-tags"></datalist>
+        </div>
+        <div>
+          <label for="tag-scope">Tag scope</label>
+          <select id="tag-scope">
+            <option value="global">All catalogs</option>
+            <option value="catalog" id="tag-catalog" disabled>Current catalog</option>
+            <option value="topic" id="tag-topic" disabled>Current topic</option>
+          </select>
+        </div>
+      </div>
     </section>
     <div class="layout">
       <div class="catalog-sidebar">
@@ -71,6 +86,18 @@
         </div>
         <p id="favorite-status" class="favorite-feedback" role="status" hidden></p>
         <p id="snippet-description" class="muted"></p>
+        <section aria-labelledby="tags-heading" class="snippet-tags">
+          <h3 id="tags-heading">Tags</h3>
+          <ul id="snippet-tags" class="tag-list"></ul>
+          <form id="tag-editor" class="tag-editor">
+            <div>
+              <label for="tag-name">Tag name</label>
+              <input id="tag-name" autocomplete="off" required>
+            </div>
+            <button type="submit">Add tag</button>
+          </form>
+          <p id="tag-status" class="muted" role="status"></p>
+        </section>
         <h3>Example</h3>
         <p id="example-context" class="muted"></p>
         <pre><code id="example"></code></pre>
