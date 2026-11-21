@@ -1,3 +1,7 @@
+import { defaultValues, parseValues } from './parameters.mjs';
+
+export { defaultValues } from './parameters.mjs';
+
 const shellLiteral = (value) => "'" + value.replaceAll("'", "'\\''") + "'";
 
 function xpathLiteral(value) {
@@ -11,38 +15,53 @@ export const snippets = [
     id: 'git-file-history',
     prerequisites: "Git and a POSIX shell. Run from the repository root.",
     expected: "Up to five lines with a short commit hash and subject, newest first, for commits that changed src/app.js.",
-    effects: "Reads commit history for the path in the current branch.",
+    effects: "Reads commit history for the selected branch and path. File change details show the status and path of changed files.",
     aliases: ["git log --oneline", "file history"],
     useCases: ["Find old changes to a file", "See which commits changed a path"],
     relatedIds: ["git-branch-list"],
     language: 'Git',
     title: 'View a file’s commit history',
-    description: 'List recent commits that changed a path in the current Git history. Use a path relative to the repository root and run the command from there.',
+    description: 'List commits that changed a file. Leave the branch blank to use the current history, or enter a local branch name. Use a path relative to the repository root.',
     keywords: 'log commits history changes file path bash shell',
     example: 'Show the last five commits affecting src/app.js in a POSIX shell.',
     fields: [
-      { id: 'path', label: 'File path', default: 'src/app.js' },
-      { id: 'limit', label: 'Commit count', default: '5', pattern: '[1-9][0-9]{0,3}', hint: 'Enter a number from 1 to 9999.' },
+      { id: 'path', type: 'text', label: 'File path', default: 'src/app.js' },
+      { id: 'limit', type: 'integer', label: 'Commit count', default: 5, min: 1, max: 9999, hint: 'Commit count must be between 1 and 9999.' },
+      { id: 'branch', type: 'text', label: 'Local branch (optional)', default: '', allowEmpty: true },
+      { id: 'fileChanges', type: 'toggle', label: 'Show file change details', default: false },
     ],
-    render: ({ path, limit }) => 'git --literal-pathspecs log --oneline -n ' + limit + ' -- ' + shellLiteral(path),
+    render: ({ path, limit, branch, fileChanges }) => {
+      const args = ['git --literal-pathspecs log --oneline', '-n ' + limit];
+      if (fileChanges) args.push('--name-status');
+      if (branch.trim()) args.push('--end-of-options', shellLiteral('refs/heads/' + branch.trim()));
+      args.push('--', shellLiteral(path));
+      return args.join(' ');
+    },
   },
   {
     id: 'git-branch-list',
     prerequisites: "Git in a local repository.",
-    expected: "Up to three short branch names, one per line, ordered by the date of each branch’s latest commit.",
+    expected: "With the default sort order, up to three short branch names ordered by the date of each branch’s latest commit.",
     effects: "Reads local branch references.",
     aliases: ["git branch list", "recent branches"],
     useCases: ["Find recently updated local branches"],
     relatedIds: ["git-file-history"],
     language: 'Git',
     title: 'List recent local branches',
-    description: 'Show local branches in order of the date of their latest commit, with the most recent first.',
+    description: 'Show local branches by date of their latest commit or in name order.',
     keywords: 'branch list recent refs sort terminal bash',
     example: 'List the three branches with the most recent commits.',
     fields: [
-      { id: 'limit', label: 'Branch count', default: '3', pattern: '[1-9][0-9]{0,3}', hint: 'Enter a number from 1 to 9999.' },
+      { id: 'limit', type: 'integer', label: 'Branch count', default: 3, min: 1, max: 9999, hint: 'Branch count must be between 1 and 9999.' },
+      {
+        id: 'sort', type: 'choice', label: 'Sort by', default: '-committerdate',
+        options: [
+          { value: '-committerdate', label: 'Latest commit' },
+          { value: 'refname', label: 'Branch name' },
+        ],
+      },
     ],
-    render: ({ limit }) => 'git for-each-ref --sort=-committerdate --count=' + limit
+    render: ({ limit, sort }) => 'git for-each-ref --sort=' + sort + ' --count=' + limit
       + " --format='%(refname:short)' refs/heads/",
   },
   {
@@ -59,8 +78,8 @@ export const snippets = [
     keywords: 'js filter array object match equality select list',
     example: 'From an array called items, keep only objects with status set to active.',
     fields: [
-      { id: 'property', label: 'Property name', default: 'status' },
-      { id: 'value', label: 'Matching text', default: 'active', allowEmpty: true },
+      { id: 'property', type: 'text', label: 'Property name', default: 'status' },
+      { id: 'value', type: 'text', label: 'Matching text', default: 'active', allowEmpty: true },
     ],
     render: ({ property, value }) => 'const matches = items.filter((item) => item['
       + JSON.stringify(property) + '] === ' + JSON.stringify(value) + ');',
@@ -78,7 +97,7 @@ export const snippets = [
     description: 'Combine the elements of an array called items into a string with a separator.',
     keywords: 'js array join delimiter concatenate string separator list',
     example: 'Convert an array of labels into a string separated by commas and spaces.',
-    fields: [{ id: 'separator', label: 'Separator', default: ', ', allowEmpty: true }],
+    fields: [{ id: 'separator', type: 'text', label: 'Separator', default: ', ', allowEmpty: true }],
     render: ({ separator }) => 'const joined = items.join(' + JSON.stringify(separator) + ');',
   },
   {
@@ -95,7 +114,7 @@ export const snippets = [
     keywords: 'csharp dotnet .net linq enumerable list limit',
     example: 'Take up to ten items from the input sequence. Add using System.Linq if needed.',
     fields: [
-      { id: 'limit', label: 'Item count', default: '10', pattern: '[1-9][0-9]{0,3}', hint: 'Enter a number from 1 to 9999.' },
+      { id: 'limit', type: 'integer', label: 'Item count', default: 10, min: 1, max: 9999, hint: 'Item count must be between 1 and 9999.' },
     ],
     render: ({ limit }) => 'var firstItems = items.Take(' + limit + ').ToList();',
   },
@@ -113,29 +132,17 @@ export const snippets = [
     keywords: 'xml xpath html locator select attribute predicate quotes',
     example: 'Find every element with a data-state attribute equal to ready.',
     fields: [
-      { id: 'attribute', label: 'Attribute name', default: 'data-state', pattern: '[A-Za-z_][A-Za-z0-9_.\\-]*', hint: 'Use an unprefixed ASCII attribute name.' },
-      { id: 'value', label: 'Attribute value', default: 'ready', allowEmpty: true },
+      { id: 'attribute', type: 'text', label: 'Attribute name', default: 'data-state', pattern: '[A-Za-z_][A-Za-z0-9_.\\-]*', hint: 'Use an unprefixed ASCII attribute name.' },
+      { id: 'value', type: 'text', label: 'Attribute value', default: 'ready', allowEmpty: true },
     ],
     render: ({ attribute, value }) => '//*[@' + attribute + '=' + xpathLiteral(value) + ']',
   },
 ];
 
-export function defaultValues(snippet) {
-  return Object.fromEntries(snippet.fields.map((field) => [field.id, field.default]));
-}
-
 export function buildSnippet(snippet, values) {
-  for (const field of snippet.fields) {
-    const value = values[field.id];
-    if (typeof value !== 'string' || (!field.allowEmpty && !value.trim())) {
-      return { error: field.label + ' is required.' };
-    }
-    if (field.pattern && !new RegExp('^(?:' + field.pattern + ')$', 'v').test(value)) {
-      return { error: field.hint };
-    }
-  }
-
-  return { output: snippet.render(values) };
+  const parsed = parseValues(snippet, values);
+  if (parsed.error) return parsed;
+  return { output: snippet.render(parsed.parameters), parameters: parsed.parameters };
 }
 
 const normalizeSearch = (value) => value.toLowerCase().trim().replace(/\s+/g, ' ');

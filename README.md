@@ -20,6 +20,17 @@ python3 -m http.server 8000 --bind 127.0.0.1
 
 Open <http://localhost:8000>. The workspace runs in the browser and only generates text for you to copy. Clipboard access uses localhost or HTTPS, with manual selection available when the clipboard is blocked.
 
+### Git history variants
+
+In the running workspace, open **View a file’s commit history** and enter a path relative to the repository root.
+
+| Variant name | Local branch | Commit count | Show file change details |
+| --- | --- | --- | --- |
+| Release review | A local release branch, such as `release/v1` | 10 | On |
+| Daily changelog | Leave blank for the current branch | 5 | Off |
+
+Enter the name and select **Save variant**. Reopen the snippet later and select the saved name to restore the fields. You can edit the values and copy the new command, or save the edited values again.
+
 The catalog lives in `app/catalog.mjs`. Each entry defines its language, search keywords, example, editable fields, and code generator. Run the catalog checks with Node.js 24.
 
 ```sh
