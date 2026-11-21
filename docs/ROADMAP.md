@@ -63,3 +63,11 @@ Complete this pass before expanding the catalogs again.
 - [x] **Mobile snippet navigation.** Open snippets in a dedicated detail view on narrow screens. **Back to results** restores the search, tag filters, catalog, topic, page, and scroll position. Direct snippet links open the detail view, and desktop keeps the side-by-side layout.
 - [x] **Search filter controls.** Keep text search prominent. Place tag and scope controls under **Filters** and show active filters as removable chips.
 - [x] **Snippet actions.** Add **Copy link** near the title and **Jump to builder** after the example. Keep the generated-code copy action beside the output.
+
+## Future work
+
+### Custom domain
+
+- Choose a domain the SUN project controls and decide on a CodeFolio subdomain.
+- Plan how to move browser-local data before changing the public URL. Saved variants can already be exported and imported. Account for favorites and tags separately.
+- Configure GitHub Pages and DNS, verify HTTPS and snippet deep links, then update the public links.
