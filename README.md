@@ -10,11 +10,11 @@ A searchable library for customizing and reusing code snippets.
 
 [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
 
-CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse the left menu by language and topic, or search the full catalog by task or exact syntax. Browse or search up to eight results per page. Favorites appear first, with each group sorted alphabetically by snippet title. Open a snippet for a worked example and a shareable link. Use **Full screen** to focus on its example and builder. Mark it as a favorite to find it again in **Favorites** in the catalog menu. Favorites are saved in the current browser. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
+CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse the left menu by language and topic, or search the full catalog by task or exact syntax. Browse or search up to eight results per page. Favorites appear first, with each group sorted alphabetically by snippet title. Open a snippet for a worked example and a shareable link. Use **Copy link** to share a snippet, **Jump to builder** to edit its parameters, or **Full screen** to focus on its detail. Mark it as a favorite to find it again in **Favorites** in the catalog menu. Favorites are saved in the current browser. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
 
 ### Tags
 
-Add or remove tags in a snippet’s **Tags** section. Tags stay in the current browser. Use **Search by tag** with **All catalogs**, the current catalog, or the current topic. Select a catalog or topic in the navigation to make that scope available.
+Add or remove tags in a snippet’s **Tags** section. Tags stay in the current browser. Open **Filters** and use **Search by tag** with **All catalogs**, the current catalog, or the current topic. Remove an active filter using its chip. Select a catalog or topic in the navigation to make that scope available.
 
 ### Run locally
 
