@@ -319,3 +319,23 @@ test('variant import detects a same-snippet duplicate when another snippet has a
   assert.equal(merged.added, 0);
   assert.deepEqual(merged.variants, stored);
 });
+
+test('backup export and import follow the selected language or topic', () => {
+  const git = 'git-file-history';
+  const linq = 'csharp-take-items';
+  const regex = 'csharp-regex-named-group';
+  const stored = {
+    [git]: [{ name: 'Daily', values: { limit: 4 } }],
+    [linq]: [{ name: 'Daily', values: { limit: 10 } }],
+    [regex]: [{ name: 'Daily', values: { group: 'level' } }],
+  };
+  const idsFor = (scope) => new Set(browseSnippets('', scope).map(({ id }) => id));
+  const csharp = exportVariantBackup(stored, idsFor({ language: 'C#' }));
+  assert.deepEqual(readVariantBackup(csharp.json), { [linq]: stored[linq], [regex]: stored[regex] });
+  const regexOnly = idsFor({ language: 'C#', topic: 'Regex' });
+  assert.deepEqual(readVariantBackup(exportVariantBackup(stored, regexOnly).json), { [regex]: stored[regex] });
+  const imported = mergeVariantBackup({ [git]: stored[git] }, stored, snippets, regexOnly);
+  assert.deepEqual(imported.variants, { [git]: stored[git], [regex]: stored[regex] });
+  assert.equal(imported.added, 1);
+  assert.equal(imported.outsideScope, 2);
+});

@@ -1,7 +1,7 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=variant-backup-2';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage } from './catalog.mjs?v=variant-catalog-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-backup-2';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-backup-2';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-catalog-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-catalog-1';
 
 const byId = (id) => document.getElementById(id);
 const search = byId('search');
@@ -25,6 +25,8 @@ const copy = byId('copy');
 const save = byId('save-variant');
 const nameInput = byId('variant-name');
 const variantList = byId('variants');
+const variantTools = byId('variant-tools');
+const variantTopic = byId('variant-topic');
 const exportVariants = byId('export-variants');
 const importVariants = byId('import-variants');
 const backupFile = byId('variant-backup-file');
@@ -36,6 +38,7 @@ const favoritesStorageKey = 'codefolio.favorites.v1';
 
 const allSnippets = { language: '', topic: '' };
 const favoritesScope = { ...allSnippets, favorites: true };
+const savedVariantsScope = { ...allSnippets, savedVariants: true };
 let scope = history.state?.catalogScope ?? allSnippets;
 let currentPage = history.state?.catalogPage ?? 1;
 let favorites = readFavorites();
@@ -53,7 +56,8 @@ function readFavorites() {
 
 function sameScope(left, right) {
   return left.language === right.language && left.topic === right.topic
-    && Boolean(left.favorites) === Boolean(right.favorites);
+    && Boolean(left.favorites) === Boolean(right.favorites)
+    && Boolean(left.savedVariants) === Boolean(right.savedVariants);
 }
 
 function button(label, onClick) {
@@ -77,6 +81,7 @@ function changeBrowsePage(page, nextScope = scope) {
   if (!sameScope(scope, nextScope) || page !== currentPage || url.href !== location.href) {
     history.pushState({ catalogScope: nextScope, catalogPage: page }, '', url);
   }
+  if (!sameScope(scope, nextScope)) transferStatus.textContent = '';
   scope = nextScope;
   currentPage = page;
   updateResults({ fromHistory: true });
@@ -97,7 +102,11 @@ function menuItem(label, itemScope) {
   return control;
 }
 
-menu.append(menuItem('All snippets', allSnippets), menuItem('Favorites', favoritesScope));
+menu.append(
+  menuItem('All snippets', allSnippets),
+  menuItem('Favorites', favoritesScope),
+  menuItem('Saved variants', savedVariantsScope),
+);
 for (const [language, topics] of languages) {
   const group = document.createElement('details');
   const summary = document.createElement('summary');
@@ -110,12 +119,24 @@ for (const [language, topics] of languages) {
   for (const topic of [...topics].sort((left, right) => left.localeCompare(right))) {
     items.append(menuItem(topic, { language, topic }));
   }
+  const saved = menuItem('Saved variants', { ...savedVariantsScope, language });
+  saved.setAttribute('aria-label', language + ' saved variants');
+  items.append(saved);
   group.append(summary, items);
   menu.append(group);
 }
 
 disclosure.open = !compactNavigation.matches;
 compactNavigation.addEventListener('change', (event) => { disclosure.open = !event.matches; });
+
+function openSnippet(snippet) {
+  const url = new URL(snippetHref(snippet.id), location.href);
+  if (location.href !== url.href) {
+    history.pushState({ catalogScope: scope, catalogPage: currentPage }, '', url);
+  }
+  updateResults();
+  byId('snippet-title').focus();
+}
 
 function snippetLink(snippet) {
   const link = document.createElement('a');
@@ -126,29 +147,73 @@ function snippetLink(snippet) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
       || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (location.href !== link.href) history.pushState({ catalogScope: scope, catalogPage: currentPage }, '', link.href);
-    updateResults();
-    byId('snippet-title').focus();
+    openSnippet(snippet);
   });
   return link;
+}
+
+function setupVariantTools(showingVariants) {
+  variantTools.hidden = !showingVariants;
+  byId('variant-topic-field').hidden = !scope.language;
+  if (!showingVariants || !scope.language) return;
+  if (variantTopic.dataset.language !== scope.language) {
+    const topics = [...languages.get(scope.language)].sort((left, right) => left.localeCompare(right));
+    variantTopic.replaceChildren(new Option('All topics', ''), ...topics.map((topic) => new Option(topic)));
+    variantTopic.dataset.language = scope.language;
+  }
+  variantTopic.value = scope.topic;
+}
+
+function savedVariantGroups(matches) {
+  const stored = readVariantStore();
+  return new Map(matches.map(({ id }) => [id, variantsFor(stored, id)]));
+}
+
+function variantLinks(entry, saved) {
+  const list = document.createElement('ul');
+  list.className = 'saved-variant-links';
+  for (const variant of saved) {
+    const row = document.createElement('li');
+    const load = button(variant.name, () => {
+      openSnippet(entry);
+      loadVariant(variant);
+    });
+    load.setAttribute('aria-label', 'Load ' + variant.name + ' from ' + entry.title);
+    row.append(load);
+    list.append(row);
+  }
+  return list;
 }
 
 function updateResults({ fromHistory = false } = {}) {
   const searching = Boolean(search.value.trim());
   const showingFavorites = !searching && scope.favorites;
+  const showingVariants = !searching && scope.savedVariants;
   const matches = browseSnippets(search.value, scope);
-  const filtered = showingFavorites ? matches.filter(({ id }) => favorites.has(id)) : matches;
+  let savedGroups;
+  if (showingVariants) {
+    try {
+      savedGroups = savedVariantGroups(matches);
+    } catch {
+      // The empty-state message will explain that the variants could not be read.
+    }
+  }
+  let filtered = matches;
+  if (showingFavorites) filtered = matches.filter(({ id }) => favorites.has(id));
+  if (showingVariants) filtered = matches.filter(({ id }) => savedGroups?.get(id).length);
   const { id, snippet } = readSnippetLink(location.search, snippets);
   const linkedIndex = searching ? -1 : filtered.indexOf(snippet);
   if (linkedIndex >= 0) currentPage = Math.floor(linkedIndex / snippetsPerPage) + 1;
   const { page, pageCount, items } = paginateSnippets(filtered, currentPage);
   currentPage = page;
 
-  const scopeLabel = scope.favorites ? 'Favorites' : [scope.language, scope.topic].filter(Boolean).join(' / ');
-  browseHeading.textContent = searching ? 'Search results' : scopeLabel || 'All snippets';
+  const scopeLabel = [scope.language, scope.topic, scope.savedVariants ? 'Saved variants' : ''].filter(Boolean).join(' / ');
+  browseHeading.textContent = searching ? 'Search results' : scope.favorites ? 'Favorites' : scopeLabel || 'All snippets';
+  const menuScope = scope.savedVariants ? { ...scope, topic: '' } : scope;
   for (const { control, itemScope } of menuButtons) {
-    control.setAttribute('aria-pressed', !searching && sameScope(itemScope, scope));
+    control.setAttribute('aria-pressed', !searching && sameScope(itemScope, menuScope));
   }
+  setupVariantTools(showingVariants);
   for (const group of menu.querySelectorAll('details')) {
     const active = !searching && group.dataset.language === scope.language;
     group.classList.toggle('active-language', active);
@@ -156,11 +221,15 @@ function updateResults({ fromHistory = false } = {}) {
   }
 
   const count = filtered.length;
-  byId('result-count').textContent = count + (count === 1 ? ' snippet' : ' snippets');
+  byId('result-count').textContent = count + (count === 1 ? ' snippet' : ' snippets')
+    + (showingVariants ? ' with saved variants' : '');
   byId('no-results').hidden = count > 0;
-  byId('no-results').textContent = showingFavorites
-    ? 'Mark a snippet as a favorite to see it here.'
-    : 'Try a different search term.';
+  let emptyMessage = 'Try a different search term.';
+  if (showingFavorites) emptyMessage = 'Mark a snippet as a favorite to see it here.';
+  if (showingVariants) {
+    emptyMessage = savedGroups ? 'No saved variants in this selection.' : 'Saved variants couldn’t be read.';
+  }
+  byId('no-results').textContent = emptyMessage;
   byId('unknown-snippet').hidden = id === null || Boolean(snippet);
   pagination.hidden = pageCount <= 1;
   previousPage.disabled = page <= 1;
@@ -179,6 +248,7 @@ function updateResults({ fromHistory = false } = {}) {
     languageLabel.textContent = entry.language + ' · ' + entry.topic;
     link.append(languageLabel);
     row.append(link);
+    if (showingVariants) row.append(variantLinks(entry, savedGroups.get(entry.id)));
     return row;
   }));
 }
@@ -352,14 +422,26 @@ function writeVariantStore(stored) {
   }
 }
 
-function readVariants() {
-  const stored = readVariantStore();
-  const variants = stored[selected.id] ?? [];
+function variantsFor(stored, id) {
+  const variants = stored[id] ?? [];
   if (!Array.isArray(variants) || variants.some((variant) => typeof variant?.name !== 'string')) {
     throw new Error('Invalid saved variants');
   }
 
-  return { stored, variants };
+  return variants;
+}
+
+function loadVariant(variant) {
+  const validObject = isRecord(variant.values);
+  const values = restoreValues(selected, validObject ? variant.values : {});
+  for (const control of parameterControls()) {
+    setControlValue(control, values[control.name]);
+  }
+  nameInput.value = variant.name;
+  updateOutput();
+  variantStatus.textContent = !validObject || buildSnippet(selected, values).error
+    ? 'Review the parameters and save this variant again.'
+    : 'Loaded ' + variant.name + '.';
 }
 
 function showVariants() {
@@ -367,7 +449,7 @@ function showVariants() {
   const empty = byId('variants-empty');
   let variants;
   try {
-    ({ variants } = readVariants());
+    variants = variantsFor(readVariantStore(), selected.id);
   } catch {
     empty.hidden = false;
     empty.textContent = 'Saved variants are unavailable in this browser.';
@@ -378,23 +460,12 @@ function showVariants() {
   empty.textContent = 'Save a named variant to reuse these values in this browser.';
   for (const variant of variants) {
     const row = document.createElement('li');
-    const load = button(variant.name, () => {
-      const validObject = isRecord(variant.values);
-      const values = restoreValues(selected, validObject ? variant.values : {});
-      for (const control of parameterControls()) {
-        setControlValue(control, values[control.name]);
-      }
-      nameInput.value = variant.name;
-      updateOutput();
-      variantStatus.textContent = !validObject || buildSnippet(selected, values).error
-        ? 'Review the parameters and save this variant again.'
-        : 'Loaded ' + variant.name + '.';
-    });
+    const load = button(variant.name, () => loadVariant(variant));
     load.setAttribute('aria-label', 'Load ' + variant.name);
     const remove = button('Delete', () => {
       if (modifyVariants((current) => current.filter((item) => item.name !== variant.name))) {
         variantStatus.textContent = 'Deleted ' + variant.name + '.';
-        nameInput.focus();
+        (detail.hidden ? browseHeading : nameInput).focus();
       }
     });
     remove.setAttribute('aria-label', 'Delete ' + variant.name);
@@ -403,12 +474,18 @@ function showVariants() {
   }
 }
 
+function refreshVariants() {
+  if (scope.savedVariants && !search.value.trim()) updateResults();
+  if (selected) showVariants();
+}
+
 function modifyVariants(change) {
   try {
-    const { stored, variants } = readVariants();
+    const stored = readVariantStore();
+    const variants = variantsFor(stored, selected.id);
     stored[selected.id] = change(variants);
     writeVariantStore(stored);
-    showVariants();
+    refreshVariants();
     return true;
   } catch {
     variantStatus.textContent = 'Your variants could not be updated in this browser.';
@@ -416,23 +493,37 @@ function modifyVariants(change) {
   }
 }
 
+variantTopic.addEventListener('change', () => changeBrowsePage(1, { ...scope, topic: variantTopic.value }));
+
+function transferSnippetIds(transferScope) {
+  if (!transferScope.language && !transferScope.topic) return undefined;
+  return new Set(browseSnippets('', transferScope).map(({ id }) => id));
+}
+
+function backupFilename() {
+  const parts = [scope.language.replace('#', 'sharp'), scope.topic]
+    .filter(Boolean)
+    .map((part) => part.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+  return ['codefolio-variants', ...parts].join('-') + '.json';
+}
+
 exportVariants.addEventListener('click', () => {
   let backup;
   try {
-    backup = exportVariantBackup(readVariantStore());
+    backup = exportVariantBackup(readVariantStore(), transferSnippetIds(scope));
   } catch {
     transferStatus.textContent = 'Saved variants couldn’t be exported.';
     return;
   }
   if (!backup.count) {
-    transferStatus.textContent = 'Save a variant before exporting.';
+    transferStatus.textContent = 'No saved variants to export in this selection.';
     return;
   }
 
   const href = URL.createObjectURL(new Blob([backup.json], { type: 'application/json' }));
   const download = document.createElement('a');
   download.href = href;
-  download.download = 'codefolio-variants.json';
+  download.download = backupFilename();
   document.body.append(download);
   download.click();
   download.remove();
@@ -446,20 +537,23 @@ backupFile.addEventListener('change', async () => {
   const file = backupFile.files[0];
   if (!file) return;
   backupFile.value = '';
+  const importScope = scope;
   importVariants.disabled = true;
   transferStatus.textContent = 'Reading backup…';
   try {
     const imported = readVariantBackup(await file.text());
-    const { variants, added, renamed, duplicates, unavailable } = mergeVariantBackup(readVariantStore(), imported, snippets);
+    const { variants, added, renamed, duplicates, unavailable, outsideScope } =
+      mergeVariantBackup(readVariantStore(), imported, snippets, transferSnippetIds(importScope));
     if (added) writeVariantStore(variants);
     const summary = ['Imported ' + added + ' ' + (added === 1 ? 'variant.' : 'variants.')];
     if (renamed) summary.push(renamed + ' renamed to keep existing variants.');
     if (duplicates) summary.push(duplicates + ' already saved.');
     if (unavailable) summary.push(unavailable + ' skipped because the snippets are unavailable.');
-    transferStatus.textContent = summary.join(' ');
-    if (selected) showVariants();
+    if (outsideScope) summary.push(outsideScope + ' skipped outside this selection.');
+    if (sameScope(scope, importScope)) transferStatus.textContent = summary.join(' ');
+    refreshVariants();
   } catch (error) {
-    transferStatus.textContent = error.message;
+    if (sameScope(scope, importScope)) transferStatus.textContent = error.message;
   } finally {
     importVariants.disabled = false;
   }
@@ -474,7 +568,7 @@ window.addEventListener('storage', (event) => {
     favorites = readFavorites();
     updateResults();
   }
-  if ((event.key === storageKey || event.key === null) && selected) showVariants();
+  if (event.key === storageKey || event.key === null) refreshVariants();
 });
 window.addEventListener('popstate', () => {
   scope = history.state?.catalogScope ?? allSnippets;

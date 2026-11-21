@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=variant-backup-2">
+  <link rel="stylesheet" href="./app/styles.css?v=variant-catalog-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=variant-backup-2').then(
+    import('./app/workspace.mjs?v=variant-catalog-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -42,6 +42,18 @@
         <section aria-labelledby="browse-heading" class="browse">
           <h2 id="browse-heading" tabindex="-1">All snippets</h2>
           <p id="workspace-status" class="muted" role="status">Loading snippets…</p>
+          <section id="variant-tools" aria-label="Saved variant backups" hidden>
+            <div id="variant-topic-field" hidden>
+              <label for="variant-topic">Topic</label>
+              <select id="variant-topic"></select>
+            </div>
+            <div class="variant-transfer">
+              <button type="button" id="export-variants">Export variants</button>
+              <button type="button" id="import-variants">Import variants</button>
+              <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
+            </div>
+            <p id="variant-transfer-status" class="muted" role="status"></p>
+          </section>
           <p id="result-count" class="muted" role="status"></p>
           <nav id="pagination" class="pagination" aria-label="Result pages" hidden>
             <button type="button" id="previous-page" aria-label="Previous page">Previous</button>
@@ -96,12 +108,6 @@
           <h3 id="variants-heading">Saved variants</h3>
           <p id="variants-empty" class="muted">Save a named variant to reuse these values in this browser.</p>
           <ul id="variants" class="variants"></ul>
-          <div class="variant-transfer">
-            <button type="button" id="export-variants">Export all variants</button>
-            <button type="button" id="import-variants">Import variants</button>
-            <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
-          </div>
-          <p id="variant-transfer-status" class="muted" role="status"></p>
         </section>
         <section aria-labelledby="related-heading" class="related-section">
           <h3 id="related-heading">Related snippets</h3>
