@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=mobile-snippet-1">
+  <link rel="stylesheet" href="./app/styles.css?v=snippet-actions-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=mobile-snippet-1').then(
+    import('./app/workspace.mjs?v=snippet-actions-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -32,21 +32,25 @@
       <p>Find a snippet, make it yours, and copy it into your workflow.</p>
       <label for="search">Search all snippets</label>
       <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
-      <div class="tag-search">
-        <div>
-          <label for="tag-search">Search by tag</label>
-          <input id="tag-search" type="search" list="known-tags" autocomplete="off">
-          <datalist id="known-tags"></datalist>
+      <details id="search-filters" class="search-filters">
+        <summary>Filters</summary>
+        <div class="tag-search">
+          <div>
+            <label for="tag-search">Search by tag</label>
+            <input id="tag-search" type="search" list="known-tags" autocomplete="off">
+            <datalist id="known-tags"></datalist>
+          </div>
+          <div>
+            <label for="tag-scope">Tag scope</label>
+            <select id="tag-scope">
+              <option value="global">All catalogs</option>
+              <option value="catalog" id="tag-catalog" disabled>Current catalog</option>
+              <option value="topic" id="tag-topic" disabled>Current topic</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label for="tag-scope">Tag scope</label>
-          <select id="tag-scope">
-            <option value="global">All catalogs</option>
-            <option value="catalog" id="tag-catalog" disabled>Current catalog</option>
-            <option value="topic" id="tag-topic" disabled>Current topic</option>
-          </select>
-        </div>
-      </div>
+      </details>
+      <ul id="active-filters" class="active-filters" aria-label="Active filters" hidden></ul>
     </section>
     <div class="layout">
       <div class="catalog-sidebar">
@@ -82,8 +86,14 @@
           <h2 id="snippet-title" tabindex="-1"></h2>
           <div class="snippet-actions">
             <button type="button" id="favorite" aria-pressed="false"><span aria-hidden="true">☆</span> Favorite</button>
+            <button type="button" id="copy-link">Copy link</button>
             <button type="button" id="open-full-screen" aria-haspopup="dialog">Full screen</button>
           </div>
+        </div>
+        <p id="link-status" class="muted" role="status"></p>
+        <div id="link-fallback" hidden>
+          <label for="snippet-link">Snippet link</label>
+          <input id="snippet-link" type="url" readonly>
         </div>
         <p id="favorite-status" class="favorite-feedback" role="status" hidden></p>
         <p id="snippet-description" class="muted"></p>
@@ -102,6 +112,7 @@
         <h3>Example</h3>
         <p id="example-context" class="muted"></p>
         <pre><code id="example"></code></pre>
+        <button type="button" id="jump-to-builder">Jump to builder</button>
         <dl class="reference-details">
           <dt>Prerequisites</dt>
           <dd id="prerequisites"></dd>
@@ -110,12 +121,12 @@
           <dt>Effects</dt>
           <dd id="effects"></dd>
         </dl>
-        <h3>Builder</h3>
+        <h3 id="builder-heading" tabindex="-1">Builder</h3>
         <form id="builder">
           <div id="fields" class="fields"></div>
           <div class="output-heading">
             <label for="output">Generated snippet</label>
-            <button id="copy" type="button">Copy</button>
+            <button id="copy" type="button">Copy code</button>
           </div>
           <textarea id="output" readonly rows="4" spellcheck="false"></textarea>
           <p id="builder-status" class="status" role="status"></p>

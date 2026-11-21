@@ -1,14 +1,16 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=mobile-snippet-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=snippet-actions-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=mobile-snippet-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=mobile-snippet-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=snippet-actions-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=snippet-actions-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=mobile-snippet-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=snippet-actions-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
 const backToResults = byId('back-to-results');
 const search = byId('search');
+const searchFilters = byId('search-filters');
+const activeFilters = byId('active-filters');
 const tagSearch = byId('tag-search');
 const tagScope = byId('tag-scope');
 const tagName = byId('tag-name');
@@ -31,6 +33,9 @@ const builder = byId('builder');
 const fields = byId('fields');
 const output = byId('output');
 const copy = byId('copy');
+const linkStatus = byId('link-status');
+const linkFallback = byId('link-fallback');
+const linkField = byId('snippet-link');
 const save = byId('save-variant');
 const nameInput = byId('variant-name');
 const variantList = byId('variants');
@@ -168,6 +173,7 @@ function rememberMobileResults(snippetId) {
       search: search.value,
       tagSearch: tagSearch.value,
       tagScope: tagScope.value,
+      filtersOpen: searchFilters.open,
       scroll: window.scrollY,
       snippetId,
     },
@@ -179,6 +185,7 @@ function restoreSearch(snapshot) {
   search.value = snapshot.search;
   tagSearch.value = snapshot.tagSearch;
   tagScope.value = snapshot.tagScope;
+  searchFilters.open = Boolean(snapshot.filtersOpen);
 }
 
 function restoreResultPosition(snapshot) {
@@ -291,6 +298,30 @@ function updateTagScope() {
   if (tagScope.selectedOptions[0]?.disabled || !tagScope.value) tagScope.value = 'global';
 }
 
+function renderActiveFilters() {
+  const tag = cleanTag(tagSearch.value);
+  activeFilters.hidden = !tag;
+  activeFilters.replaceChildren();
+  if (!tag) return;
+
+  function addChip(label, control, clear) {
+    const row = document.createElement('li');
+    const chip = button(label + ' ×', () => {
+      clear();
+      refreshSearchResults();
+      (searchFilters.open ? control : searchFilters.querySelector('summary')).focus();
+    });
+    chip.setAttribute('aria-label', 'Remove filter ' + label);
+    row.append(chip);
+    activeFilters.append(row);
+  }
+
+  addChip('Tag · ' + tag, tagSearch, () => { tagSearch.value = ''; });
+  if (tagScope.value !== 'global') {
+    addChip(tagScope.selectedOptions[0].textContent, tagScope, () => { tagScope.value = 'global'; });
+  }
+}
+
 function showTags() {
   tagList.replaceChildren();
   for (const name of tags[selected.id] ?? []) {
@@ -332,6 +363,7 @@ function changeTags(change) {
 
 function updateResults({ fromHistory = false } = {}) {
   updateTagScope();
+  renderActiveFilters();
   const searchingTags = Boolean(tagSearch.value.trim());
   const searchingText = Boolean(search.value.trim());
   const searching = searchingText || searchingTags;
@@ -428,6 +460,8 @@ function selectSnippet(snippet) {
   if (selected === snippet) return;
   selected = snippet;
   favoriteStatus.hidden = true;
+  linkStatus.textContent = '';
+  linkFallback.hidden = true;
   detail.hidden = !snippet;
   if (!snippet) {
     if (fullScreen.open) fullScreen.close();
@@ -748,19 +782,14 @@ byId('tag-editor').addEventListener('submit', (event) => {
   }
 });
 
-tagSearch.addEventListener('input', () => {
+function refreshSearchResults() {
   currentPage = 1;
   updateResults();
-});
-tagScope.addEventListener('change', () => {
-  currentPage = 1;
-  updateResults();
-});
+}
 
-search.addEventListener('input', () => {
-  currentPage = 1;
-  updateResults();
-});
+tagSearch.addEventListener('input', refreshSearchResults);
+tagScope.addEventListener('change', refreshSearchResults);
+search.addEventListener('input', refreshSearchResults);
 window.addEventListener('storage', (event) => {
   if (event.key === favoritesStorageKey || event.key === null) {
     favorites = readFavorites();
@@ -783,6 +812,30 @@ window.addEventListener('popstate', () => {
   if (snapshot) restoreResultPosition(snapshot);
 });
 fields.addEventListener('input', updateOutput);
+
+byId('copy-link').addEventListener('click', async () => {
+  const snippet = selected;
+  const href = new URL(snippetHref(snippet.id), location.href).href;
+  try {
+    await navigator.clipboard.writeText(href);
+    if (selected !== snippet) return;
+    linkFallback.hidden = true;
+    linkStatus.textContent = 'Snippet link copied.';
+  } catch {
+    if (selected !== snippet) return;
+    linkStatus.textContent = 'Use your device’s Copy command to copy the selected link.';
+    linkField.value = href;
+    linkFallback.hidden = false;
+    linkField.focus();
+    linkField.select();
+  }
+});
+
+byId('jump-to-builder').addEventListener('click', () => {
+  const heading = byId('builder-heading');
+  heading.focus({ preventScroll: true });
+  heading.scrollIntoView({ block: 'start' });
+});
 
 copy.addEventListener('click', async () => {
   const copiedSnippet = selected;
