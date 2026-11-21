@@ -1,4 +1,5 @@
 import { buildSnippet, defaultValues, findSnippets, snippets } from './catalog.mjs';
+import { restoreValues } from './parameters.mjs';
 import { readSnippetLink, snippetHref } from './snippet-links.mjs';
 
 const byId = (id) => document.getElementById(id);
@@ -10,6 +11,7 @@ const builder = byId('builder');
 const fields = byId('fields');
 const output = byId('output');
 const copy = byId('copy');
+const save = byId('save-variant');
 const nameInput = byId('variant-name');
 const variantList = byId('variants');
 const builderStatus = byId('builder-status');
@@ -102,32 +104,65 @@ function selectSnippet(snippet) {
     return row;
   }));
 
-  fields.replaceChildren(...snippet.fields.map((field) => {
-    const row = document.createElement('div');
-    const label = document.createElement('label');
-    const input = document.createElement('input');
-    input.id = 'parameter-' + field.id;
-    input.name = field.id;
-    input.value = field.default;
-    input.required = !field.allowEmpty;
-    input.autocomplete = 'off';
-    input.spellcheck = false;
-    if (field.pattern) input.pattern = field.pattern;
-    if (field.id === 'limit') input.inputMode = 'numeric';
-    label.htmlFor = input.id;
-    label.textContent = field.label;
-    row.append(label, input);
-    return row;
-  }));
+  fields.replaceChildren(...snippet.fields.map(parameterControl));
   nameInput.value = '';
   variantStatus.textContent = '';
   updateOutput();
   showVariants();
 }
 
+function setControlValue(control, value) {
+  if (control.type === 'checkbox') {
+    control.checked = value === true;
+  } else {
+    control.value = typeof value === 'string' || typeof value === 'number' ? value : '';
+  }
+}
+
+function parameterControl(field) {
+  const row = document.createElement('div');
+  const label = document.createElement('label');
+  const control = document.createElement(field.type === 'choice' ? 'select' : 'input');
+  control.id = 'parameter-' + field.id;
+  control.name = field.id;
+  control.setAttribute('aria-describedby', 'builder-status');
+  label.htmlFor = control.id;
+  label.textContent = field.label;
+
+  if (field.type === 'choice') {
+    for (const { value, label } of field.options) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      control.append(option);
+    }
+  } else if (field.type === 'toggle') {
+    control.type = 'checkbox';
+    row.className = 'toggle-field';
+  } else if (field.type === 'integer') {
+    control.type = 'number';
+    control.min = field.min;
+    control.max = field.max;
+    control.required = true;
+  } else {
+    control.required = !field.allowEmpty;
+    control.autocomplete = 'off';
+    control.spellcheck = false;
+    if (field.pattern) control.pattern = field.pattern;
+  }
+
+  setControlValue(control, field.default);
+  row.append(label, control);
+  return row;
+}
+
+function parameterControls() {
+  return fields.querySelectorAll('input, select');
+}
+
 function fieldValues() {
-  return Object.fromEntries(Array.from(fields.querySelectorAll('input'), (input) => [
-    input.name, input.value,
+  return Object.fromEntries(Array.from(parameterControls(), (control) => [
+    control.name, control.type === 'checkbox' ? control.checked : control.value,
   ]));
 }
 
@@ -135,7 +170,15 @@ function updateOutput() {
   const result = buildSnippet(selected, fieldValues());
   output.value = result.output ?? '';
   copy.disabled = Boolean(result.error);
+  save.disabled = Boolean(result.error);
   builderStatus.textContent = result.error ?? '';
+  for (const control of parameterControls()) {
+    if (control.name === result.fieldId) {
+      control.setAttribute('aria-invalid', 'true');
+    } else {
+      control.removeAttribute('aria-invalid');
+    }
+  }
 }
 
 function readVariants() {
@@ -145,9 +188,7 @@ function readVariants() {
   }
 
   const variants = stored[selected.id] ?? [];
-  if (!Array.isArray(variants) || variants.some((variant) =>
-    typeof variant?.name !== 'string' || !variant.values || buildSnippet(selected, variant.values).error
-  )) {
+  if (!Array.isArray(variants) || variants.some((variant) => typeof variant?.name !== 'string')) {
     throw new Error('Invalid saved variants');
   }
 
@@ -171,12 +212,16 @@ function showVariants() {
   for (const variant of variants) {
     const row = document.createElement('li');
     const load = button(variant.name, () => {
-      for (const input of fields.querySelectorAll('input')) {
-        input.value = variant.values[input.name];
+      const validObject = variant.values && typeof variant.values === 'object' && !Array.isArray(variant.values);
+      const values = restoreValues(selected, validObject ? variant.values : {});
+      for (const control of parameterControls()) {
+        setControlValue(control, values[control.name]);
       }
       nameInput.value = variant.name;
       updateOutput();
-      variantStatus.textContent = 'Loaded ' + variant.name + '.';
+      variantStatus.textContent = !validObject || buildSnippet(selected, values).error
+        ? 'Review the parameters and save this variant again.'
+        : 'Loaded ' + variant.name + '.';
     });
     load.setAttribute('aria-label', 'Load ' + variant.name);
     const remove = button('Delete', () => {
@@ -233,12 +278,13 @@ builder.addEventListener('submit', (event) => {
     return;
   }
 
-  const values = fieldValues();
-  if (buildSnippet(selected, values).error) return;
+  const { parameters, error } = buildSnippet(selected, fieldValues());
+  if (error) return;
   if (modifyVariants((variants) => {
+    const variant = { name, values: parameters };
     const existing = variants.findIndex((variant) => variant.name === name);
-    if (existing === -1) return [...variants, { name, values }];
-    return variants.map((variant, index) => index === existing ? { name, values } : variant);
+    if (existing === -1) return [...variants, variant];
+    return variants.map((entry, index) => index === existing ? variant : entry);
   })) {
     variantStatus.textContent = 'Saved ' + name + '.';
   }

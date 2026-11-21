@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { buildSnippet, defaultValues, findSnippets, snippets } from '../app/catalog.mjs';
+import { restoreValues } from '../app/parameters.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
 
 const byId = (id) => snippets.find((snippet) => snippet.id === id);
@@ -23,7 +24,7 @@ test('search matches multiple terms across metadata and respects language filter
 
 test('Git file history passes the path as one literal shell argument', () => {
   const path = "src/my team's [draft].js";
-  const { output } = buildSnippet(byId('git-file-history'), { path, limit: '3' });
+  const { output } = buildSnippet(byId('git-file-history'), { ...defaultValues(byId('git-file-history')), path, limit: '3' });
   // Replace git with a shell function to inspect its arguments.
   const args = execFileSync('bash', ['-c', 'git() { printf "%s\\n" "$@"; }; ' + output], { encoding: 'utf8' });
   assert.deepEqual(args.trimEnd().split('\n'), [
@@ -95,4 +96,27 @@ test('every snippet has reference details and a shareable URL that resolves to i
 test('an empty location means browse and an unknown link does not resolve', () => {
   assert.deepEqual(readSnippetLink(''), { id: null, snippet: undefined });
   assert.deepEqual(readSnippetLink('?snippet=missing'), { id: 'missing', snippet: undefined });
+});
+
+test('legacy saved values keep their custom settings and use defaults for new fields', () => {
+  const history = byId('git-file-history');
+  const saved = { path: 'docs/notes.md', limit: '6' };
+  const restored = buildSnippet(history, restoreValues(history, saved));
+  assert.deepEqual(restored.parameters, { path: 'docs/notes.md', limit: 6, branch: '', fileChanges: false });
+  assert.equal(restored.output, "git --literal-pathspecs log --oneline -n 6 -- 'docs/notes.md'");
+  assert.ok(buildSnippet(history, restoreValues(history, { ...saved, limit: 'bad' })).error);
+
+  const branches = byId('git-branch-list');
+  assert.equal(buildSnippet(branches, restoreValues(branches, { limit: '7' })).parameters.sort, '-committerdate');
+  assert.match(buildSnippet(branches, { limit: 2, sort: 'refname' }).output, /--sort=refname/);
+  assert.ok(buildSnippet(branches, { limit: 2, sort: '' }).error);
+});
+
+test('Git history emits optional branch and file detail arguments', () => {
+  const snippet = byId('git-file-history');
+  const defaults = defaultValues(snippet);
+  const result = buildSnippet(snippet, { ...defaults, branch: 'release/v1', fileChanges: true });
+  assert.equal(result.output,
+    "git --literal-pathspecs log --oneline -n 5 --name-status --end-of-options 'refs/heads/release/v1' -- 'src/app.js'");
+  assert.ok(buildSnippet(snippet, { ...defaults, fileChanges: 'true' }).error);
 });
