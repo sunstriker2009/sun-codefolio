@@ -54,3 +54,29 @@ test('numeric parameters reject non-integers and out-of-range values', () => {
     assert.ok(buildSnippet(snippet, { limit }).error, limit);
   }
 });
+
+test('catalog entries have stable URL-safe IDs and valid related snippets', () => {
+  for (const snippet of snippets) {
+    assert.match(snippet.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.ok(snippet.aliases.length && snippet.useCases.length);
+    assert.equal(new Set(snippet.relatedIds).size, snippet.relatedIds.length);
+    for (const relatedId of snippet.relatedIds) {
+      assert.notEqual(relatedId, snippet.id);
+      assert.ok(byId(relatedId), relatedId);
+    }
+  }
+});
+
+test('plain-language searches use aliases and use cases', () => {
+  assert.equal(findSnippets('find old changes to a file')[0].id, 'git-file-history');
+  assert.equal(findSnippets('Find the changes to a file')[0].id, 'git-file-history');
+  assert.equal(findSnippets('git branch list')[0].id, 'git-branch-list');
+});
+
+test('syntax search preserves punctuation and ranks matching example code first', () => {
+  assert.equal(findSnippets('git log --oneline')[0].id, 'git-file-history');
+  assert.deepEqual(findSnippets('items.Take(').map(({ id }) => id), ['csharp-take-items']);
+  assert.deepEqual(findSnippets('//*[@').map(({ id }) => id), ['xpath-match-attribute']);
+  assert.deepEqual(findSnippets('items.Take(', 'JavaScript'), []);
+  assert.deepEqual(findSnippets('items.Take['), []);
+});
