@@ -9,6 +9,9 @@ function xpathLiteral(value) {
 export const snippets = [
   {
     id: 'git-file-history',
+    aliases: ["git log --oneline", "file history"],
+    useCases: ["Find old changes to a file", "See which commits changed a path"],
+    relatedIds: ["git-branch-list"],
     language: 'Git',
     title: 'View a file’s commit history',
     description: 'List recent commits that changed a path in the current Git history. Use a path relative to the repository root and run the command from there.',
@@ -22,6 +25,9 @@ export const snippets = [
   },
   {
     id: 'git-branch-list',
+    aliases: ["git branch list", "recent branches"],
+    useCases: ["Find recently updated local branches"],
+    relatedIds: ["git-file-history"],
     language: 'Git',
     title: 'List recent local branches',
     description: 'Show local branches in order of the date of their latest commit, with the most recent first.',
@@ -35,6 +41,9 @@ export const snippets = [
   },
   {
     id: 'js-filter-array',
+    aliases: ["Array.filter", "filter array"],
+    useCases: ["Find objects with a matching field", "Keep records with a particular status"],
+    relatedIds: ["js-join-array", "csharp-take-items"],
     language: 'JavaScript',
     title: 'Filter an array by property',
     description: 'Keep objects whose chosen property equals a string. Property names can contain spaces or punctuation.',
@@ -49,6 +58,9 @@ export const snippets = [
   },
   {
     id: 'js-join-array',
+    aliases: ["Array.join", "join array"],
+    useCases: ["Turn a list of labels into comma-separated text"],
+    relatedIds: ["js-filter-array"],
     language: 'JavaScript',
     title: 'Join an array into a string',
     description: 'Combine the elements of an array called items into a string with a separator.',
@@ -59,6 +71,9 @@ export const snippets = [
   },
   {
     id: 'csharp-take-items',
+    aliases: ["Enumerable.Take", "LINQ Take"],
+    useCases: ["Get the first N items from a collection"],
+    relatedIds: ["js-filter-array"],
     language: 'C#',
     title: 'Take the first items from a sequence',
     description: 'Use LINQ to take up to a fixed number of items from an enumerable called items. Calling ToList materializes the result.',
@@ -71,6 +86,9 @@ export const snippets = [
   },
   {
     id: 'xpath-match-attribute',
+    aliases: ["attribute selector", "attribute predicate"],
+    useCases: ["Find HTML or XML elements with a matching attribute"],
+    relatedIds: ["js-filter-array"],
     language: 'XPath',
     title: 'Find elements by attribute value',
     description: 'Find elements anywhere in a document whose selected unprefixed attribute exactly matches a value. Works in XPath 1.0.',
@@ -83,19 +101,6 @@ export const snippets = [
     render: ({ attribute, value }) => '//*[@' + attribute + '=' + xpathLiteral(value) + ']',
   },
 ];
-
-export function findSnippets(query, language) {
-  const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-
-  return snippets.filter((snippet) => {
-    if (language && snippet.language !== language) return false;
-    const searchable = [
-      snippet.title, snippet.language, snippet.description, snippet.keywords, snippet.example,
-    ].join(' ').toLowerCase();
-
-    return terms.every((term) => searchable.includes(term));
-  });
-}
 
 export function defaultValues(snippet) {
   return Object.fromEntries(snippet.fields.map((field) => [field.id, field.default]));
@@ -113,4 +118,38 @@ export function buildSnippet(snippet, values) {
   }
 
   return { output: snippet.render(values) };
+}
+
+const normalizeSearch = (value) => value.toLowerCase().trim().replace(/\s+/g, ' ');
+const taskWords = new Set(['a', 'an', 'i', 'in', 'me', 'of', 'the', 'to', 'with']);
+
+const searchIndex = snippets.map((snippet) => {
+  const names = [snippet.title, ...snippet.aliases].map(normalizeSearch);
+  const exampleCode = normalizeSearch(buildSnippet(snippet, defaultValues(snippet)).output);
+  const searchable = normalizeSearch([
+    ...names, snippet.language, snippet.description, snippet.keywords, snippet.example,
+    ...snippet.useCases, exampleCode,
+  ].join(' '));
+  return { snippet, names, exampleCode, searchable };
+});
+
+function relevance(entry, phrase, terms) {
+  if (entry.names.includes(phrase)) return 4;
+  if (entry.exampleCode.includes(phrase)) return 3;
+  if (entry.searchable.includes(phrase)) return 2;
+  return terms.every((term) => entry.searchable.includes(term)) ? 1 : 0;
+}
+
+export function findSnippets(query, language) {
+  const phrase = normalizeSearch(query);
+  const words = phrase.split(' ');
+  const taskTerms = words.filter((word) => !taskWords.has(word));
+  const terms = taskTerms.length ? taskTerms : words;
+
+  return searchIndex
+    .filter(({ snippet }) => !language || snippet.language === language)
+    .map((entry) => ({ snippet: entry.snippet, score: phrase ? relevance(entry, phrase, terms) : 1 }))
+    .filter(({ score }) => score > 0)
+    .sort((left, right) => right.score - left.score)
+    .map(({ snippet }) => snippet);
 }
