@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { test } from 'node:test';
+import { buildSnippet, defaultValues, findSnippets, snippets } from '../app/catalog.mjs';
+
+const byId = (id) => snippets.find((snippet) => snippet.id === id);
+
+test('all published examples have valid defaults and distinct IDs and fields', () => {
+  assert.equal(new Set(snippets.map((snippet) => snippet.id)).size, snippets.length);
+  for (const snippet of snippets) {
+    assert.equal(new Set(snippet.fields.map((field) => field.id)).size, snippet.fields.length);
+    assert.ok(buildSnippet(snippet, defaultValues(snippet)).output, snippet.id);
+  }
+});
+
+test('search matches multiple terms across metadata and respects language filters', () => {
+  assert.deepEqual(findSnippets('  GiT HISTORY  ', 'Git').map((snippet) => snippet.id), ['git-file-history']);
+  assert.deepEqual(findSnippets('filter array').map((snippet) => snippet.id), ['js-filter-array']);
+  assert.deepEqual(findSnippets('git history', 'XPath'), []);
+  assert.deepEqual(findSnippets(''), snippets);
+});
+
+test('Git file history passes the path as one literal shell argument', () => {
+  const path = "src/my team's [draft].js";
+  const { output } = buildSnippet(byId('git-file-history'), { path, limit: '3' });
+  // Replace git with a shell function to inspect its arguments.
+  const args = execFileSync('bash', ['-c', 'git() { printf "%s\\n" "$@"; }; ' + output], { encoding: 'utf8' });
+  assert.deepEqual(args.trimEnd().split('\n'), [
+    '--literal-pathspecs', 'log', '--oneline', '-n', '3', '--', path,
+  ]);
+});
+
+test('JavaScript escapes string literals and preserves empty values', () => {
+  const property = 'a"b';
+  const value = '';
+  const snippet = byId('js-filter-array');
+  assert.equal(buildSnippet(snippet, { property, value }).output,
+    'const matches = items.filter((item) => item[' + JSON.stringify(property) + '] === "");');
+  assert.equal(buildSnippet(byId('js-join-array'), { separator: ' ' }).output,
+    'const joined = items.join(" ");');
+});
+
+test('XPath handles both quote characters in a value and validates attribute names', () => {
+  const snippet = byId('xpath-match-attribute');
+  const value = `O'Reilly "guide"`;
+  const { output } = buildSnippet(snippet, { attribute: 'data-name', value });
+  assert.equal(output, `//*[@data-name=concat('O', "'", 'Reilly "guide"')]`);
+  assert.ok(buildSnippet(snippet, { attribute: 'data name', value }).error);
+});
+
+test('numeric parameters reject non-integers and out-of-range values', () => {
+  const snippet = byId('csharp-take-items');
+  for (const limit of ['0', '-1', '1.5', '10000', ' 2', '']) {
+    assert.ok(buildSnippet(snippet, { limit }).error, limit);
+  }
+});

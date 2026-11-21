@@ -21,3 +21,10 @@ jobs:
           test -f .github/CODEOWNERS
           test -f docs/REPOSITORY-SETUP.md
           echo "SUN repository foundation valid"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate CodeFolio workspace
+        run: |
+          node --check app/workspace.mjs
+          node --test tests/catalog.test.mjs
