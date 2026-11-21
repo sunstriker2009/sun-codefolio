@@ -1,11 +1,13 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=result-accents-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=mobile-snippet-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=result-accents-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=result-accents-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=mobile-snippet-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=mobile-snippet-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=result-accents-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=mobile-snippet-1';
 
 const byId = (id) => document.getElementById(id);
+const workspace = byId('workspace');
+const backToResults = byId('back-to-results');
 const search = byId('search');
 const tagSearch = byId('tag-search');
 const tagScope = byId('tag-scope');
@@ -147,16 +149,79 @@ for (const [language, topics] of languages) {
 }
 
 disclosure.open = !compactNavigation.matches;
-compactNavigation.addEventListener('change', (event) => { disclosure.open = !event.matches; });
+compactNavigation.addEventListener('change', (event) => {
+  disclosure.open = !event.matches;
+  updateMobileDetail(readSnippetLink(location.search, snippets).snippet);
+});
+
+function updateMobileDetail(linkedSnippet) {
+  const showing = compactNavigation.matches && Boolean(linkedSnippet);
+  if (compactNavigation.matches && !showing && fullScreen.open) fullScreen.close();
+  workspace.classList.toggle('mobile-detail', showing);
+}
+
+function rememberMobileResults(snippetId) {
+  history.replaceState({
+    catalogScope: scope,
+    catalogPage: currentPage,
+    mobileResults: {
+      search: search.value,
+      tagSearch: tagSearch.value,
+      tagScope: tagScope.value,
+      scroll: window.scrollY,
+      snippetId,
+    },
+  }, '', location.href);
+}
+
+function restoreSearch(snapshot) {
+  if (!snapshot) return;
+  search.value = snapshot.search;
+  tagSearch.value = snapshot.tagSearch;
+  tagScope.value = snapshot.tagScope;
+}
+
+function restoreResultPosition(snapshot) {
+  requestAnimationFrame(() => {
+    if (!compactNavigation.matches || workspace.classList.contains('mobile-detail')) return;
+    const link = results.querySelector('[data-snippet-id="' + snapshot.snippetId + '"]');
+    (link ?? browseHeading).focus({ preventScroll: true });
+    window.scrollTo(0, snapshot.scroll);
+  });
+}
 
 function openSnippet(snippet) {
   const url = new URL(snippetHref(snippet.id), location.href);
   if (location.href !== url.href) {
-    history.pushState({ catalogScope: scope, catalogPage: currentPage }, '', url);
+    let mobileResultDepth = 0;
+    if (compactNavigation.matches) {
+      if (!workspace.classList.contains('mobile-detail')) {
+        rememberMobileResults(snippet.id);
+        mobileResultDepth = 1;
+      } else if (history.state?.mobileResultDepth) {
+        mobileResultDepth = history.state.mobileResultDepth + 1;
+      }
+    }
+    history.pushState({ catalogScope: scope, catalogPage: currentPage, mobileResultDepth }, '', url);
   }
   updateResults();
-  byId('snippet-title').focus();
+  if (workspace.classList.contains('mobile-detail') && !fullScreen.open) window.scrollTo(0, 0);
+  byId('snippet-title').focus({ preventScroll: workspace.classList.contains('mobile-detail') && !fullScreen.open });
 }
+
+backToResults.addEventListener('click', () => {
+  const depth = history.state?.mobileResultDepth;
+  if (depth) {
+    history.go(-depth);
+    return;
+  }
+
+  const url = new URL(location.href);
+  url.searchParams.delete('snippet');
+  history.replaceState({ catalogScope: scope, catalogPage: currentPage }, '', url);
+  updateResults({ fromHistory: true });
+  browseHeading.focus();
+});
 
 function snippetLink(snippet) {
   const link = document.createElement('a');
@@ -288,6 +353,7 @@ function updateResults({ fromHistory = false } = {}) {
   if (showingFavorites) filtered = matches.filter(({ id }) => favorites.has(id));
   if (showingVariants) filtered = matches.filter(({ id }) => savedGroups?.get(id).length);
   const { id, snippet } = readSnippetLink(location.search, snippets);
+  updateMobileDetail(snippet);
   const ordered = sortSnippetResults(filtered, favorites);
   const linkedIndex = searching ? -1 : ordered.indexOf(snippet);
   if (linkedIndex >= 0) currentPage = Math.floor(linkedIndex / snippetsPerPage) + 1;
@@ -401,7 +467,7 @@ openFullScreen.addEventListener('click', () => {
 
 fullScreen.addEventListener('close', () => {
   fullScreen.before(detail);
-  if (!detail.hidden) {
+  if (!detail.hidden && (!compactNavigation.matches || workspace.classList.contains('mobile-detail'))) {
     window.scrollTo(browseScroll);
     openFullScreen.focus({ preventScroll: true });
   }
@@ -711,7 +777,10 @@ window.addEventListener('storage', (event) => {
 window.addEventListener('popstate', () => {
   scope = history.state?.catalogScope ?? allSnippets;
   currentPage = history.state?.catalogPage ?? 1;
+  const snapshot = history.state?.mobileResults;
+  restoreSearch(snapshot);
   updateResults({ fromHistory: true });
+  if (snapshot) restoreResultPosition(snapshot);
 });
 fields.addEventListener('input', updateOutput);
 
@@ -753,4 +822,5 @@ builder.addEventListener('submit', (event) => {
 });
 
 updateTagOptions();
+restoreSearch(history.state?.mobileResults);
 updateResults();
