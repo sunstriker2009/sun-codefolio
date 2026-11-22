@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=regex-multiline-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=regex-m6-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=regex-multiline-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=regex-multiline-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=regex-m6-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=regex-m6-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=regex-multiline-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=regex-m6-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');

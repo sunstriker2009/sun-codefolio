@@ -383,3 +383,30 @@ test('multiline C# Regex search exposes a configurable log parser', () => {
   assert.match(result.output, /FromMilliseconds\(350\)/);
   assert.equal(buildSnippet(snippet, { ...defaults, levels: 'debug' }).fieldId, 'levels');
 });
+
+test('C# Regex masking is discoverable and generates a configurable match evaluator', () => {
+  const id = 'csharp-regex-mask-ids';
+  const snippet = byId(id);
+  assert.equal(findSnippets('mask numeric account IDs in logs')[0].id, id);
+  assert.equal(findSnippets('MatchEvaluator')[0].id, id);
+  const defaults = defaultValues(snippet);
+  const result = buildSnippet(snippet, { ...defaults, label: 'account.id', mask: 'X', timeout: 350 });
+  assert.match(result.output, /Regex\.Escape\("account\.id"\)/);
+  assert.match(result.output, /Regex\.Replace\(input, pattern, match =>/);
+  assert.ok(result.output.includes("new string('X', id.Length - 4) + id[^4..]"));
+  assert.match(result.output, /FromMilliseconds\(350\)/);
+  assert.equal(buildSnippet(snippet, { ...defaults, mask: "'" }).fieldId, 'mask');
+});
+
+test('C# Regex timeout example generates distinct match, no-match, and timeout results', () => {
+  const id = 'csharp-regex-match-timeout';
+  const snippet = byId(id);
+  assert.equal(findSnippets('distinguish a timeout from no match')[0].id, id);
+  assert.equal(findSnippets('RegexMatchTimeoutException')[0].id, id);
+  const defaults = defaultValues(snippet);
+  const result = buildSnippet(snippet, { ...defaults, timeout: 10 });
+  assert.match(result.output, /FromMilliseconds\(10\)/);
+  assert.match(result.output, /catch \(RegexMatchTimeoutException\)\s*\{\s*return null;/);
+  assert.match(result.output, /true => "Matched",\s*false => "No match",\s*null => "Timed out"/);
+  assert.equal(buildSnippet(snippet, { ...defaults, timeout: 9 }).fieldId, 'timeout');
+});
