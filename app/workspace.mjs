@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=variant-email-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=variant-share-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-email-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-email-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-share-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-share-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=variant-email-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=variant-share-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -44,7 +44,7 @@ const variantList = byId('variants');
 const variantTools = byId('variant-tools');
 const exportVariants = byId('export-variants');
 const importVariants = byId('import-variants');
-const emailVariants = byId('email-variants');
+const shareVariants = byId('share-variants');
 const backupFile = byId('variant-backup-file');
 const transferStatus = byId('variant-transfer-status');
 const builderStatus = byId('builder-status');
@@ -751,41 +751,41 @@ exportVariants.addEventListener('click', () => {
   transferStatus.textContent = 'Exported ' + backup.count + ' saved ' + (backup.count === 1 ? 'variant.' : 'variants.');
 });
 
-function showEmailFallback() {
+function showShareFallback() {
   const draft = document.createElement('a');
   draft.href = 'mailto:?subject=CodeFolio%20saved%20variants';
   draft.textContent = 'open an email draft';
-  transferStatus.replaceChildren('Use Export to download the backup, then ', draft,
-    ' and attach the JSON file.');
+  transferStatus.replaceChildren('Use Export to download the JSON file and attach it in your app. You can also ',
+    draft, '.');
 }
 
-emailVariants.addEventListener('click', async () => {
+shareVariants.addEventListener('click', async () => {
   const backup = prepareVariantBackup();
   if (!backup) return;
 
-  const emailScope = scope;
+  const shareScope = scope;
   const file = new File([backup.json], backupFilename(), { type: 'application/json' });
   const shareData = { files: [file], title: 'CodeFolio saved variants' };
-  emailVariants.disabled = true;
+  shareVariants.disabled = true;
   try {
     if (!navigator.share || !navigator.canShare?.(shareData)) {
-      showEmailFallback();
+      showShareFallback();
       return;
     }
-    transferStatus.textContent = 'Choose your email app from the share menu.';
+    transferStatus.textContent = 'Choose an app from the share menu.';
     await navigator.share(shareData);
-    if (sameScope(scope, emailScope)) {
-      transferStatus.textContent = 'Finish sending the backup in your email app.';
+    if (sameScope(scope, shareScope)) {
+      transferStatus.textContent = 'Finish sharing in the app you chose.';
     }
   } catch (error) {
-    if (!sameScope(scope, emailScope)) return;
+    if (!sameScope(scope, shareScope)) return;
     if (error.name === 'AbortError') {
       transferStatus.textContent = 'Sharing canceled. Use Export to attach the backup manually.';
     } else {
-      showEmailFallback();
+      showShareFallback();
     }
   } finally {
-    emailVariants.disabled = false;
+    shareVariants.disabled = false;
   }
 });
 
