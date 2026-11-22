@@ -322,7 +322,7 @@ export const snippets = [
     keywords: 'csharp dotnet regex regular expressions named capture groups parse log level',
     aliases: ['Regex.Match', 'named capture group'],
     useCases: ['Extract a log level from a structured line', 'Read a named group from a regular expression'],
-    relatedIds: ['csharp-regex-reformat-date', 'csharp-regex-repeated-words', 'csharp-regex-generated', 'csharp-regex-escape-literal'],
+    relatedIds: ['csharp-regex-multiline-logs', 'csharp-regex-reformat-date', 'csharp-regex-repeated-words', 'csharp-regex-generated', 'csharp-regex-escape-literal'],
     example: 'Extract the level from WARN Disk latency is high.',
     prerequisites: 'System and System.Text.RegularExpressions in scope. Supply an input string and a pattern that defines the selected group.',
     expected: 'The default inputs produce WARN. A line with no capture in the selected group produces null.',
@@ -456,6 +456,62 @@ export const snippets = [
         'var pattern = ' + pattern + ';',
         'var found = Regex.IsMatch(' + csharpStringLiteral(input) + ', pattern,',
         '    ' + regexOptions(ignoreCase) + ', TimeSpan.FromMilliseconds(' + timeout + '));',
+      ].join('\n');
+    },
+  },
+  {
+    id: 'csharp-regex-multiline-logs',
+    topic: 'Regex',
+    language: 'C#',
+    title: 'Extract structured records from a multiline log',
+    description: 'Match timestamped log lines and project their named captures into records with Timestamp, Level, and Message fields.',
+    keywords: 'csharp dotnet regex matches multiline named groups structured log parsing severity',
+    aliases: ['Regex.Matches', 'multiline log parsing'],
+    useCases: ['Extract error and warning records from application logs', 'Parse multiple log lines into structured records'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-escape-literal'],
+    example: 'Parse a four-line worker log with INFO, WARN, and ERROR records and a continuation line.',
+    prerequisites: 'System, System.Linq, and System.Text.RegularExpressions in scope. Each record starts with a UTC timestamp in yyyy-MM-ddTHH:mm:ssZ form, followed by INFO, WARN, or ERROR and a message.',
+    expected: 'The default search returns three records in input order. The WARN record has Timestamp 2026-11-21T09:10:03Z and Message “Queue depth is 42”. Choosing Warnings and errors returns the final two records.',
+    effects: 'Reads the input and materializes the matches as an array. Continuation lines and blank messages are skipped. Timestamp is captured as text. Matching can throw RegexMatchTimeoutException.',
+    fields: [
+      {
+        id: 'input', type: 'text', multiline: true, label: 'Log text', allowEmpty: true,
+        default: [
+          '2026-11-21T09:10:00Z INFO Worker started',
+          '2026-11-21T09:10:03Z WARN Queue depth is 42',
+          'Detail: retry after 3 seconds',
+          '2026-11-21T09:10:07Z ERROR Processing failed',
+        ].join('\n'),
+      },
+      {
+        id: 'levels', type: 'choice', label: 'Log levels', default: 'all',
+        options: [
+          { value: 'all', label: 'All supported levels' },
+          { value: 'warnings', label: 'Warnings and errors' },
+          { value: 'errors', label: 'Errors only' },
+        ],
+      },
+      regexTimeoutField,
+    ],
+    render: ({ input, levels, timeout }) => {
+      const severity = { all: 'INFO|WARN|ERROR', warnings: 'WARN|ERROR', errors: 'ERROR' }[levels];
+      const pattern = '^(?<timestamp>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)'
+        + '[ \\t]+(?<level>' + severity + ')[ \\t]+(?<message>[^ \\t\\r\\n][^\\r\\n]*)\\r?$';
+      const lines = input.split('\n');
+      const log = lines.map((line, index) =>
+        csharpStringLiteral(index < lines.length - 1 ? line + '\n' : line)).join(' +\n    ');
+      return [
+        'var log = ' + log + ';',
+        'var records = Regex.Matches(log, ' + csharpStringLiteral(pattern) + ',',
+        '        RegexOptions.Multiline | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(' + timeout + '))',
+        '    .Cast<Match>()',
+        '    .Select(match => new',
+        '    {',
+        '        Timestamp = match.Groups["timestamp"].Value,',
+        '        Level = match.Groups["level"].Value,',
+        '        Message = match.Groups["message"].Value,',
+        '    })',
+        '    .ToArray();',
       ].join('\n');
     },
   },

@@ -10,6 +10,7 @@
 | M3 · First release | Complete | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
 | M4 · Catalog expansion | Complete | Two Git history tasks and a focused C# Regex collection |
 | M5 · UI refinement | Complete | Mobile snippet navigation, simpler search filters, and easier access to snippet actions |
+| M6 · Practical C# Regex | In progress | Structured log extraction, match-dependent masking, and timeout handling |
 
 ## M0 · Starter workspace
 
@@ -63,6 +64,12 @@ Complete this pass before expanding the catalogs again.
 - [x] **Mobile snippet navigation.** Open snippets in a dedicated detail view on narrow screens. **Back to results** restores the search, tag filters, catalog, topic, page, and scroll position. Direct snippet links open the detail view, and desktop keeps the side-by-side layout.
 - [x] **Search filter controls.** Keep text search prominent. Place tag and scope controls under **Filters** and show active filters as removable chips.
 - [x] **Snippet actions.** Add **Copy link** near the title and **Jump to builder** after the example. Keep the generated-code copy action beside the output.
+
+## M6 · Practical C# Regex
+
+- [x] **Multiline log extraction.** Turn timestamped lines into records with configurable level selection and a match timeout. Check Unix and Windows line endings, blank messages, and continuation lines against .NET 10.
+- [ ] **Mask identifiers.** Preserve the final four digits with a match evaluator.
+- [ ] **Handle match timeouts.** Give callers a distinct result when a regex match exceeds its timeout.
 
 ## Future work
 

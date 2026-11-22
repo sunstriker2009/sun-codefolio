@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=compact-tags-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=regex-multiline-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=compact-tags-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=compact-tags-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=regex-multiline-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=regex-multiline-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=compact-tags-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=regex-multiline-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -555,7 +555,12 @@ function setControlValue(control, value) {
 function parameterControl(field) {
   const row = document.createElement('div');
   const label = document.createElement('label');
-  const control = document.createElement(field.type === 'choice' ? 'select' : 'input');
+  const elementName = field.multiline ? 'textarea' : field.type === 'choice' ? 'select' : 'input';
+  const control = document.createElement(elementName);
+  if (field.multiline) {
+    row.className = 'multiline-field';
+    control.rows = 5;
+  }
   control.id = 'parameter-' + field.id;
   control.name = field.id;
   control.setAttribute('aria-describedby', 'builder-status');
@@ -590,7 +595,7 @@ function parameterControl(field) {
 }
 
 function parameterControls() {
-  return fields.querySelectorAll('input, select');
+  return fields.querySelectorAll('input, select, textarea');
 }
 
 function fieldValues() {

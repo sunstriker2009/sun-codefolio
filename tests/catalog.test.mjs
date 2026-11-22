@@ -366,3 +366,20 @@ test('result sorting puts favorites first and orders both groups alphabetically 
   assert.deepEqual(entries.map(({ id }) => id), ['z', 'c', 'b', 'a']);
   assert.deepEqual(sortSnippetResults(entries, new Set()).map(({ id }) => id), ['a', 'b', 'c', 'z']);
 });
+
+test('multiline C# Regex search exposes a configurable log parser', () => {
+  const id = 'csharp-regex-multiline-logs';
+  const snippet = byId(id);
+  assert.equal(findSnippets('parse multiple log lines')[0].id, id);
+  assert.equal(findSnippets('Regex.Matches')[0].id, id);
+  assert.equal(snippet.fields.find(({ id }) => id === 'input').multiline, true);
+  const defaults = defaultValues(snippet);
+  const input = 'first "quoted" line\r\nlast line';
+  const result = buildSnippet(snippet, { ...defaults, input, levels: 'warnings', timeout: 350 });
+  assert.equal(result.parameters.input, input);
+  assert.ok(result.output.includes('"first \\"quoted\\" line\\r\\n" +\n    "last line"'));
+  assert.match(result.output, /\(\?<level>WARN\|ERROR\)/);
+  assert.match(result.output, /RegexOptions\.Multiline/);
+  assert.match(result.output, /FromMilliseconds\(350\)/);
+  assert.equal(buildSnippet(snippet, { ...defaults, levels: 'debug' }).fieldId, 'levels');
+});
