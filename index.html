@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=variant-email-1">
+  <link rel="stylesheet" href="./app/styles.css?v=variant-share-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=variant-email-1').then(
+    import('./app/workspace.mjs?v=variant-share-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -65,7 +65,7 @@
             <div class="variant-transfer">
               <button type="button" id="export-variants" aria-label="Export saved variants">Export</button>
               <button type="button" id="import-variants" aria-label="Import saved variants">Import</button>
-              <button type="button" id="email-variants">Send to email</button>
+              <button type="button" id="share-variants">Share backup</button>
               <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
             </div>
             <p id="variant-transfer-status" class="muted" role="status"></p>

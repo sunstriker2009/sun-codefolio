@@ -39,7 +39,7 @@ Enter the name and select **Save variant**. Reopen the snippet later and select 
 
 In the catalog menu, choose **All**, **Saved**, or **Favorites**, then use the language and topic navigation below to set the scope. **Saved** lists variants in the current selection. **Export** downloads a JSON backup, and **Import** restores only entries in that selection. Choose **All catalogs** while in **Saved** for an all-language backup. Import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
 
-Use **Send to email** in **Saved** to share the same scoped JSON backup. Choose your email app in the device’s share menu, then review and send the draft. If file sharing is unavailable, use **Export**, open an email draft, and attach the downloaded JSON file.
+Use **Share backup** in **Saved** to send the current selection’s JSON file through the device’s share menu. Available apps depend on the device and which apps accept the file. If file sharing is unavailable, use **Export** and attach the downloaded JSON in your messaging or email app.
 
 ### Maintain the catalog
 
