@@ -58,6 +58,27 @@ try {
   assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
   await page.locator('.pattern-field').getByRole('button', { name: 'Copy pattern' }).click();
   assert.equal(await page.evaluate(() => window.copiedText), patterns.find(entry => entry.id === 'signed-integer').expressions.javascript);
+  const toast = page.locator('#regex-toast');
+  await toast.getByText('Pattern copied.', { exact: true }).waitFor();
+  assert.equal(await page.locator('#detail-status').textContent(), '');
+  await page.getByRole('button', { name: 'Copy link', exact: true }).click();
+  await toast.getByText('Link copied.', { exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => window.copiedText), page.url());
+  await toast.getByText('Link copied.', { exact: true }).waitFor({ state: 'hidden', timeout: 5000 });
+
+  const patternField = await page.locator('.pattern-field').boundingBox();
+  const testInput = await input.boundingBox();
+  assert.ok(patternField && testInput && testInput.y - (patternField.y + patternField.height) < 55);
+  const addTag = await page.getByRole('button', { name: 'Add a tag', exact: true }).boundingBox();
+  assert.ok(addTag && addTag.height <= 26);
+  const examples = page.getByRole('combobox', { name: 'Load example' });
+  await examples.selectOption('noMatch');
+  assert.equal(await input.inputValue(), '3.5');
+  await test.click();
+  await page.locator('#test-status').getByText('No match.', { exact: true }).waitFor();
+  await examples.selectOption('match');
+  assert.equal(await input.inputValue(), '-42');
+  assert.equal(await examples.inputValue(), '');
   await previous.click();
   await page.getByRole('heading', { name: 'ASCII alphanumeric', exact: true }).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');

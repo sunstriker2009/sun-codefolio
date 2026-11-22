@@ -19,6 +19,9 @@ const tagName = byId('tag-name');
 const detail = byId('detail');
 const detailStatus = byId('detail-status');
 const input = byId('test-input');
+const examplePicker = byId('example-picker');
+const toast = byId('regex-toast');
+let toastTimer;
 const testButton = byId('test-button');
 const testStatus = byId('test-status');
 const matchResult = byId('match-result');
@@ -230,8 +233,9 @@ function renderDetail(entry) {
   byId('pattern-description').textContent = entry.description;
   byId('pattern-source').textContent = entry.expressions[platform.value];
   byId('pattern-mode').textContent = entry.mode === 'whole' ? 'Validates the whole input' : 'Finds the first match within the input';
-  byId('matching-example').textContent = JSON.stringify(entry.examples.match);
-  byId('nonmatching-example').textContent = JSON.stringify(entry.examples.noMatch);
+  examplePicker.options[1].textContent = 'Match · ' + JSON.stringify(entry.examples.match);
+  examplePicker.options[2].textContent = 'No match · ' + JSON.stringify(entry.examples.noMatch);
+  examplePicker.value = '';
   renderPersonal();
 }
 
@@ -309,25 +313,28 @@ async function copy(value, label) {
   byId('copy-fallback').hidden = true;
   try {
     await navigator.clipboard.writeText(value);
-    detailStatus.textContent = label + ' copied.';
+    clearTimeout(toastTimer);
+    toast.textContent = label + ' copied.';
+    toastTimer = setTimeout(() => { toast.textContent = ''; }, 2200);
   } catch {
-    detailStatus.textContent = 'Select and copy the text below.';
     const field = byId('copy-value');
     field.value = value;
     byId('copy-fallback').hidden = false;
+    field.focus();
     field.select();
   }
 }
 
 byId('copy-pattern').addEventListener('click', () => copy(selected.expressions[platform.value], 'Pattern'));
 byId('copy-link').addEventListener('click', () => copy(patternUrl(selected.id, platform.value).href, 'Link'));
-for (const [id, example] of [['use-match', 'match'], ['use-nonmatch', 'noMatch']]) {
-  byId(id).addEventListener('click', () => {
-    input.value = selected.examples[example];
-    clearTest();
-    input.focus();
-  });
-}
+examplePicker.addEventListener('change', () => {
+  const choice = examplePicker.value;
+  if (!choice) return;
+  input.value = selected.examples[choice];
+  examplePicker.value = '';
+  clearTest();
+  input.focus();
+});
 input.addEventListener('input', clearTest);
 byId('try-it').addEventListener('submit', async event => {
   event.preventDefault();
