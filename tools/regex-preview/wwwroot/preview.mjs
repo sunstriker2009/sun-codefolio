@@ -1,7 +1,7 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs?v=regex-reference-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-python-1';
-import { createRunner } from './runner.mjs?v=regex-python-1';
-import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-python-1';
+import { patterns, platforms } from './patterns.mjs?v=regex-pcre2-1';
+import { createRunner } from './runner.mjs?v=regex-pcre2-1';
+import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-pcre2-1';
 
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
@@ -257,6 +257,7 @@ function showEditor(editing) {
     'example-picker': editing || custom,
   };
   for (const [id, hidden] of Object.entries(controls)) byId(id).hidden = hidden;
+  byId('pcre2-note').hidden = platform.value !== 'pcre2';
   detail.querySelector('.pattern-navigation').hidden = editing;
   newPattern.disabled = editing;
   detail.classList.toggle('editing-pattern', editing);
@@ -526,6 +527,7 @@ byId('try-it').addEventListener('submit', async event => {
     invalid: result.message,
     'no-match': 'No match.',
     timeout: 'The match timed out. Try shorter text.',
+    limit: 'The match reached a PCRE2 engine limit. Try a simpler pattern or shorter text.',
     'load-error': 'The runner couldn’t load. Try again.',
   };
   testStatus.textContent = labels[result.status] ?? 'The runner couldn’t complete the test.';
