@@ -13,7 +13,7 @@ bash tools/regex-preview/build-preview.sh "$preview_dir"
 python3 -m http.server 8000 --directory "$preview_dir"
 ```
 
-Open [the Regex page](http://localhost:8000/sun-codefolio/regex/), or open the snippet library at [the site root](http://localhost:8000/sun-codefolio/). The [Regex preview workflow](../../.github/workflows/regex-preview.yml) publishes the same site tree as a build artifact.
+Open [the Regex page](http://localhost:8000/sun-codefolio/regex/), or open the snippet library at [the site root](http://localhost:8000/sun-codefolio/). Pass `--regex-only` after the output directory to build the standalone Regex preview. The [Regex preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads that preview.
 
 ## Publish
 

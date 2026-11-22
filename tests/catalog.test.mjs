@@ -5,7 +5,7 @@ import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnip
 import { restoreValues } from '../app/parameters.mjs';
 import { exportPersonalBackup, mergePersonalBackup, mergeVariantBackup, readPersonalBackup } from '../app/variant-backup.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
-import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs';
+import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs';
 
 const personalData = (variants = {}, tags = {}, favorites = []) => ({ variants, tags, favorites });
 
