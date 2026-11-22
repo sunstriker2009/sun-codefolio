@@ -2,6 +2,12 @@
 
 CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath snippets. Use the builder to customize an example, copy the generated code, or save your settings for later in the same browser. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
 
+## Planned
+
+| Milestone | What’s coming |
+| --- | --- |
+| M10 · Regex reference | Browse common patterns at `/regex/`, try them on your own text with C# or JavaScript, and transfer your Regex tags and favorites. |
+
 ## Shipped
 
 | Milestone | What shipped |
