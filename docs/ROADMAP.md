@@ -1,6 +1,6 @@
 # CodeFolio roadmap
 
-CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath snippets. Use the builder to customize an example, copy the generated code, or save your settings for later in the same browser. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
+CodeFolio is a searchable Regex reference with Try It for C#, JavaScript, Python, PCRE2, and Go. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/). The original snippet workspace now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/).
 
 ## Shipped
 
@@ -20,3 +20,4 @@ CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath
 | M12 · Python Regex | Browse, test, and save Python patterns using Python’s standard `re` engine. |
 | M13 · PCRE2 | Browse, test, and save patterns using PCRE2. See how to wrap raw expressions for PHP’s `preg_match`. |
 | M14 · Go Regex | Browse, test, and save patterns using Go’s standard `regexp` engine, with guidance on Go’s syntax and match offsets. Manual iPhone Safari verification is complete. |
+| M15 · Playground split | Made Regex the CodeFolio home page and moved the original snippet workspace to Playground. Existing snippet links forward to their new home. |

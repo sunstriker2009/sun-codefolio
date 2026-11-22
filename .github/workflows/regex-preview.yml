@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/regex-preview.yml'
+      - 'index.html'
+      - 'redirect.mjs'
       - 'tools/regex-preview/**'
       - 'tests/runtime/regex/**'
       - 'shared/**'
@@ -27,7 +29,7 @@ jobs:
       - name: Build Regex preview
         run: |
           preview="$RUNNER_TEMP/codefolio-regex-preview"
-          bash tools/regex-preview/build-preview.sh "$preview" --regex-only
+          bash tools/regex-preview/build-preview.sh "$preview"
           test ! -e "$preview/sun-codefolio/app"
       - uses: actions/setup-node@v4
         with:

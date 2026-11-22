@@ -41,7 +41,8 @@ try {
     return Math.round(performance.now() - start);
   }
 
-  await page.goto(regex.href);
+  await page.goto(root.href);
+  await page.waitForURL(regex.href);
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
   assert.equal(await page.getByLabel('Platform', { exact: true }).count(), 0);
   assert.equal(requests.some(url => url.includes('/_framework/')), false);
