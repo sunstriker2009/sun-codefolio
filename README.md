@@ -55,6 +55,12 @@ Run the C# Regex runtime tests with Node.js 24 and the .NET 10 SDK. The console 
 dotnet run --project tests/runtime/csharp/CodeFolio.CSharp.RuntimeTests.csproj --configuration Release
 ```
 
+Run the Git runtime tests with Node.js 24, Git, and a POSIX shell. The suite executes generated commands against a temporary repository with known history, branches, and tags. GitHub Actions runs the same command.
+
+```sh
+node --test tests/runtime/git/catalog.test.mjs
+```
+
 Keep runtime suites under `tests/runtime/<catalog>`. Add C# cases in `tests/runtime/csharp/generate-tests.mjs` with the snippet ID, any input overrides, and assertions for the generated code’s behavior.
 
 When changing the page markup or frontend modules together, update their asset version query strings in `index.html` and `app/workspace.mjs` so a browser can fetch the matching files after a Pages deployment.
