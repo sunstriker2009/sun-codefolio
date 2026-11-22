@@ -17,6 +17,12 @@ function csharpStringLiteral(value) {
     '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
+function csharpMultilineLiteral(value) {
+  const lines = value.split('\n');
+  return lines.map((line, index) =>
+    csharpStringLiteral(index < lines.length - 1 ? line + '\n' : line)).join(' +\n    ');
+}
+
 const regexTimeoutField = {
   id: 'timeout', type: 'integer', label: 'Match timeout (milliseconds)', default: 250,
   min: 10, max: 5000, hint: 'Enter a match timeout from 10 to 5000 milliseconds.',
@@ -402,7 +408,7 @@ export const snippets = [
     keywords: 'csharp dotnet regex source generator compile time partial method ticket id validate full string',
     aliases: ['GeneratedRegex', '[GeneratedRegex(', 'regex source generator'],
     useCases: ['Validate ticket identifiers in an application', 'Reuse a constant regex pattern across calls'],
-    relatedIds: ['csharp-regex-named-group', 'csharp-regex-escape-literal'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-escape-literal', 'csharp-regex-mask-ids', 'csharp-regex-match-timeout'],
     example: 'Validate identifiers like OPS-0042 using the prefix OPS and four digits.',
     prerequisites: 'A .NET 7 or later project. Put the generated class in its own source file and call TicketIds.Pattern().IsMatch(ticketId) within the project.',
     expected: 'With the default settings, OPS-0042 matches. OPS-42, lowercase ops-0042, and OPS-0042 followed by a newline fail.',
@@ -468,7 +474,7 @@ export const snippets = [
     keywords: 'csharp dotnet regex matches multiline named groups structured log parsing severity',
     aliases: ['Regex.Matches', 'multiline log parsing'],
     useCases: ['Extract error and warning records from application logs', 'Parse multiple log lines into structured records'],
-    relatedIds: ['csharp-regex-named-group', 'csharp-regex-escape-literal'],
+    relatedIds: ['csharp-regex-named-group', 'csharp-regex-escape-literal', 'csharp-regex-mask-ids', 'csharp-regex-match-timeout'],
     example: 'Parse a four-line worker log with INFO, WARN, and ERROR records and a continuation line.',
     prerequisites: 'System, System.Linq, and System.Text.RegularExpressions in scope. Each record starts with a UTC timestamp in yyyy-MM-ddTHH:mm:ssZ form, followed by INFO, WARN, or ERROR and a message.',
     expected: 'The default search returns three records in input order. The WARN record has Timestamp 2026-11-21T09:10:03Z and Message “Queue depth is 42”. Choosing Warnings and errors returns the final two records.',
@@ -497,11 +503,8 @@ export const snippets = [
       const severity = { all: 'INFO|WARN|ERROR', warnings: 'WARN|ERROR', errors: 'ERROR' }[levels];
       const pattern = '^(?<timestamp>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)'
         + '[ \\t]+(?<level>' + severity + ')[ \\t]+(?<message>[^ \\t\\r\\n][^\\r\\n]*)\\r?$';
-      const lines = input.split('\n');
-      const log = lines.map((line, index) =>
-        csharpStringLiteral(index < lines.length - 1 ? line + '\n' : line)).join(' +\n    ');
       return [
-        'var log = ' + log + ';',
+        'var log = ' + csharpMultilineLiteral(input) + ';',
         'var records = Regex.Matches(log, ' + csharpStringLiteral(pattern) + ',',
         '        RegexOptions.Multiline | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(' + timeout + '))',
         '    .Cast<Match>()',
@@ -514,6 +517,86 @@ export const snippets = [
         '    .ToArray();',
       ].join('\n');
     },
+  },
+  {
+    id: 'csharp-regex-mask-ids',
+    topic: 'Regex',
+    language: 'C#',
+    title: 'Mask IDs while keeping the last four digits',
+    description: 'Use a Regex match evaluator to mask the leading digits of a labeled numeric ID while retaining its last four digits.',
+    keywords: 'csharp dotnet regex replace mask redact identifiers trailing digits logs match evaluator',
+    aliases: ['MatchEvaluator', 'mask IDs'],
+    useCases: ['Mask numeric account IDs in logs', 'Keep the last four digits of an identifier'],
+    relatedIds: ['csharp-regex-multiline-logs', 'csharp-regex-reformat-date', 'csharp-regex-match-timeout'],
+    example: 'Mask accountId=1234567890 in a log line that also contains requestId=9876543210.',
+    prerequisites: 'C# 8 or later with System and System.Text.RegularExpressions in scope. Enter a case-sensitive field label. The example recognizes fields separated by whitespace, commas, or semicolons, and accepts = or : after the label.',
+    expected: 'The default inputs produce accountId=******7890 requestId=9876543210.',
+    effects: 'Returns a new string. IDs with four or fewer digits, mixed alphanumeric IDs, and other fields stay as written. Matching can throw RegexMatchTimeoutException.',
+    fields: [
+      {
+        id: 'input', type: 'text', multiline: true, label: 'Log text', allowEmpty: true,
+        default: 'accountId=1234567890 requestId=9876543210',
+      },
+      { id: 'label', type: 'text', label: 'ID label', default: 'accountId' },
+      {
+        id: 'mask', type: 'choice', label: 'Mask character', default: '*',
+        options: [{ value: '*', label: 'Asterisk (*)' }, { value: 'X', label: 'X' }],
+      },
+      regexTimeoutField,
+    ],
+    render: ({ input, label, mask, timeout }) => [
+      'var input = ' + csharpMultilineLiteral(input) + ';',
+      'var label = Regex.Escape(' + csharpStringLiteral(label) + ');',
+      String.raw`var pattern = $@"(?<![^\s,;])(?<prefix>{label}[ \t]*[:=][ \t]*)(?<id>[0-9]{{5,}})(?=\z|[\s,;])";`,
+      'var masked = Regex.Replace(input, pattern, match =>',
+      '{',
+      '    var id = match.Groups["id"].Value;',
+      '    return match.Groups["prefix"].Value + new string(\'' + mask + '\', id.Length - 4) + id[^4..];',
+      '}, RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(' + timeout + '));',
+    ].join('\n'),
+  },
+  {
+    id: 'csharp-regex-match-timeout',
+    topic: 'Regex',
+    language: 'C#',
+    title: 'Handle a Regex match timeout',
+    description: 'Set a match timeout and handle three outcomes separately: a match, no match, and a timed-out attempt.',
+    keywords: 'csharp dotnet regex ismatch time limit timeout exception nullable bool',
+    aliases: ['RegexMatchTimeoutException', 'regex match timeout'],
+    useCases: ['Distinguish a timeout from no match', 'Handle a regex match that exceeds its time limit'],
+    relatedIds: ['csharp-regex-multiline-logs', 'csharp-regex-mask-ids', 'csharp-regex-generated'],
+    example: 'Check a release label against an anchored pattern and map the result to a status message.',
+    prerequisites: 'C# 8 or later with System and System.Text.RegularExpressions in scope. Enter a valid .NET regex pattern.',
+    expected: 'The default inputs produce “Matched”. Input containing a space produces “No match”. If matching exceeds the time limit, the result is “Timed out”.',
+    effects: 'Returns null for a timeout. Invalid patterns still raise an exception.',
+    fields: [
+      { id: 'input', type: 'text', multiline: true, label: 'Input text', default: 'release-2026', allowEmpty: true },
+      { id: 'pattern', type: 'text', label: 'Regex pattern', default: String.raw`\A[a-z][a-z0-9-]{2,31}\z` },
+      regexTimeoutField,
+    ],
+    render: ({ input, pattern, timeout }) => [
+      'static bool? TryMatch(string input, string pattern)',
+      '{',
+      '    try',
+      '    {',
+      '        return Regex.IsMatch(input, pattern, RegexOptions.CultureInvariant,',
+      '            TimeSpan.FromMilliseconds(' + timeout + '));',
+      '    }',
+      '    catch (RegexMatchTimeoutException)',
+      '    {',
+      '        return null;',
+      '    }',
+      '}',
+      '',
+      'var input = ' + csharpMultilineLiteral(input) + ';',
+      'var outcome = TryMatch(input, ' + csharpStringLiteral(pattern) + ');',
+      'var message = outcome switch',
+      '{',
+      '    true => "Matched",',
+      '    false => "No match",',
+      '    null => "Timed out",',
+      '};',
+    ].join('\n'),
   },
 ];
 

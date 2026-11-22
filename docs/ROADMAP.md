@@ -10,7 +10,7 @@
 | M3 · First release | Complete | Ship a reviewed catalog and verify the two workflows on the first supported hosting target |
 | M4 · Catalog expansion | Complete | Two Git history tasks and a focused C# Regex collection |
 | M5 · UI refinement | Complete | Mobile snippet navigation, simpler search filters, and easier access to snippet actions |
-| M6 · Practical C# Regex | In progress | Structured log extraction, match-dependent masking, and timeout handling |
+| M6 · Practical C# Regex | Complete | Structured log extraction, match-dependent masking, and timeout handling |
 
 ## M0 · Starter workspace
 
@@ -68,8 +68,8 @@ Complete this pass before expanding the catalogs again.
 ## M6 · Practical C# Regex
 
 - [x] **Multiline log extraction.** Turn timestamped lines into records with configurable level selection and a match timeout. Check Unix and Windows line endings, blank messages, and continuation lines against .NET 10.
-- [ ] **Mask identifiers.** Preserve the final four digits with a match evaluator.
-- [ ] **Handle match timeouts.** Give callers a distinct result when a regex match exceeds its timeout.
+- [x] **Mask identifiers.** Preserve the final four digits with a match evaluator.
+- [x] **Handle match timeouts.** Give callers a distinct result when a regex match exceeds its timeout.
 
 ## Future work
 
