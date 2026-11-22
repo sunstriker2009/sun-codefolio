@@ -3,9 +3,10 @@ const whole = (source) => ({
   javascript: '^(?:' + source + ')(?![\\s\\S])',
   python: '\\A(?:' + source + ')\\Z',
   pcre2: '\\A(?:' + source + ')\\z',
+  go: '\\A(?:' + source + ')\\z',
 });
 
-export const platforms = { csharp: 'C# / .NET 10', javascript: 'JavaScript', python: 'Python', pcre2: 'PCRE2' };
+export const platforms = { csharp: 'C# / .NET 10', javascript: 'JavaScript', python: 'Python', pcre2: 'PCRE2', go: 'Go' };
 
 export const patterns = [
   {

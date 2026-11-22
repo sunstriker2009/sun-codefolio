@@ -19,9 +19,4 @@ CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath
 | M11 · Custom Regex patterns | Create, edit, duplicate, and test your own patterns with a separate expression per platform. Transfer custom patterns, tags, and favorites in a JSON backup. |
 | M12 · Python Regex | Browse, test, and save Python patterns using Python’s standard `re` engine. |
 | M13 · PCRE2 | Browse, test, and save patterns using PCRE2. See how to wrap raw expressions for PHP’s `preg_match`. |
-
-## Planned
-
-| Milestone | What to expect |
-| --- | --- |
-| M14 · Go Regex | Test patterns with Go’s standard `regexp` engine and see where its syntax differs. |
+| M14 · Go Regex | Browse, test, and save patterns using Go’s standard `regexp` engine, with guidance on Go’s syntax and match offsets. |

@@ -43,6 +43,11 @@ jobs:
       - name: Install .NET WebAssembly tools
         if: steps.source.outputs.type == 'workflow'
         run: dotnet workload install wasm-tools --skip-manifest-update
+      - uses: actions/setup-go@v6
+        if: steps.source.outputs.type == 'workflow'
+        with:
+          go-version-file: 'tools/regex-preview/.go-version'
+          cache: false
       - name: Build site
         if: steps.source.outputs.type == 'workflow'
         run: bash tools/regex-preview/build-preview.sh "$RUNNER_TEMP/codefolio-pages"

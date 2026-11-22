@@ -15,6 +15,7 @@ cp -R "$repo_root/app" "$repo_root/branding" "$site_dir/"
 cp -R "$publish_dir/wwwroot/." "$site_dir/regex/"
 bash "$repo_root/tools/regex-preview/install-python-runtime.sh" "$site_dir/regex"
 bash "$repo_root/tools/regex-preview/install-pcre2-runtime.sh" "$site_dir/regex"
+bash "$repo_root/tools/regex-preview/build-go-runtime.sh" "$site_dir/regex"
 sed 's/id="site-nav" aria-label="CodeFolio" hidden/id="site-nav" aria-label="CodeFolio"/' \
   "$repo_root/index.html" > "$site_dir/index.html"
 
