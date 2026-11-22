@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { buildSnippet, defaultValues, snippets } from '../../../app/catalog.mjs';
+import { linqCases } from './linq-cases.mjs';
 
 const parser = 'csharp-regex-multiline-logs';
 const masking = 'csharp-regex-mask-ids';
@@ -104,9 +105,10 @@ const cases = [
       'catch (RegexParseException) { }',
     ],
   },
+  ...linqCases,
 ];
 
-function generateCase({ name, id, values, assertions }) {
+function generateCase({ name, id, values, setup = [], assertions }) {
   const snippet = snippets.find((entry) => entry.id === id);
   if (!snippet) throw new Error(`Missing catalog snippet: ${id}`);
   const { output, error } = buildSnippet(snippet, { ...defaultValues(snippet), ...values });
@@ -115,7 +117,7 @@ function generateCase({ name, id, values, assertions }) {
   return [
     `Console.WriteLine(${JSON.stringify(`${id}: ${name}`)});`,
     '{',
-    ...[...output.split('\n'), ...assertions].map((line) => line ? '    ' + line : ''),
+    ...[...setup, ...output.split('\n'), ...assertions].map((line) => line ? '    ' + line : ''),
     '}',
   ].join('\n');
 }

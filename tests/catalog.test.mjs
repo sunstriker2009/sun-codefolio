@@ -473,3 +473,27 @@ test('scoped personal backups merge tags and favorites without duplicates or dat
   assert.deepEqual(repeated.tags, merged.tags);
   assert.deepEqual(repeated.favorites, merged.favorites);
 });
+
+test('practical LINQ snippets are searchable by task and syntax within C# LINQ', () => {
+  const scope = { language: 'C#', topic: 'LINQ' };
+  for (const [id, task, syntax] of [
+    ['csharp-linq-latest-per-group', 'Select the latest record per account', 'ThenByDescending('],
+    ['csharp-linq-join-by-key', 'Join orders and customers by customer ID', 'Enumerable.LeftJoin'],
+    ['csharp-linq-duplicate-keys', 'Find repeated records using multiple key fields', 'GroupBy(row => (row.Warehouse, row.Sku))'],
+  ]) {
+    assert.equal(browseSnippets(task, scope)[0].id, id);
+    assert.equal(browseSnippets(syntax, scope)[0].id, id);
+  }
+});
+
+test('practical LINQ builders switch query options and can omit sample data', () => {
+  const latest = byId('csharp-linq-latest-per-group');
+  const join = byId('csharp-linq-join-by-key');
+  const duplicates = byId('csharp-linq-duplicate-keys');
+  const customLatest = buildSnippet(latest, { tieBreak: 'lowest', includeSample: false });
+  assert.match(customLatest.output, /\.ThenBy\(/);
+  assert.doesNotMatch(customLatest.output, /var updates/);
+  assert.match(buildSnippet(join, { joinType: 'left', includeSample: true }).output, /\.LeftJoin\(customers/);
+  assert.equal(buildSnippet(join, { joinType: 'other', includeSample: true }).fieldId, 'joinType');
+  assert.equal(buildSnippet(duplicates, { minCount: 1, includeSample: true }).fieldId, 'minCount');
+});

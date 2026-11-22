@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=catalog-filter-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=linq-m8-1';
 import { restoreValues } from './parameters.mjs';
-import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=catalog-filter-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-filter-1';
+import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=linq-m8-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=linq-m8-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=catalog-filter-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=linq-m8-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');

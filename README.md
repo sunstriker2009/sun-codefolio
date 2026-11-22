@@ -51,7 +51,7 @@ Run the catalog checks with Node.js 24.
 node --test tests/catalog.test.mjs
 ```
 
-Run the C# Regex runtime tests with Node.js 24 and the .NET 10 SDK. The console project uses the catalog builder to generate C# during the build, then compiles and executes it. GitHub Actions runs the same command.
+Run the C# Regex and LINQ runtime tests with Node.js 24 and the .NET 10 SDK. The console project uses the catalog builder to generate C# during the build, then compiles and executes it. GitHub Actions runs the same command.
 
 ```sh
 dotnet run --project tests/runtime/csharp/CodeFolio.CSharp.RuntimeTests.csproj --configuration Release
