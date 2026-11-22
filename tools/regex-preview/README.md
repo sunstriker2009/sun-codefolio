@@ -1,6 +1,6 @@
 # CodeFolio Regex reference
 
-The Regex reference runs JavaScript in a browser worker and starts .NET 10 WebAssembly on the first C# test. The engine processes text locally. Regex backups include tags and favorites.
+The Regex reference runs JavaScript in a browser worker and starts .NET 10 WebAssembly on the first C# test. The engine processes text locally. Custom patterns have a title and an expression for each platform you supply. Each engine validates its expressions before save or import. Regex backups include custom patterns, tags, and favorites.
 
 ## Build and run
 

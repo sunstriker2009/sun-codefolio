@@ -36,7 +36,7 @@ export const patterns = [
     expressions: { csharp: String.raw`[ \t]+`, javascript: String.raw`[ \t]+` },
     examples: { match: 'one\t two', noMatch: 'one\ntwo' },
   },
-];
+].map(entry => ({ ...entry, source: 'native' }));
 
 export function matchJavaScript(pattern, text) {
   const match = new RegExp(pattern).exec(text);

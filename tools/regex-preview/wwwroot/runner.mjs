@@ -21,19 +21,20 @@ export function createRunner(platform) {
   function send() {
     clearTimeout(pending.timer);
     pending.timer = setTimeout(() => stop('timeout'), 2000);
-    worker.postMessage({ pattern: pending.pattern, input: pending.input });
+    const { pattern, input, operation } = pending;
+    worker.postMessage({ pattern, input, operation });
   }
 
-  return (pattern, input) => new Promise((resolve) => {
+  return (pattern, input, operation = 'match') => new Promise((resolve) => {
     if (pending) stop('canceled');
-    pending = { pattern, input, resolve, timer: setTimeout(() => stop('load-error'), 30_000) };
+    pending = { pattern, input, operation, resolve, timer: setTimeout(() => stop('load-error'), 30_000) };
     if (ready) {
       send();
       return;
     }
 
     try {
-      const url = new URL('./regex-worker.mjs?v=regex-reference-1', import.meta.url);
+      const url = new URL('./regex-worker.mjs?v=regex-custom-1', import.meta.url);
       url.searchParams.set('platform', platform);
       const current = new Worker(url, { type: 'module' });
       worker = current;

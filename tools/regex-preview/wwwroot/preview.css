@@ -1,6 +1,6 @@
 .regex-reference > .intro { padding: 1rem 0 .85rem; }
 .regex-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .6rem; max-width: 42rem; }
-.regex-search select, #detail-platform { width: auto; }
+#detail-platform { width: auto; }
 .regex-detail-top, .pattern-navigation { display: flex; flex-wrap: wrap; gap: .4rem; }
 .regex-detail-top { justify-content: space-between; align-items: center; margin-bottom: .45rem; }
 .pattern-navigation { margin-inline-start: auto; }
@@ -28,3 +28,9 @@
 @media (max-width: 720px) {
   .regex-reference.mobile-detail .regex-detail-top { position: sticky; top: .5rem; z-index: 1; background: var(--surface); }
 }
+
+#custom-expression { grid-column: 1 / -1; margin: 0; border: 0; background: transparent; }
+#pattern-display:has(.pattern-placeholder) { color: var(--muted); }
+#pattern-name-field, #delete-pattern { margin-top: .65rem; }
+#editor-status:empty { min-height: 0; margin: 0; }
+#editor-status { overflow-wrap: anywhere; }

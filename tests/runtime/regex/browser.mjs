@@ -31,13 +31,18 @@ try {
   async function run(text, expected) {
     await input.fill(text);
     await test.click();
-    await page.locator('#test-status').getByText(expected, { exact: true }).waitFor();
+    const status = page.locator('#test-status');
+    try {
+      await status.getByText(expected, { exact: true }).waitFor();
+    } catch (error) {
+      throw new Error('Expected ' + expected + ' but saw ' + await status.textContent(), { cause: error });
+    }
   }
 
   await page.goto(root.href);
   await page.getByRole('navigation', { name: 'CodeFolio' }).getByRole('link', { name: 'Regex' }).click();
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
-  assert.equal(await page.getByLabel('Platform', { exact: true }).inputValue(), 'csharp');
+  assert.equal(await page.getByLabel('Platform', { exact: true }).count(), 0);
   assert.equal(requests.some(url => url.includes('/_framework/')), false);
 
   const search = page.getByPlaceholder('Search patterns');
@@ -85,7 +90,7 @@ try {
   await page.getByRole('button', { name: 'Back to results' }).click();
   await page.getByRole('heading', { name: 'Patterns (2)', exact: true }).waitFor();
   assert.equal(await search.inputValue(), 'ascii');
-  assert.equal(await page.getByLabel('Platform', { exact: true }).inputValue(), 'javascript');
+  assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
 
   for (const engine of ['javascript', 'csharp']) {
     for (const entry of patterns) {
@@ -134,7 +139,8 @@ try {
   const json = await readFile(await download.path(), 'utf8');
   assert.deepEqual(JSON.parse(json), {
     format: 'codefolio.regex-backup',
-    version: 1,
+    version: 2,
+    customPatterns: [],
     tags: { 'signed-integer': ['Numbers'], 'spaces-tabs': ['Layout'] },
     favorites: ['signed-integer', 'spaces-tabs'],
   });
@@ -146,11 +152,11 @@ try {
   await page.locator('#backup-file').setInputFiles({
     name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(json),
   });
-  await page.getByText('Imported 2 tags and 2 favorites.', { exact: true }).waitFor();
+  await page.getByText('Imported 0 patterns, 2 tags, and 2 favorites.', { exact: true }).waitFor();
   await page.locator('#backup-file').setInputFiles({
     name: download.suggestedFilename(), mimeType: 'application/json', buffer: Buffer.from(json),
   });
-  await page.getByText('Imported 0 tags and 0 favorites.', { exact: true }).waitFor();
+  await page.getByText('Imported 0 patterns, 0 tags, and 0 favorites.', { exact: true }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
   await page.setViewportSize({ width: 1280, height: 850 });
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
@@ -159,8 +165,98 @@ try {
   const copyBox = await page.locator('.pattern-field').getByRole('button', { name: 'Copy pattern' }).boundingBox();
   assert.ok(patternBox && copyBox && copyBox.x > patternBox.x);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 1280);
+  await page.setViewportSize({ width: 390, height: 850 });
+  await page.goto(regex.href);
+  const customCsharp = patterns.find(entry => entry.id === 'signed-integer').expressions.csharp;
+  await page.getByRole('button', { name: 'New pattern' }).click();
+  const title = page.getByLabel('Pattern title');
+  const expression = page.getByLabel('Pattern expression');
+  const engine = page.getByLabel('Detail platform');
+  const save = page.getByRole('button', { name: 'Save pattern' });
+  const editorStatus = page.locator('#editor-status');
+  assert.equal(await expression.getAttribute('placeholder'), 'Not provided');
+  assert.equal(await test.isDisabled(), true);
+  await save.click();
+  await editorStatus.getByText('Enter a pattern title.').waitFor();
+  await title.fill('Portable example');
+  await save.click();
+  await editorStatus.getByText('Enter a pattern for at least one platform.').waitFor();
+  await expression.fill('(');
+  await save.click();
+  await editorStatus.getByText(/C# \/ \.NET 10/).waitFor();
+  assert.equal(await expression.getAttribute('aria-invalid'), 'true');
+
+  await expression.fill(customCsharp);
+  await engine.selectOption('javascript');
+  assert.equal(await expression.inputValue(), '');
+  assert.equal(await test.isDisabled(), true);
+  await expression.fill('(');
+  await engine.selectOption('csharp');
+  assert.equal(await expression.inputValue(), customCsharp);
+  await save.click();
+  await editorStatus.getByText(/JavaScript/).waitFor();
+  assert.equal(await engine.inputValue(), 'javascript');
+  assert.equal(await expression.inputValue(), '(');
+  await expression.fill('^[a-z]+$');
+  await run('private-input', 'No match.');
+  await run('sample', 'Match.');
+  await save.click();
+  await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
+  const customUrl = page.url();
+  assert.match(new URL(customUrl).searchParams.get('pattern'), /^custom-/);
+  await page.getByRole('button', { name: 'Favorite', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expression.fill('');
+  assert.equal(await test.isDisabled(), true);
+  await save.click();
+  await page.getByText('Not provided', { exact: true }).waitFor();
+  assert.equal(await test.isDisabled(), true);
+  await engine.selectOption('csharp');
+  assert.equal(await page.locator('#pattern-source').textContent(), customCsharp);
+  assert.equal(await engine.inputValue(), 'csharp');
+  await run('42', 'Match.');
+
+  await page.getByRole('button', { name: 'Back to results' }).click();
+  const customDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  const customDownload = await customDownloadPromise;
+  const customJson = await readFile(await customDownload.path(), 'utf8');
+  const exported = JSON.parse(customJson);
+  assert.equal(exported.customPatterns.length, 1);
+  assert.equal(exported.customPatterns[0].source, 'custom');
+  assert.equal(exported.customPatterns[0].expressions.csharp, customCsharp);
+  assert.doesNotMatch(customJson, /private-input|sample/);
+
+  await page.evaluate(() => localStorage.removeItem('codefolio.regex-personal.v1'));
+  await page.reload();
+  const file = page.locator('#backup-file');
+  const upload = value => file.setInputFiles({
+    name: 'regex.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(value)),
+  });
+  const invalid = structuredClone(exported);
+  invalid.customPatterns[0].expressions.javascript = '(';
+  await upload(invalid);
+  await page.locator('#backup-status').getByText(/Portable example · JavaScript/).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await upload(exported);
+  await page.getByRole('heading', { name: 'Patterns (6)', exact: true }).waitFor();
+  await upload(exported);
+  await page.locator('#backup-status').getByText('Imported 0 patterns, 0 tags, and 0 favorites.', { exact: true }).waitFor();
+  await upload({ format: exported.format, version: 1, tags: { 'signed-integer': ['Legacy'] }, favorites: [] });
+  await page.locator('#backup-status').getByText('Imported 0 patterns, 1 tag, and 0 favorites.', { exact: true }).waitFor();
+
+  await page.goto(customUrl);
+  await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
+  assert.equal(await title.inputValue(), 'Portable example copy');
+  await engine.selectOption('csharp');
+  assert.equal(await expression.inputValue(), customCsharp);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Delete pattern', exact: true }).click();
+  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
   assert.deepEqual(errors, []);
-  console.log('Verified both engines, captures, copy, inline count, detail platform, previous/next, OR tags, and backup round trips.');
+  console.log('Verified native patterns, engine-specific validation, saved custom variants, editing, duplication, deletion, and backup round trips.');
 } finally {
   await browser.close();
 }
