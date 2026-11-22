@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=multi-tags-1">
+  <link rel="stylesheet" href="./app/styles.css?v=catalog-filter-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=multi-tags-1').then(
+    import('./app/workspace.mjs?v=catalog-filter-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -34,6 +34,10 @@
       <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
       <details id="search-filters" class="search-filters">
         <summary>Filters</summary>
+        <details id="catalog-disclosure" class="catalog-navigation">
+          <summary>Catalogs</summary>
+          <nav id="catalog-menu" aria-label="Snippet catalog"></nav>
+        </details>
         <details id="tag-filter" class="tag-filter">
           <summary>Tags</summary>
           <div id="tag-filter-options" class="tag-filter-options" role="group" aria-label="Filter by tags"></div>
@@ -47,33 +51,27 @@
       <ul id="active-filters" class="active-filters" aria-label="Active filters" hidden></ul>
     </section>
     <div class="layout">
-      <div class="catalog-sidebar">
-        <details id="catalog-disclosure" class="catalog-navigation">
-          <summary>Browse catalog</summary>
-          <nav id="catalog-menu" aria-label="Snippet catalog"></nav>
-        </details>
-        <section aria-labelledby="browse-heading" class="browse">
-          <h2 id="browse-heading" tabindex="-1">All snippets</h2>
-          <p id="workspace-status" class="muted" role="status">Loading snippets…</p>
-          <section id="variant-tools" aria-label="Personal backups" hidden>
-            <div class="variant-transfer">
-              <button type="button" id="export-variants" aria-label="Export personal backup">Export</button>
-              <button type="button" id="import-variants" aria-label="Import personal backup">Import</button>
-              <button type="button" id="share-variants">Share</button>
-              <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
-            </div>
-            <p id="variant-transfer-status" class="muted" role="status"></p>
-          </section>
-          <p id="result-count" class="muted" role="status"></p>
-          <nav id="pagination" class="pagination" aria-label="Result pages" hidden>
-            <button type="button" id="previous-page" aria-label="Previous page">Previous</button>
-            <span id="page-number" role="status"></span>
-            <button type="button" id="next-page" aria-label="Next page">Next</button>
-          </nav>
-          <ul id="results" class="results"></ul>
-          <p id="no-results" class="muted" hidden>Try a different search term.</p>
+      <section aria-labelledby="browse-heading" class="browse">
+        <h2 id="browse-heading" tabindex="-1">All snippets</h2>
+        <p id="workspace-status" class="muted" role="status">Loading snippets…</p>
+        <section id="variant-tools" aria-label="Personal backups" hidden>
+          <div class="variant-transfer">
+            <button type="button" id="export-variants" aria-label="Export personal backup">Export</button>
+            <button type="button" id="import-variants" aria-label="Import personal backup">Import</button>
+            <button type="button" id="share-variants">Share</button>
+            <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
+          </div>
+          <p id="variant-transfer-status" class="muted" role="status"></p>
         </section>
-      </div>
+        <p id="result-count" class="muted" role="status"></p>
+        <nav id="pagination" class="pagination" aria-label="Result pages" hidden>
+          <button type="button" id="previous-page" aria-label="Previous page">Previous</button>
+          <span id="page-number" role="status"></span>
+          <button type="button" id="next-page" aria-label="Next page">Next</button>
+        </nav>
+        <ul id="results" class="results"></ul>
+        <p id="no-results" class="muted" hidden>Try a different search term.</p>
+      </section>
       <section id="detail" class="panel" aria-labelledby="snippet-title" hidden>
         <button type="button" id="back-to-results">← Back to results</button>
         <p id="snippet-language" class="language"></p>
