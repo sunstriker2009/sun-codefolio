@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Test both engines in Chromium
+      - name: Test all three engines in Chromium
         run: |
           npm install --prefix "$RUNNER_TEMP/regex-tests" --no-audit --no-fund playwright@1.62.1
           "$RUNNER_TEMP/regex-tests/node_modules/.bin/playwright" install --with-deps chromium

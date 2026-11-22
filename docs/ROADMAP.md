@@ -17,3 +17,11 @@ CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath
 | M8 · Practical C# LINQ | Added examples for selecting the latest record per group, joining collections by key, and finding duplicates by a composite key. |
 | M10 · Regex reference | Browse and test common patterns at `/regex/` with C# and JavaScript. |
 | M11 · Custom Regex patterns | Create, edit, duplicate, and test your own patterns with a separate expression per platform. Transfer custom patterns, tags, and favorites in a JSON backup. |
+| M12 · Python Regex | Browse, test, and save Python patterns using Python’s standard `re` engine. |
+
+## Planned
+
+| Milestone | What to expect |
+| --- | --- |
+| M13 · PCRE2 | Test the PCRE2 regex dialect and learn how to use patterns with PHP. |
+| M14 · Go Regex | Test patterns with Go’s standard `regexp` engine and see where its syntax differs. |

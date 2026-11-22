@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { patterns } from '../../../tools/regex-preview/wwwroot/patterns.mjs';
+import { patterns, platforms } from '../../../tools/regex-preview/wwwroot/patterns.mjs';
 
 const { chromium } = createRequire(import.meta.url)('playwright');
 const executablePath = process.env.CODEFOLIO_CHROMIUM_EXECUTABLE;
@@ -30,6 +30,7 @@ try {
 
   async function run(text, expected) {
     await input.fill(text);
+    const start = performance.now();
     await test.click();
     const status = page.locator('#test-status');
     try {
@@ -37,6 +38,7 @@ try {
     } catch (error) {
       throw new Error('Expected ' + expected + ' but saw ' + await status.textContent(), { cause: error });
     }
+    return Math.round(performance.now() - start);
   }
 
   await page.goto(root.href);
@@ -92,7 +94,19 @@ try {
   assert.equal(await search.inputValue(), 'ascii');
   assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
 
-  for (const engine of ['javascript', 'csharp']) {
+  const pythonRequests = () => requests.filter(url => url.includes('/_python/'));
+  const detailPlatform = page.getByLabel('Detail platform');
+  await page.goto(new URL('?pattern=signed-integer', regex).href);
+  await detailPlatform.selectOption('python');
+  assert.equal(pythonRequests().length, 0);
+  const firstPython = await run('-42', 'Match.');
+  const countAfterStart = pythonRequests().length;
+  assert.ok(pythonRequests().some(url => url.endsWith('/pyodide.asm.wasm')));
+  const repeatPython = await run('42', 'Match.');
+  assert.equal(pythonRequests().length, countAfterStart);
+  console.log(`Python at 390 px in Chromium: ${firstPython} ms first test, ${repeatPython} ms repeat test.`);
+
+  for (const engine of Object.keys(platforms)) {
     for (const entry of patterns) {
       const url = new URL(regex);
       url.searchParams.set('platform', engine);
@@ -168,6 +182,7 @@ try {
   await page.setViewportSize({ width: 390, height: 850 });
   await page.goto(regex.href);
   const customCsharp = patterns.find(entry => entry.id === 'signed-integer').expressions.csharp;
+  const customPython = String.raw`(?P<word>café)\b`;
   await page.getByRole('button', { name: 'New pattern' }).click();
   const title = page.getByLabel('Pattern title');
   const expression = page.getByLabel('Pattern expression');
@@ -200,6 +215,20 @@ try {
   await expression.fill('^[a-z]+$');
   await run('private-input', 'No match.');
   await run('sample', 'Match.');
+  await engine.selectOption('python');
+  await expression.fill('(?P<word>');
+  await engine.selectOption('javascript');
+  await save.click();
+  await editorStatus.getByText(/Python · .*unterminated/).waitFor();
+  assert.equal(await engine.inputValue(), 'python');
+  assert.equal(await expression.getAttribute('aria-invalid'), 'true');
+  await expression.fill('^(a+)+$');
+  await run('a'.repeat(100) + '!', 'The match timed out. Try shorter text.');
+  await expression.fill(customPython);
+  await run('😀 café', 'Match.');
+  assert.match(await page.locator('#match-result').textContent(), /Matched "café" at index 3/);
+  assert.match(await page.locator('#match-result').textContent(), /Group 1 · "café"/);
+  await engine.selectOption('javascript');
   await save.click();
   await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
   const customUrl = page.url();
@@ -225,6 +254,7 @@ try {
   assert.equal(exported.customPatterns.length, 1);
   assert.equal(exported.customPatterns[0].source, 'custom');
   assert.equal(exported.customPatterns[0].expressions.csharp, customCsharp);
+  assert.equal(exported.customPatterns[0].expressions.python, customPython);
   assert.doesNotMatch(customJson, /private-input|sample/);
 
   await page.evaluate(() => localStorage.removeItem('codefolio.regex-personal.v1'));
@@ -238,6 +268,11 @@ try {
   await upload(invalid);
   await page.locator('#backup-status').getByText(/Portable example · JavaScript/).waitFor();
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  invalid.customPatterns[0].expressions.javascript = '';
+  invalid.customPatterns[0].expressions.python = '(?P<word>';
+  await upload(invalid);
+  await page.locator('#backup-status').getByText(/Portable example · Python/).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
   await upload(exported);
   await page.getByRole('heading', { name: 'Patterns (6)', exact: true }).waitFor();
   await upload(exported);
@@ -247,6 +282,8 @@ try {
 
   await page.goto(customUrl);
   await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
+  await engine.selectOption('python');
+  assert.equal(await page.locator('#pattern-source').textContent(), customPython);
   await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
   assert.equal(await title.inputValue(), 'Portable example copy');
   await engine.selectOption('csharp');

@@ -1,10 +1,10 @@
 # CodeFolio Regex reference
 
-The Regex reference runs JavaScript in a browser worker and starts .NET 10 WebAssembly on the first C# test. The engine processes text locally. Custom patterns have a title and an expression for each platform you supply. Each engine validates its expressions before save or import. Regex backups include custom patterns, tags, and favorites.
+The Regex reference runs C#, JavaScript, and Python in browser workers. The first test or validation for C# loads .NET 10 WebAssembly. The first one for Python loads Pyodide and runs CPython’s standard `re` module. Test text and custom expressions stay in the browser. Custom patterns have a title and an expression for each platform you supply. Each engine validates its expressions before save or import. Regex backups include custom patterns, tags, and favorites.
 
 ## Build and run
 
-Use the .NET 10 SDK and its WebAssembly workload. Build into a fresh output directory and serve it over HTTP.
+Use the .NET 10 SDK and its WebAssembly workload. The build downloads and verifies the pinned [Pyodide core runtime](https://github.com/pyodide/pyodide/tree/314.0.8) and publishes its browser assets alongside the site. Build into a fresh output directory and serve it over HTTP.
 
 ```sh
 dotnet workload install wasm-tools
