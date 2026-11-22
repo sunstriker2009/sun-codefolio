@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=multi-tags-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=catalog-filter-1';
 import { restoreValues } from './parameters.mjs';
-import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=multi-tags-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=multi-tags-1';
+import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=catalog-filter-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=catalog-filter-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=multi-tags-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=catalog-filter-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -26,7 +26,8 @@ const tagToggle = byId('toggle-tag-editor');
 const tagList = byId('snippet-tags');
 const tagStatus = byId('tag-status');
 const menu = byId('catalog-menu');
-const disclosure = byId('catalog-disclosure');
+const catalogFilter = byId('catalog-disclosure');
+const catalogFilterSummary = catalogFilter.querySelector('summary');
 const compactNavigation = matchMedia('(max-width: 720px)');
 const browseHeading = byId('browse-heading');
 const pagination = byId('pagination');
@@ -112,10 +113,8 @@ function changeBrowsePage(page, nextScope = scope) {
 
 function browseScope(nextScope) {
   changeBrowsePage(1, nextScope);
-  if (compactNavigation.matches) {
-    disclosure.open = false;
-    browseHeading.focus();
-  }
+  catalogFilter.open = false;
+  catalogFilterSummary.focus();
 }
 
 function scopeItem(label, language, topic = '') {
@@ -141,9 +140,7 @@ for (const [language, topics] of languages) {
   menu.append(group);
 }
 
-disclosure.open = !compactNavigation.matches;
-compactNavigation.addEventListener('change', (event) => {
-  disclosure.open = !event.matches;
+compactNavigation.addEventListener('change', () => {
   updateMobileDetail(readSnippetLink(location.search, snippets).snippet);
 });
 
@@ -161,6 +158,7 @@ function rememberMobileResults(snippetId) {
       search: search.value,
       selectedTags: [...selectedTags],
       tagFilterOpen: tagFilter.open,
+      catalogFilterOpen: catalogFilter.open,
       filtersOpen: searchFilters.open,
       scroll: window.scrollY,
       snippetId,
@@ -173,6 +171,7 @@ function restoreSearch(snapshot) {
   search.value = snapshot.search;
   selectedTags = new Set((snapshot.selectedTags ?? []).filter((key) => knownTagOptions.has(key)));
   tagFilter.open = Boolean(snapshot.tagFilterOpen);
+  catalogFilter.open = Boolean(snapshot.catalogFilterOpen);
   searchFilters.open = Boolean(snapshot.filtersOpen);
 }
 
@@ -300,6 +299,10 @@ function setPersonalFilter(key, checked) {
   changeBrowsePage(1, { ...scope, [key]: checked });
 }
 
+function catalogScopeLabel() {
+  return [scope.language, scope.topic].filter(Boolean).join(' / ');
+}
+
 function renderActiveFilters() {
   activeFilters.replaceChildren();
 
@@ -314,6 +317,10 @@ function renderActiveFilters() {
     activeFilters.append(row);
   }
 
+  const catalog = catalogScopeLabel();
+  if (catalog) {
+    addChip('Catalog: ' + catalog, catalogFilterSummary, () => changeBrowsePage(1, { ...scope, ...allSnippets }));
+  }
   for (const [key, { name, control }] of knownTagOptions) {
     control.checked = selectedTags.has(key);
     if (control.checked) {
@@ -393,8 +400,7 @@ function updateResults({ fromHistory = false } = {}) {
   const { page, pageCount, items } = paginateSnippets(ordered, currentPage);
   currentPage = page;
 
-  const scopeLabel = [scope.language, scope.topic].filter(Boolean).join(' / ');
-  browseHeading.textContent = scopeLabel || (searching ? 'Search results' : 'All snippets');
+  browseHeading.textContent = catalogScopeLabel() || (searching ? 'Search results' : 'All snippets');
   for (const { control, language, topic } of scopeButtons) {
     control.setAttribute('aria-pressed', scope.language === language && scope.topic === topic);
   }
