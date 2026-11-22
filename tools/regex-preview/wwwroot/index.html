@@ -8,8 +8,8 @@
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../app/styles.css?v=regex-reference-1">
-  <link rel="stylesheet" href="./preview.css?v=regex-reference-1">
-  <script type="module" src="./preview.mjs?v=regex-reference-1"></script>
+  <link rel="stylesheet" href="./preview.css?v=regex-compact-1">
+  <script type="module" src="./preview.mjs?v=regex-compact-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -23,11 +23,9 @@
     </nav>
   </header>
   <main class="container regex-reference">
-    <section class="intro" aria-labelledby="page-title">
-      <h1 id="page-title">Regex reference</h1>
-      <p>Find common patterns and test them against your own text.</p>
+    <section class="intro" aria-label="Search and filter patterns">
       <div class="regex-search">
-        <div><label for="pattern-search">Search patterns</label><input id="pattern-search" type="search" autocomplete="off"></div>
+        <div><input id="pattern-search" type="search" placeholder="Search patterns" aria-label="Search patterns" autocomplete="off"></div>
         <div>
           <label for="platform">Platform</label>
           <select id="platform"><option value="csharp">C# / .NET 10</option><option value="javascript">JavaScript</option></select>
@@ -46,8 +44,8 @@
     </section>
     <div class="layout">
       <section class="browse" aria-labelledby="pattern-list-title">
-        <h2 id="pattern-list-title" tabindex="-1">Patterns</h2>
-        <p id="pattern-count" class="muted" role="status">Loading patterns…</p>
+        <h2 id="pattern-list-title" tabindex="-1">Patterns <span id="pattern-count" aria-live="polite"></span></h2>
+        <p id="empty-patterns" class="muted" hidden>No patterns match these filters.</p>
         <ul id="patterns" class="results"></ul>
         <section id="backup-tools" aria-label="Regex backups">
           <div class="variant-transfer">
@@ -60,13 +58,18 @@
         </section>
       </section>
       <article id="detail" class="panel" aria-labelledby="pattern-title" hidden>
-        <button id="back-to-results" type="button">Back to results</button>
-        <p id="pattern-platform" class="language"></p>
+        <div class="regex-detail-top">
+          <button id="back-to-results" type="button">Back to results</button>
+          <nav class="pattern-navigation" aria-label="Pattern navigation">
+            <button id="previous-pattern" type="button" disabled>Previous</button>
+            <button id="next-pattern" type="button" disabled>Next</button>
+          </nav>
+        </div>
         <h2 id="pattern-title" tabindex="-1"></h2>
         <div class="snippet-actions">
           <button id="favorite" type="button" aria-pressed="false">Favorite</button>
-          <button id="copy-pattern" type="button">Copy pattern</button>
           <button id="copy-link" type="button">Copy link</button>
+          <select id="detail-platform" aria-label="Detail platform"><option value="csharp">C# / .NET 10</option><option value="javascript">JavaScript</option></select>
         </div>
         <p id="detail-status" class="muted" role="status"></p>
         <div id="copy-fallback" hidden>
@@ -74,7 +77,10 @@
           <input id="copy-value" readonly>
         </div>
         <p id="pattern-description" class="muted"></p>
-        <pre><code id="pattern-source"></code></pre>
+        <div class="pattern-field">
+          <pre><code id="pattern-source"></code></pre>
+          <button id="copy-pattern" type="button" aria-label="Copy pattern">Copy</button>
+        </div>
         <p id="pattern-mode" class="muted"></p>
         <section aria-labelledby="regex-tags-title">
           <div class="tag-heading">

@@ -20,6 +20,7 @@ try {
     Object.defineProperties(navigator, {
       canShare: { value: () => true },
       share: { value: async ({ files: [file] }) => { window.sharedBackup = await file.text(); } },
+      clipboard: { value: { writeText: async (value) => { window.copiedText = value; } } },
     });
   });
   const root = new URL(process.argv[2]);
@@ -35,9 +36,35 @@ try {
 
   await page.goto(root.href);
   await page.getByRole('navigation', { name: 'CodeFolio' }).getByRole('link', { name: 'Regex' }).click();
-  await page.getByRole('heading', { name: 'Regex reference' }).waitFor();
-  assert.equal(await page.getByLabel('Platform').inputValue(), 'csharp');
+  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  assert.equal(await page.getByLabel('Platform', { exact: true }).inputValue(), 'csharp');
   assert.equal(requests.some(url => url.includes('/_framework/')), false);
+
+  const search = page.getByPlaceholder('Search patterns');
+  const previous = page.getByRole('button', { name: 'Previous', exact: true });
+  const next = page.getByRole('button', { name: 'Next', exact: true });
+  await search.fill('ascii');
+  await page.getByRole('heading', { name: 'Patterns (2)', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'ASCII alphanumeric', exact: true }).click();
+  assert.equal(await previous.isDisabled(), true);
+  assert.equal(await next.isEnabled(), true);
+  await next.click();
+  await page.getByRole('heading', { name: 'Signed integer', exact: true }).waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('pattern'), 'signed-integer');
+  assert.equal(await next.isDisabled(), true);
+  await input.fill('+78');
+  await page.getByLabel('Detail platform').selectOption('javascript');
+  assert.equal(await input.inputValue(), '+78');
+  assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
+  await page.locator('.pattern-field').getByRole('button', { name: 'Copy pattern' }).click();
+  assert.equal(await page.evaluate(() => window.copiedText), patterns.find(entry => entry.id === 'signed-integer').expressions.javascript);
+  await previous.click();
+  await page.getByRole('heading', { name: 'ASCII alphanumeric', exact: true }).waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
+  await page.getByRole('button', { name: 'Back to results' }).click();
+  await page.getByRole('heading', { name: 'Patterns (2)', exact: true }).waitFor();
+  assert.equal(await search.inputValue(), 'ascii');
+  assert.equal(await page.getByLabel('Platform', { exact: true }).inputValue(), 'javascript');
 
   for (const engine of ['javascript', 'csharp']) {
     for (const entry of patterns) {
@@ -104,8 +131,15 @@ try {
   });
   await page.getByText('Imported 0 tags and 0 favorites.', { exact: true }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+  await page.setViewportSize({ width: 1280, height: 850 });
+  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByLabel('Detail platform').waitFor();
+  const patternBox = await page.locator('.pattern-field pre').boundingBox();
+  const copyBox = await page.locator('.pattern-field').getByRole('button', { name: 'Copy pattern' }).boundingBox();
+  assert.ok(patternBox && copyBox && copyBox.x > patternBox.x);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 1280);
   assert.deepEqual(errors, []);
-  console.log('Verified both engines, reference examples, captures, mobile navigation, OR tags, and backup round trips.');
+  console.log('Verified both engines, captures, copy, inline count, detail platform, previous/next, OR tags, and backup round trips.');
 } finally {
   await browser.close();
 }

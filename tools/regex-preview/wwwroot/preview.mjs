@@ -6,6 +6,9 @@ import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup,
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
 const platform = byId('platform');
+const detailPlatform = byId('detail-platform');
+const previous = byId('previous-pattern');
+const next = byId('next-pattern');
 const results = byId('patterns');
 const chips = byId('active-filters');
 const favorite = byId('favorite');
@@ -27,6 +30,8 @@ let personal = loadPersonalData();
 const selectedTags = new Set();
 const tagControls = new Map();
 let selected;
+let entries = [];
+let backPlatform;
 let testVersion = 0;
 let linked = false;
 
@@ -112,13 +117,17 @@ function renderResults() {
   chips.hidden = !chips.childElementCount;
 
   const query = search.value.trim().toLowerCase();
-  const entries = findTaggedSnippets(patterns, personal.tags, selectedTags)
+  entries = findTaggedSnippets(patterns, personal.tags, selectedTags)
     .filter(entry => !favoritesOnly.checked || personal.favorites.includes(entry.id))
     .filter(entry => [entry.title, entry.description, entry.expressions[platform.value]].some(text => text.toLowerCase().includes(query)))
     .sort((left, right) => Number(personal.favorites.includes(right.id)) - Number(personal.favorites.includes(left.id))
       || left.title.localeCompare(right.title));
 
-  byId('pattern-count').textContent = entries.length ? entries.length + (entries.length === 1 ? ' pattern' : ' patterns') : 'No patterns match these filters.';
+  byId('pattern-count').textContent = '(' + entries.length + ')';
+  byId('empty-patterns').hidden = Boolean(entries.length);
+  const selectedIndex = entries.indexOf(selected);
+  previous.disabled = selectedIndex <= 0;
+  next.disabled = selectedIndex < 0 || selectedIndex >= entries.length - 1;
   results.replaceChildren(...entries.map(entry => {
     const row = document.createElement('li');
     const link = document.createElement('a');
@@ -140,16 +149,30 @@ function renderResults() {
     link.addEventListener('click', event => {
       if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      const url = patternUrl(entry.id, platform.value);
-      if (url.href !== location.href) history.pushState({ regexResults: !linked }, '', url);
-      linked = true;
-      renderDetail(entry);
-      renderResults();
-      byId('pattern-title').focus();
+      openPattern(entry);
     });
     row.append(link);
     return row;
   }));
+}
+
+function openPattern(entry, step = false) {
+  const url = patternUrl(entry.id, platform.value);
+  if (url.href !== location.href) {
+    if (step && linked) history.replaceState(history.state, '', url);
+    else history.pushState({ regexResults: !linked }, '', url);
+  }
+  linked = true;
+  renderDetail(entry);
+  renderResults();
+  byId('pattern-title').focus();
+}
+
+for (const [control, offset] of [[previous, -1], [next, 1]]) {
+  control.addEventListener('click', () => {
+    const index = entries.indexOf(selected);
+    if (index >= 0 && entries[index + offset]) openPattern(entries[index + offset], true);
+  });
 }
 
 function clearTest() {
@@ -203,7 +226,7 @@ function renderDetail(entry) {
   detailStatus.textContent = '';
   byId('copy-fallback').hidden = true;
   byId('pattern-title').textContent = entry.title;
-  byId('pattern-platform').textContent = platforms[platform.value];
+  detailPlatform.value = platform.value;
   byId('pattern-description').textContent = entry.description;
   byId('pattern-source').textContent = entry.expressions[platform.value];
   byId('pattern-mode').textContent = entry.mode === 'whole' ? 'Validates the whole input' : 'Finds the first match within the input';
@@ -214,9 +237,13 @@ function renderDetail(entry) {
 
 function readLocation() {
   const query = new URLSearchParams(location.search);
-  const engine = query.get('platform');
+  const engine = backPlatform ?? query.get('platform');
   platform.value = Object.hasOwn(platforms, engine) ? engine : 'csharp';
   const entry = patterns.find(pattern => pattern.id === query.get('pattern'));
+  if (backPlatform) {
+    backPlatform = undefined;
+    history.replaceState(history.state, '', patternUrl(entry?.id, platform.value));
+  }
   linked = Boolean(entry);
   renderDetail(entry ?? patterns[0]);
   renderResults();
@@ -224,19 +251,29 @@ function readLocation() {
 
 search.addEventListener('input', renderResults);
 favoritesOnly.addEventListener('change', renderResults);
-platform.addEventListener('change', () => {
-  history.replaceState(history.state, '', patternUrl(linked ? selected.id : null, platform.value));
+function changePlatform(engine) {
+  platform.value = engine;
+  history.replaceState(history.state, '', patternUrl(linked ? selected.id : null, engine));
   renderDetail(selected);
   renderResults();
+}
+
+for (const control of [platform, detailPlatform]) {
+  control.addEventListener('change', () => changePlatform(control.value));
+}
+window.addEventListener('popstate', () => {
+  const returning = Boolean(backPlatform);
+  readLocation();
+  if (returning) byId('pattern-list-title').focus();
 });
-window.addEventListener('popstate', readLocation);
 byId('back-to-results').addEventListener('click', () => {
   if (history.state?.regexResults) {
+    backPlatform = platform.value;
     history.back();
-  } else {
-    history.replaceState(null, '', patternUrl(null, platform.value));
-    readLocation();
+    return;
   }
+  history.replaceState(null, '', patternUrl(null, platform.value));
+  readLocation();
   byId('pattern-list-title').focus();
 });
 
