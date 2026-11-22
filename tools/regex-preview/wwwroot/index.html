@@ -8,8 +8,8 @@
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../app/styles.css?v=regex-reference-1">
-  <link rel="stylesheet" href="./preview.css?v=regex-detail-1">
-  <script type="module" src="./preview.mjs?v=regex-detail-1"></script>
+  <link rel="stylesheet" href="./preview.css?v=regex-custom-1">
+  <script type="module" src="./preview.mjs?v=regex-custom-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -25,11 +25,8 @@
   <main class="container regex-reference">
     <section class="intro" aria-label="Search and filter patterns">
       <div class="regex-search">
-        <div><input id="pattern-search" type="search" placeholder="Search patterns" aria-label="Search patterns" autocomplete="off"></div>
-        <div>
-          <label for="platform">Platform</label>
-          <select id="platform"><option value="csharp">C# / .NET 10</option><option value="javascript">JavaScript</option></select>
-        </div>
+        <input id="pattern-search" type="search" placeholder="Search patterns" aria-label="Search patterns" autocomplete="off">
+        <button id="new-pattern" type="button">New pattern</button>
       </div>
       <details class="search-filters">
         <summary>Filters</summary>
@@ -66,6 +63,10 @@
           </nav>
         </div>
         <h2 id="pattern-title" tabindex="-1"></h2>
+        <div id="pattern-name-field" hidden>
+          <label for="custom-title">Pattern title</label>
+          <input id="custom-title" maxlength="100" autocomplete="off">
+        </div>
         <div class="snippet-actions">
           <button id="favorite" class="icon-button" type="button" aria-label="Favorite" title="Favorite" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.3-5.7-3-5.7 3 1.1-6.3-4.5-4.4 6.3-.9Z"/></svg>
@@ -73,14 +74,22 @@
           <button id="copy-link" class="icon-button" type="button" aria-label="Copy link" title="Copy link">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 13a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M14 11a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
           </button>
+          <button id="edit-pattern" type="button" hidden>Edit</button>
+          <button id="duplicate-pattern" type="button">Duplicate</button>
           <select id="detail-platform" aria-label="Detail platform"><option value="csharp">C# / .NET 10</option><option value="javascript">JavaScript</option></select>
         </div>
         <div class="pattern-field">
-          <pre><code id="pattern-source"></code></pre>
+          <pre id="pattern-display"><code id="pattern-source"></code></pre>
+          <textarea id="custom-expression" aria-label="Pattern expression" aria-describedby="editor-status" placeholder="Not provided" rows="2" maxlength="10000" spellcheck="false" autocomplete="off" hidden></textarea>
           <button id="copy-pattern" class="icon-button" type="button" aria-label="Copy pattern" title="Copy pattern">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
           </button>
         </div>
+        <div id="pattern-editor-actions" class="snippet-actions" hidden>
+          <button id="save-pattern" type="button">Save pattern</button>
+          <button id="cancel-pattern" type="button">Cancel</button>
+        </div>
+        <p id="editor-status" class="status" role="status"></p>
         <div id="copy-fallback" hidden>
           <label for="copy-value">Copy this text</label>
           <input id="copy-value" readonly>
@@ -99,11 +108,11 @@
           <p id="test-status" class="status" role="status"></p>
           <pre id="match-result" hidden></pre>
         </form>
-        <div class="pattern-notes">
+        <div id="pattern-notes" class="pattern-notes">
           <p id="pattern-mode" class="muted"></p>
           <p id="pattern-description" class="muted"></p>
         </div>
-        <section aria-labelledby="regex-tags-title">
+        <section id="detail-tags" aria-labelledby="regex-tags-title">
           <div class="tag-heading">
             <h3 id="regex-tags-title">Tags</h3>
             <button id="toggle-tag-editor" type="button" aria-label="Add a tag" aria-expanded="false" aria-controls="tag-editor">+</button>
@@ -115,6 +124,7 @@
           </form>
           <p id="detail-status" class="muted" role="status"></p>
         </section>
+        <button id="delete-pattern" type="button" hidden>Delete pattern</button>
       </article>
     </div>
     <div id="regex-toast" class="regex-toast" role="status" aria-atomic="true"></div>

@@ -11,6 +11,20 @@ public static partial class RegexRunner
     public static void Main() { }
 
     [JSExport]
+    public static string? Validate(string pattern)
+    {
+        try
+        {
+            _ = new Regex(pattern, RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(250));
+            return null;
+        }
+        catch (ArgumentException error)
+        {
+            return error.Message;
+        }
+    }
+
+    [JSExport]
     public static string Test(string pattern, string input)
     {
         try
@@ -29,11 +43,19 @@ public static partial class RegexRunner
         {
             return "{\"status\":\"timeout\"}";
         }
+        catch (ArgumentException error)
+        {
+            return JsonSerializer.Serialize(new RegexError("invalid", error.Message),
+                RegexJsonContext.Default.RegexError);
+        }
     }
 }
 
 internal sealed record RegexResult(string Status, string Text, int Index, string?[] Groups);
 
+internal sealed record RegexError(string Status, string Message);
+
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(RegexResult))]
+[JsonSerializable(typeof(RegexError))]
 internal partial class RegexJsonContext : JsonSerializerContext { }

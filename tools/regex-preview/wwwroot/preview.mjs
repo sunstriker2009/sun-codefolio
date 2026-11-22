@@ -1,12 +1,16 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs?v=regex-reference-1';
-import { patterns, platforms } from './patterns.mjs';
-import { createRunner } from './runner.mjs';
-import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs';
+import { patterns, platforms } from './patterns.mjs?v=regex-custom-1';
+import { createRunner } from './runner.mjs?v=regex-custom-1';
+import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-custom-1';
 
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
-const platform = byId('platform');
-const detailPlatform = byId('detail-platform');
+const platform = byId('detail-platform');
+const newPattern = byId('new-pattern');
+const customTitle = byId('custom-title');
+const customExpression = byId('custom-expression');
+const editorStatus = byId('editor-status');
+const savePattern = byId('save-pattern');
 const previous = byId('previous-pattern');
 const next = byId('next-pattern');
 const results = byId('patterns');
@@ -33,6 +37,8 @@ let personal = loadPersonalData();
 const selectedTags = new Set();
 const tagControls = new Map();
 let selected;
+let draft;
+let validating = false;
 let entries = [];
 let backPlatform;
 let testVersion = 0;
@@ -107,6 +113,10 @@ function focusTagPicker() {
   (outer.open ? picker : outer).querySelector(':scope > summary').focus();
 }
 
+function allPatterns() {
+  return [...patterns, ...personal.customPatterns];
+}
+
 function renderResults() {
   chips.replaceChildren();
   for (const [key, { control, name }] of tagControls) {
@@ -120,9 +130,9 @@ function renderResults() {
   chips.hidden = !chips.childElementCount;
 
   const query = search.value.trim().toLowerCase();
-  entries = findTaggedSnippets(patterns, personal.tags, selectedTags)
+  entries = findTaggedSnippets(allPatterns(), personal.tags, selectedTags)
     .filter(entry => !favoritesOnly.checked || personal.favorites.includes(entry.id))
-    .filter(entry => [entry.title, entry.description, entry.expressions[platform.value]].some(text => text.toLowerCase().includes(query)))
+    .filter(entry => [entry.title, entry.description ?? '', ...Object.values(entry.expressions)].some(text => text.toLowerCase().includes(query)))
     .sort((left, right) => Number(personal.favorites.includes(right.id)) - Number(personal.favorites.includes(left.id))
       || left.title.localeCompare(right.title));
 
@@ -149,6 +159,12 @@ function renderResults() {
       caption.prepend(star);
     }
     link.append(caption);
+    if (entry.source === 'custom') {
+      const kind = document.createElement('span');
+      kind.className = 'muted';
+      kind.textContent = 'Custom';
+      link.append(kind);
+    }
     link.addEventListener('click', event => {
       if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
@@ -160,6 +176,9 @@ function renderResults() {
 }
 
 function openPattern(entry, step = false) {
+  if (validating) return;
+  if (draft && !window.confirm('Discard the unsaved pattern changes?')) return;
+  draft = undefined;
   const url = patternUrl(entry.id, platform.value);
   if (url.href !== location.href) {
     if (step && linked) history.replaceState(history.state, '', url);
@@ -178,11 +197,15 @@ for (const [control, offset] of [[previous, -1], [next, 1]]) {
   });
 }
 
+function activeExpression() {
+  return (draft ?? selected)?.expressions[platform.value] ?? '';
+}
+
 function clearTest() {
   testVersion++;
   testStatus.textContent = '';
   matchResult.hidden = true;
-  testButton.disabled = false;
+  testButton.disabled = validating || !activeExpression();
 }
 
 function renderPersonal() {
@@ -215,35 +238,78 @@ function setTagEditor(open) {
   if (!open) tagName.value = '';
 }
 
+function showEditor(editing) {
+  const custom = selected?.source === 'custom';
+  const controls = {
+    'pattern-name-field': !editing,
+    'pattern-editor-actions': !editing,
+    'custom-expression': !editing,
+    'pattern-display': editing,
+    'pattern-notes': editing || custom,
+    'back-to-results': editing,
+    'detail-tags': editing,
+    'copy-link': editing,
+    'copy-pattern': editing,
+    'favorite': editing,
+    'edit-pattern': editing || !custom,
+    'delete-pattern': editing || !custom,
+    'duplicate-pattern': editing,
+    'example-picker': editing || custom,
+  };
+  for (const [id, hidden] of Object.entries(controls)) byId(id).hidden = hidden;
+  detail.querySelector('.pattern-navigation').hidden = editing;
+  newPattern.disabled = editing;
+  detail.classList.toggle('editing-pattern', editing);
+}
+
+function renderDraft() {
+  detail.hidden = false;
+  document.querySelector('.regex-reference').classList.add('mobile-detail');
+  showEditor(true);
+  byId('copy-fallback').hidden = true;
+  byId('pattern-title').textContent = draft.isNew ? 'New custom pattern' : 'Edit custom pattern';
+  customTitle.value = draft.title;
+  customExpression.value = activeExpression();
+  customExpression.removeAttribute('aria-invalid');
+  editorStatus.textContent = '';
+  clearTest();
+}
+
 function renderDetail(entry) {
   const changed = entry !== selected;
   selected = entry;
   detail.hidden = !entry;
   document.querySelector('.regex-reference').classList.toggle('mobile-detail', Boolean(entry && linked));
   if (!entry) return;
+  showEditor(false);
+  editorStatus.textContent = '';
   clearTest();
   if (changed) {
-    input.value = entry.examples.match;
+    input.value = entry.examples?.match ?? '';
     setTagEditor(false);
   }
   detailStatus.textContent = '';
   byId('copy-fallback').hidden = true;
   byId('pattern-title').textContent = entry.title;
-  detailPlatform.value = platform.value;
-  byId('pattern-description').textContent = entry.description;
-  byId('pattern-source').textContent = entry.expressions[platform.value];
+  byId('pattern-description').textContent = entry.description ?? '';
+  const expression = activeExpression();
+  const source = byId('pattern-source');
+  source.textContent = expression || 'Not provided';
+  source.classList.toggle('pattern-placeholder', !expression);
+  byId('copy-pattern').disabled = !expression;
   byId('pattern-mode').textContent = entry.mode === 'whole' ? 'Validates the whole input' : 'Finds the first match within the input';
-  examplePicker.options[1].textContent = 'Match · ' + JSON.stringify(entry.examples.match);
-  examplePicker.options[2].textContent = 'No match · ' + JSON.stringify(entry.examples.noMatch);
+  examplePicker.options[1].textContent = 'Match · ' + JSON.stringify(entry.examples?.match ?? '');
+  examplePicker.options[2].textContent = 'No match · ' + JSON.stringify(entry.examples?.noMatch ?? '');
   examplePicker.value = '';
   renderPersonal();
 }
 
 function readLocation() {
+  draft = undefined;
   const query = new URLSearchParams(location.search);
   const engine = backPlatform ?? query.get('platform');
   platform.value = Object.hasOwn(platforms, engine) ? engine : 'csharp';
-  const entry = patterns.find(pattern => pattern.id === query.get('pattern'));
+  const entry = allPatterns().find(pattern => pattern.id === query.get('pattern'));
   if (backPlatform) {
     backPlatform = undefined;
     history.replaceState(history.state, '', patternUrl(entry?.id, platform.value));
@@ -257,14 +323,16 @@ search.addEventListener('input', renderResults);
 favoritesOnly.addEventListener('change', renderResults);
 function changePlatform(engine) {
   platform.value = engine;
+  if (draft) {
+    renderDraft();
+    return;
+  }
   history.replaceState(history.state, '', patternUrl(linked ? selected.id : null, engine));
   renderDetail(selected);
   renderResults();
 }
 
-for (const control of [platform, detailPlatform]) {
-  control.addEventListener('change', () => changePlatform(control.value));
-}
+platform.addEventListener('change', () => changePlatform(platform.value));
 window.addEventListener('popstate', () => {
   const returning = Boolean(backPlatform);
   readLocation();
@@ -277,6 +345,111 @@ byId('back-to-results').addEventListener('click', () => {
     return;
   }
   history.replaceState(null, '', patternUrl(null, platform.value));
+  readLocation();
+  byId('pattern-list-title').focus();
+});
+
+function beginDraft(entry, duplicate = false) {
+  if (validating) return;
+  const isNew = !entry || duplicate;
+  draft = {
+    isNew,
+    id: isNew ? 'custom-' + crypto.randomUUID() : entry.id,
+    title: duplicate ? (entry.title + ' copy').slice(0, 100) : entry?.title ?? '',
+    expressions: { ...entry?.expressions },
+  };
+  if (isNew) input.value = '';
+  renderDraft();
+  customTitle.focus();
+}
+
+newPattern.addEventListener('click', () => beginDraft());
+byId('edit-pattern').addEventListener('click', () => beginDraft(selected));
+byId('duplicate-pattern').addEventListener('click', () => beginDraft(selected, true));
+byId('cancel-pattern').addEventListener('click', readLocation);
+customTitle.addEventListener('input', () => { draft.title = customTitle.value; });
+customExpression.addEventListener('input', () => {
+  draft.expressions[platform.value] = customExpression.value;
+  customExpression.removeAttribute('aria-invalid');
+  editorStatus.textContent = '';
+  clearTest();
+});
+
+function setValidating(value) {
+  validating = value;
+  savePattern.disabled = value;
+  customTitle.disabled = value;
+  customExpression.disabled = value;
+  platform.disabled = value;
+  byId('cancel-pattern').disabled = value;
+  byId('import-backup').disabled = value;
+  clearTest();
+}
+
+async function validateExpressions(expressions) {
+  for (const [engine, label] of Object.entries(platforms)) {
+    const expression = expressions[engine];
+    if (!expression) continue;
+    const result = await runners[engine](expression, '', 'validate');
+    if (result.status === 'valid') continue;
+    return {
+      engine,
+      invalid: result.status === 'invalid',
+      message: label + ' · ' + (result.status === 'invalid' ? result.message : 'The runner couldn’t validate this expression. Try again.'),
+    };
+  }
+  return null;
+}
+
+savePattern.addEventListener('click', async () => {
+  if (!draft || validating) return;
+  const current = draft;
+  const title = current.title.trim();
+  if (!title) {
+    editorStatus.textContent = 'Enter a pattern title.';
+    customTitle.focus();
+    return;
+  }
+  if (!Object.values(current.expressions).some(Boolean)) {
+    editorStatus.textContent = 'Enter a pattern for at least one platform.';
+    customExpression.focus();
+    return;
+  }
+
+  setValidating(true);
+  editorStatus.textContent = 'Validating patterns…';
+  const failure = await validateExpressions(current.expressions);
+  setValidating(false);
+  if (draft !== current) return;
+  if (failure) {
+    changePlatform(failure.engine);
+    customExpression.setAttribute('aria-invalid', failure.invalid);
+    editorStatus.textContent = failure.message;
+    customExpression.focus();
+    return;
+  }
+  const entry = { id: current.id, source: 'custom', title, expressions: current.expressions };
+  const customPatterns = current.isNew
+    ? [...personal.customPatterns, entry]
+    : personal.customPatterns.map(item => item.id === entry.id ? entry : item);
+  if (!save({ ...personal, customPatterns }, editorStatus)) return;
+  draft = undefined;
+  openPattern(entry, !current.isNew);
+});
+
+byId('delete-pattern').addEventListener('click', () => {
+  if (validating) return;
+  const { id } = selected;
+  if (!window.confirm('Delete this custom pattern?')) return;
+  const tags = { ...personal.tags };
+  delete tags[id];
+  if (!save({
+    tags,
+    favorites: personal.favorites.filter(item => item !== id),
+    customPatterns: personal.customPatterns.filter(item => item.id !== id),
+  }, detailStatus)) return;
+  history.replaceState(null, '', patternUrl(null, platform.value));
+  updateTagOptions();
   readLocation();
   byId('pattern-list-title').focus();
 });
@@ -325,7 +498,7 @@ async function copy(value, label) {
   }
 }
 
-byId('copy-pattern').addEventListener('click', () => copy(selected.expressions[platform.value], 'Pattern'));
+byId('copy-pattern').addEventListener('click', () => copy(activeExpression(), 'Pattern'));
 byId('copy-link').addEventListener('click', () => copy(patternUrl(selected.id, platform.value).href, 'Link'));
 examplePicker.addEventListener('change', () => {
   const choice = examplePicker.value;
@@ -339,15 +512,18 @@ input.addEventListener('input', clearTest);
 byId('try-it').addEventListener('submit', async event => {
   event.preventDefault();
   clearTest();
+  const expression = activeExpression();
+  if (!expression || validating) return;
   const version = testVersion;
   const engine = platform.value;
   testButton.disabled = true;
   testStatus.textContent = 'Running ' + platforms[engine] + '…';
-  const result = await runners[engine](selected.expressions[engine], input.value);
+  const result = await runners[engine](expression, input.value);
   if (version !== testVersion) return;
   testButton.disabled = false;
   const labels = {
     match: 'Match.',
+    invalid: result.message,
     'no-match': 'No match.',
     timeout: 'The match timed out. Try shorter text.',
     'load-error': 'The runner couldn’t load. Try again.',
@@ -362,10 +538,12 @@ byId('try-it').addEventListener('submit', async event => {
   }
 });
 
+const countLabel = (count, noun) => count + ' ' + (count === 1 ? noun : noun + 's');
+
 const filename = 'codefolio-regex-backup.json';
 function backup() {
   const { count, json } = exportRegexBackup(personal);
-  backupStatus.textContent = count ? '' : 'Add tags or favorites to create a backup.';
+  backupStatus.textContent = count ? '' : 'Add a custom pattern, tag, or favorite to create a backup.';
   return count ? json : null;
 }
 
@@ -386,17 +564,28 @@ byId('import-backup').addEventListener('click', () => backupFile.click());
 backupFile.addEventListener('change', async () => {
   const file = backupFile.files[0];
   backupFile.value = '';
-  if (!file) return;
+  if (!file || validating) return;
   try {
-    const merged = mergeRegexBackup(personal, readRegexBackup(await file.text()));
+    setValidating(true);
+    const imported = readRegexBackup(await file.text());
+    backupStatus.textContent = 'Validating backup…';
+    for (const entry of imported.customPatterns) {
+      const failure = await validateExpressions(entry.expressions);
+      if (failure) throw new Error(entry.title + ' · ' + failure.message);
+    }
+    const merged = mergeRegexBackup(personal, imported);
     if (!save(merged.data, backupStatus)) return;
     updateTagOptions();
     renderPersonal();
     renderResults();
-    backupStatus.textContent = 'Imported ' + merged.tagsAdded + ' tags and ' + merged.favoritesAdded + ' favorites.'
+    backupStatus.textContent = 'Imported ' + countLabel(merged.patternsAdded, 'pattern') + ', '
+      + countLabel(merged.tagsAdded, 'tag') + ', and ' + countLabel(merged.favoritesAdded, 'favorite') + '.'
+      + (merged.conflicts ? ' Kept ' + merged.conflicts + ' existing patterns with conflicting IDs.' : '')
       + (merged.unavailable ? ' Skipped ' + merged.unavailable + ' items for unavailable patterns.' : '');
   } catch (error) {
     backupStatus.textContent = error.message;
+  } finally {
+    setValidating(false);
   }
 });
 byId('share-backup').addEventListener('click', async () => {
