@@ -61,6 +61,13 @@ Run the Git runtime tests with Node.js 24, Git, and a POSIX shell. The suite exe
 node --test tests/runtime/git/catalog.test.mjs
 ```
 
+Run the XPath runtime tests with Node.js 24 and the .NET 10 SDK. The suite builds the catalog’s XPath expressions, evaluates them against XML, and checks which nodes they select.
+
+```sh
+node tests/runtime/xpath/generate-tests.mjs |
+  dotnet run --project tests/runtime/xpath/CodeFolio.XPath.RuntimeTests.csproj --configuration Release
+```
+
 Keep runtime suites under `tests/runtime/<catalog>`. Add C# cases in `tests/runtime/csharp/generate-tests.mjs` with the snippet ID, any input overrides, and assertions for the generated code’s behavior.
 
 When changing the page markup or frontend modules together, update their asset version query strings in `index.html` and `app/workspace.mjs` so a browser can fetch the matching files after a Pages deployment.
