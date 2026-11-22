@@ -35,3 +35,8 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Run generated C# snippet tests
         run: dotnet run --project tests/runtime/csharp/CodeFolio.CSharp.RuntimeTests.csproj --configuration Release
+      - name: Run generated XPath snippet tests
+        shell: bash
+        run: |
+          node tests/runtime/xpath/generate-tests.mjs |
+            dotnet run --project tests/runtime/xpath/CodeFolio.XPath.RuntimeTests.csproj --configuration Release
