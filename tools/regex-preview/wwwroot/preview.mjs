@@ -1,7 +1,7 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs?v=regex-reference-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-custom-1';
-import { createRunner } from './runner.mjs?v=regex-custom-1';
-import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-custom-1';
+import { patterns, platforms } from './patterns.mjs?v=regex-python-1';
+import { createRunner } from './runner.mjs?v=regex-python-1';
+import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-python-1';
 
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
