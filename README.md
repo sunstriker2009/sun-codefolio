@@ -63,6 +63,12 @@ Run the Git runtime tests with Node.js 24, Git, and a POSIX shell. The suite exe
 node --test tests/runtime/git/catalog.test.mjs
 ```
 
+Run the JavaScript runtime tests with Node.js 24. They execute generated filter, join, and property-extraction snippets against fixed inputs.
+
+```sh
+node --test tests/runtime/javascript/catalog.test.mjs
+```
+
 Run the XPath runtime tests with Node.js 24 and the .NET 10 SDK. The suite builds the catalog’s XPath expressions, evaluates them against XML, and checks which nodes they select.
 
 ```sh

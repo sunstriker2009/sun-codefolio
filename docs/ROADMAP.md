@@ -11,6 +11,9 @@
 | M4 · Catalog expansion | Complete | Two Git history tasks and a focused C# Regex collection |
 | M5 · UI refinement | Complete | Mobile snippet navigation, simpler search filters, and easier access to snippet actions |
 | M6 · Practical C# Regex | Complete | Structured log extraction, match-dependent masking, and timeout handling |
+| M7 · JavaScript runtime coverage | Complete | Execute generated JavaScript examples in CI alongside Git, C#, and XPath |
+| M8 · Practical C# LINQ | Planned | Latest record per group, joins by key, and duplicate detection with a composite key |
+| M9 · Mobile performance baseline | Planned | Record startup, search, and snippet-opening performance on iPhone Safari |
 
 ## M0 · Starter workspace
 
@@ -71,10 +74,27 @@ Complete this pass before expanding the catalogs again.
 - [x] **Mask identifiers.** Preserve the final four digits with a match evaluator.
 - [x] **Handle match timeouts.** Give callers a distinct result when a regex match exceeds its timeout.
 
+## M7 · JavaScript runtime coverage
+
+- [x] **Run generated snippets.** Execute the builder output for array filtering, joining values, and extracting properties with Node.js 24. Cover defaults and representative custom inputs.
+- [x] **Keep coverage in CI.** Run the JavaScript suite with the existing catalog and runtime checks.
+
+## M8 · Practical C# LINQ
+
+- [ ] **Latest per group.** Select the newest record for each key and demonstrate how to resolve ties.
+- [ ] **Join by key.** Join two collections and demonstrate the behavior for unmatched and repeated keys.
+- [ ] **Duplicates by composite key.** Find groups that share multiple key fields.
+- [ ] **Verify the examples.** Give each snippet a worked example, search terms, and related links. Execute the generated output in the .NET runtime suite.
+
+## M9 · Mobile performance baseline
+
+- [ ] **Record an iPhone Safari baseline.** Capture cold load to usable search, search response, snippet opening, and initial asset size. Record the device, browser, catalog size, and test conditions.
+- [ ] **Repeat the same measurements after catalog growth.** Use the results to decide when to load catalogs on demand and prebuild the search index.
+
 ## Future work
 
 ### Custom domain
 
 - Choose a domain the SUN project controls and decide on a CodeFolio subdomain.
-- Plan how to move browser-local data before changing the public URL. Saved variants can already be exported and imported. Account for favorites and tags separately.
+- Verify migration of saved variants, favorites, and tags with a personal-data backup before changing the public URL.
 - Configure GitHub Pages and DNS, verify HTTPS and snippet deep links, then update the public links.
