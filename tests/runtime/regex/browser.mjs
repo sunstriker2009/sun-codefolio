@@ -41,8 +41,7 @@ try {
     return Math.round(performance.now() - start);
   }
 
-  await page.goto(root.href);
-  await page.getByRole('navigation', { name: 'CodeFolio' }).getByRole('link', { name: 'Regex' }).click();
+  await page.goto(regex.href);
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
   assert.equal(await page.getByLabel('Platform', { exact: true }).count(), 0);
   assert.equal(requests.some(url => url.includes('/_framework/')), false);
@@ -354,6 +353,7 @@ try {
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Delete pattern', exact: true }).click();
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  assert.equal(requests.some(url => new URL(url).pathname.startsWith(new URL('app/', root).pathname)), false);
   assert.deepEqual(errors, []);
   console.log('Verified native patterns, engine-specific validation, saved custom variants, editing, duplication, deletion, and backup round trips.');
 } finally {

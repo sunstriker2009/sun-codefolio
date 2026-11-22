@@ -1,15 +1,13 @@
 import { parseValues, restoreValues } from './parameters.mjs';
 
-import { cleanTag, tagKey } from './snippet-tags.mjs';
+import { compactMetadata, isRecord, mergeMetadata, validateMetadata } from '../shared/personal-metadata.mjs';
+
+export { isRecord };
 
 const backupFormat = 'codefolio.personal-backup';
 const legacyBackupFormat = 'codefolio.saved-variants';
 const backupVersion = 1;
 const maxNameLength = 80;
-
-export function isRecord(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 
 function isVariant(variant) {
   return isRecord(variant)
@@ -29,14 +27,7 @@ function validateVariants(variants) {
 
 function validatePersonalData({ variants, tags, favorites }) {
   validateVariants(variants);
-  if (!isRecord(tags) || Object.values(tags).some((names) =>
-    !Array.isArray(names) || names.some((name) => typeof name !== 'string' || !cleanTag(name)))) {
-    throw new Error('The backup contains invalid tags.');
-  }
-  if (!Array.isArray(favorites) || favorites.some((id) => typeof id !== 'string' || !id.trim())) {
-    throw new Error('The backup contains invalid favorites.');
-  }
-  return { variants, tags, favorites };
+  return { variants, ...validateMetadata({ tags, favorites }) };
 }
 
 function scopeEntries(entries, snippetIds) {
@@ -49,20 +40,14 @@ function nonemptyEntries(entries) {
 }
 
 export function exportPersonalBackup(data, snippetIds) {
-  const { variants, tags, favorites } = validatePersonalData({
-    variants: scopeEntries(data.variants, snippetIds),
+  const variants = nonemptyEntries(validateVariants(scopeEntries(data.variants, snippetIds)));
+  const { tags, favorites, count } = compactMetadata({
     tags: scopeEntries(data.tags, snippetIds),
     favorites: data.favorites.filter((id) => !snippetIds || snippetIds.has(id)),
   });
-  const scoped = {
-    variants: nonemptyEntries(variants),
-    tags: nonemptyEntries(tags),
-    favorites: [...new Set(favorites)],
-  };
+  const scoped = { variants, tags, favorites };
   return {
-    count: Object.values(scoped.variants).reduce((count, entries) => count + entries.length, 0)
-      + Object.values(scoped.tags).reduce((count, names) => count + names.length, 0)
-      + scoped.favorites.length,
+    count: Object.values(variants).reduce((total, entries) => total + entries.length, count),
     json: JSON.stringify({ format: backupFormat, version: backupVersion, ...scoped }, null, 2) + '\n',
   };
 }
@@ -171,52 +156,13 @@ export function mergeVariantBackup(stored, imported, snippets, snippetIds) {
 
 export function mergePersonalBackup(stored, imported, snippets, snippetIds) {
   const { variants, ...counts } = mergeVariantBackup(stored.variants, imported.variants, snippets, snippetIds);
-  const tags = { ...stored.tags };
-  const favorites = new Set(stored.favorites);
   const catalogIds = new Set(snippets.map(({ id }) => id));
-  counts.tagsAdded = 0;
-  counts.favoritesAdded = 0;
-
-  function inScope(id, count) {
-    if (!catalogIds.has(id)) {
-      counts.unavailable += count;
-      return false;
-    }
-    if (snippetIds && !snippetIds.has(id)) {
-      counts.outsideScope += count;
-      return false;
-    }
-    return true;
-  }
-
-  for (const [id, incoming] of Object.entries(imported.tags)) {
-    if (!incoming.length || !inScope(id, incoming.length)) continue;
-
-    const current = tags[id] ?? [];
-    const known = new Set(current.map(tagKey));
-    const additions = [];
-    for (const tag of incoming) {
-      const key = tagKey(tag);
-      if (known.has(key)) {
-        counts.duplicates++;
-      } else {
-        known.add(key);
-        additions.push(cleanTag(tag));
-      }
-    }
-    if (additions.length) tags[id] = [...current, ...additions];
-    counts.tagsAdded += additions.length;
-  }
-
-  for (const id of imported.favorites) {
-    if (!inScope(id, 1)) continue;
-    if (favorites.has(id)) {
-      counts.duplicates++;
-    } else {
-      favorites.add(id);
-      counts.favoritesAdded++;
-    }
-  }
-
-  return { variants, tags, favorites: [...favorites], ...counts };
+  const { tags, favorites, tagsAdded, favoritesAdded, duplicates, unavailable, outsideScope } =
+    mergeMetadata(stored, imported, catalogIds, snippetIds);
+  return {
+    variants, tags, favorites, ...counts, tagsAdded, favoritesAdded,
+    duplicates: counts.duplicates + duplicates,
+    unavailable: counts.unavailable + unavailable,
+    outsideScope: counts.outsideScope + outsideScope,
+  };
 }

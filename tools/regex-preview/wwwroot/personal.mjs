@@ -1,4 +1,4 @@
-import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from '../app/variant-backup.mjs?v=regex-reference-1';
+import { compactMetadata, isRecord, mergeMetadata, validateMetadata } from '../shared/personal-metadata.mjs?v=standalone-regex-1';
 import { patterns, platforms } from './patterns.mjs?v=regex-go-1';
 
 const format = 'codefolio.regex-backup';
@@ -7,8 +7,7 @@ export const maxPatternLength = 10_000;
 const customId = /^custom-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
 
 export function exportRegexBackup(data) {
-  const { json, count } = exportPersonalBackup({ ...data, variants: {} });
-  const { tags, favorites } = JSON.parse(json);
+  const { tags, favorites, count } = compactMetadata(data);
   const { customPatterns } = data;
   return {
     count: count + customPatterns.length,
@@ -41,9 +40,7 @@ export function readRegexBackup(text) {
   }
   if (file?.format !== format) throw new Error('Choose a CodeFolio Regex backup.');
   if (![1, 2].includes(file.version)) throw new Error('This version of CodeFolio can’t read the Regex backup format.');
-  const { tags, favorites } = readPersonalBackup(JSON.stringify({
-    format: 'codefolio.personal-backup', version: 1, tags: file.tags, favorites: file.favorites, variants: {},
-  }));
+  const { tags, favorites } = validateMetadata(file);
   const customPatterns = file.version === 2 ? readCustomPatterns(file.customPatterns) : [];
   return { tags, favorites, customPatterns };
 }
@@ -65,12 +62,11 @@ export function mergeRegexBackup(current, imported) {
 
   const customPatterns = [...byId.values()];
   const fromFile = {
-    variants: {},
     tags: Object.fromEntries(Object.entries(imported.tags).filter(([id]) => !conflicts.has(id))),
     favorites: imported.favorites.filter(id => !conflicts.has(id)),
   };
-  const { tags, favorites, tagsAdded, favoritesAdded, unavailable } =
-    mergePersonalBackup({ ...current, variants: {} }, fromFile, [...patterns, ...customPatterns]);
+  const patternIds = new Set([...patterns, ...customPatterns].map(({ id }) => id));
+  const { tags, favorites, tagsAdded, favoritesAdded, unavailable } = mergeMetadata(current, fromFile, patternIds);
   return { data: { tags, favorites, customPatterns }, patternsAdded, tagsAdded, favoritesAdded, conflicts: conflicts.size, unavailable };
 }
 

@@ -6,8 +6,7 @@ on:
       - '.github/workflows/regex-preview.yml'
       - 'tools/regex-preview/**'
       - 'tests/runtime/regex/**'
-      - 'index.html'
-      - 'app/**'
+      - 'shared/**'
       - 'branding/assets/icons/icon-64.png'
 permissions:
   contents: read
@@ -26,7 +25,10 @@ jobs:
           go-version-file: 'tools/regex-preview/.go-version'
           cache: false
       - name: Build Regex preview
-        run: bash tools/regex-preview/build-preview.sh "$RUNNER_TEMP/codefolio-regex-preview"
+        run: |
+          preview="$RUNNER_TEMP/codefolio-regex-preview"
+          bash tools/regex-preview/build-preview.sh "$preview" --regex-only
+          test ! -e "$preview/sun-codefolio/app"
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
