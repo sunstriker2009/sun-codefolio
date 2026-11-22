@@ -641,8 +641,8 @@ export function findSnippets(query, language) {
 }
 
 export function browseSnippets(query, { language, topic } = {}) {
-  if (query.trim()) return findSnippets(query);
-  return snippets.filter((snippet) =>
+  const matches = query.trim() ? findSnippets(query, language) : snippets;
+  return matches.filter((snippet) =>
     (!language || snippet.language === language) && (!topic || snippet.topic === topic));
 }
 

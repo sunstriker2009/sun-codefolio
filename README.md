@@ -14,7 +14,7 @@ CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse
 
 ### Tags
 
-Use **+** beside **Tags** to add a tag, or remove an existing tag from its chip. Tags stay in the current browser. Open **Filters** and use **Search by tag** with **All catalogs**, the current catalog, or the current topic. Remove an active filter using its chip. Select a catalog or topic in the navigation to make that scope available.
+Use **+** beside **Tags** to add a tag, or remove an existing tag from its chip. Tags stay in the current browser. Open **Filters** to search by tag or check **Saved** and **Favorites**. Results match every active filter, including text search and the catalog or topic selected in **Browse catalog**. Use **All catalogs** to search across the library. Remove any active filter chip to clear that filter.
 
 ### Run locally
 
@@ -37,9 +37,9 @@ In the running workspace, open **View a file’s commit history** and enter a pa
 
 Enter the name and select **Save variant**. Reopen the snippet later and select the saved name to restore the fields. You can edit the values and copy the new command, or save the edited values again.
 
-In the catalog menu, choose **All**, **Saved**, or **Favorites**, then use the language and topic navigation below to set the scope. **Saved** lists variants in the current selection. **Export** downloads a JSON backup of your saved variants, tags, and favorites. **Import** merges entries within the current selection and accepts older variant-only backups. Choose **All catalogs** while in **Saved** to transfer all your data. Import adds missing favorites and tags and skips tags that already match by name regardless of case. For variants, import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
+Check **Saved** in **Filters** to show snippets with saved variants and open the backup controls. Choose a catalog or topic in the navigation to set the backup scope. **Export** downloads a JSON backup of your saved variants, tags, and favorites. **Import** merges entries within the current selection and accepts older variant-only backups. Choose **All catalogs** while in **Saved** to transfer all your data. Import adds missing favorites and tags and skips tags that already match by name regardless of case. For variants, import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
 
-Use **Share backup** in **Saved** to send the current selection’s JSON file through the device’s share menu. Available apps depend on the device and which apps accept the file. If file sharing is unavailable, use **Export** and attach the downloaded JSON in your messaging or email app.
+Use **Shared** with **Saved** checked to send the current selection’s JSON file through the device’s share menu. Available apps depend on the device and which apps accept the file. If file sharing is unavailable, use **Export** and attach the downloaded JSON in your messaging or email app.
 
 ### Maintain the catalog
 
