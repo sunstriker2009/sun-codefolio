@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=regex-m6-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=variant-email-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=regex-m6-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=regex-m6-1';
+import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-email-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-email-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=regex-m6-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=variant-email-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -44,6 +44,7 @@ const variantList = byId('variants');
 const variantTools = byId('variant-tools');
 const exportVariants = byId('export-variants');
 const importVariants = byId('import-variants');
+const emailVariants = byId('email-variants');
 const backupFile = byId('variant-backup-file');
 const transferStatus = byId('variant-transfer-status');
 const builderStatus = byId('builder-status');
@@ -720,18 +721,24 @@ function backupFilename() {
   return ['codefolio-variants', ...parts].join('-') + '.json';
 }
 
-exportVariants.addEventListener('click', () => {
+function prepareVariantBackup() {
   let backup;
   try {
     backup = exportVariantBackup(readVariantStore(), transferSnippetIds(scope));
   } catch {
-    transferStatus.textContent = 'Saved variants couldn’t be exported.';
+    transferStatus.textContent = 'The saved variant backup couldn’t be prepared.';
     return;
   }
   if (!backup.count) {
-    transferStatus.textContent = 'No saved variants to export in this selection.';
+    transferStatus.textContent = 'This selection has no saved variants.';
     return;
   }
+  return backup;
+}
+
+exportVariants.addEventListener('click', () => {
+  const backup = prepareVariantBackup();
+  if (!backup) return;
 
   const href = URL.createObjectURL(new Blob([backup.json], { type: 'application/json' }));
   const download = document.createElement('a');
@@ -742,6 +749,44 @@ exportVariants.addEventListener('click', () => {
   download.remove();
   setTimeout(() => URL.revokeObjectURL(href), 1000);
   transferStatus.textContent = 'Exported ' + backup.count + ' saved ' + (backup.count === 1 ? 'variant.' : 'variants.');
+});
+
+function showEmailFallback() {
+  const draft = document.createElement('a');
+  draft.href = 'mailto:?subject=CodeFolio%20saved%20variants';
+  draft.textContent = 'open an email draft';
+  transferStatus.replaceChildren('Use Export to download the backup, then ', draft,
+    ' and attach the JSON file.');
+}
+
+emailVariants.addEventListener('click', async () => {
+  const backup = prepareVariantBackup();
+  if (!backup) return;
+
+  const emailScope = scope;
+  const file = new File([backup.json], backupFilename(), { type: 'application/json' });
+  const shareData = { files: [file], title: 'CodeFolio saved variants' };
+  emailVariants.disabled = true;
+  try {
+    if (!navigator.share || !navigator.canShare?.(shareData)) {
+      showEmailFallback();
+      return;
+    }
+    transferStatus.textContent = 'Choose your email app from the share menu.';
+    await navigator.share(shareData);
+    if (sameScope(scope, emailScope)) {
+      transferStatus.textContent = 'Finish sending the backup in your email app.';
+    }
+  } catch (error) {
+    if (!sameScope(scope, emailScope)) return;
+    if (error.name === 'AbortError') {
+      transferStatus.textContent = 'Sharing canceled. Use Export to attach the backup manually.';
+    } else {
+      showEmailFallback();
+    }
+  } finally {
+    emailVariants.disabled = false;
+  }
 });
 
 importVariants.addEventListener('click', () => backupFile.click());

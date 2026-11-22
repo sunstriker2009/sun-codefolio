@@ -172,6 +172,7 @@ body:has(#snippet-full-screen[open]) { overflow: hidden; }
 
 .variant-transfer { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
 #variant-transfer-status:not(:empty) { margin-top: .45rem; font-size: .85rem; }
+#variant-transfer-status a { color: var(--accent); }
 
 #variant-tools { margin: .65rem 0; }
 .saved-variant-links { list-style: none; display: grid; gap: .25rem; margin: .3rem 0 .25rem .7rem; padding: 0 0 0 .4rem; border-left: 1px solid var(--border); }
