@@ -8,8 +8,8 @@
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../app/styles.css?v=regex-reference-1">
-  <link rel="stylesheet" href="./preview.css?v=regex-compact-1">
-  <script type="module" src="./preview.mjs?v=regex-compact-1"></script>
+  <link rel="stylesheet" href="./preview.css?v=regex-detail-1">
+  <script type="module" src="./preview.mjs?v=regex-detail-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -67,21 +67,42 @@
         </div>
         <h2 id="pattern-title" tabindex="-1"></h2>
         <div class="snippet-actions">
-          <button id="favorite" type="button" aria-pressed="false">Favorite</button>
-          <button id="copy-link" type="button">Copy link</button>
+          <button id="favorite" class="icon-button" type="button" aria-label="Favorite" title="Favorite" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.3-5.7-3-5.7 3 1.1-6.3-4.5-4.4 6.3-.9Z"/></svg>
+          </button>
+          <button id="copy-link" class="icon-button" type="button" aria-label="Copy link" title="Copy link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 13a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M14 11a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
+          </button>
           <select id="detail-platform" aria-label="Detail platform"><option value="csharp">C# / .NET 10</option><option value="javascript">JavaScript</option></select>
         </div>
-        <p id="detail-status" class="muted" role="status"></p>
+        <div class="pattern-field">
+          <pre><code id="pattern-source"></code></pre>
+          <button id="copy-pattern" class="icon-button" type="button" aria-label="Copy pattern" title="Copy pattern">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+          </button>
+        </div>
         <div id="copy-fallback" hidden>
           <label for="copy-value">Copy this text</label>
           <input id="copy-value" readonly>
         </div>
-        <p id="pattern-description" class="muted"></p>
-        <div class="pattern-field">
-          <pre><code id="pattern-source"></code></pre>
-          <button id="copy-pattern" type="button" aria-label="Copy pattern">Copy</button>
+        <form id="try-it" aria-label="Try It">
+          <label for="test-input">Test text</label>
+          <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
+          <div class="regex-test-actions">
+            <button id="test-button" type="submit">Test pattern</button>
+            <select id="example-picker" aria-label="Load example">
+              <option value="">Examples</option>
+              <option value="match"></option>
+              <option value="noMatch"></option>
+            </select>
+          </div>
+          <p id="test-status" class="status" role="status"></p>
+          <pre id="match-result" hidden></pre>
+        </form>
+        <div class="pattern-notes">
+          <p id="pattern-mode" class="muted"></p>
+          <p id="pattern-description" class="muted"></p>
         </div>
-        <p id="pattern-mode" class="muted"></p>
         <section aria-labelledby="regex-tags-title">
           <div class="tag-heading">
             <h3 id="regex-tags-title">Tags</h3>
@@ -92,25 +113,11 @@
             <div><label for="tag-name">Tag name</label><input id="tag-name" maxlength="80" required></div>
             <button type="submit">Add tag</button>
           </form>
+          <p id="detail-status" class="muted" role="status"></p>
         </section>
-        <form id="try-it">
-          <h3>Try It</h3>
-          <div class="regex-examples">
-            <div><strong>Matches</strong> <code id="matching-example"></code></div>
-            <div><strong>Doesn’t match</strong> <code id="nonmatching-example"></code></div>
-          </div>
-          <div class="snippet-actions">
-            <button id="use-match" type="button">Use matching example</button>
-            <button id="use-nonmatch" type="button">Use non-matching example</button>
-          </div>
-          <label for="test-input">Test text</label>
-          <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
-          <button id="test-button" type="submit">Test pattern</button>
-          <p id="test-status" class="status" role="status"></p>
-          <pre id="match-result" hidden></pre>
-        </form>
       </article>
     </div>
+    <div id="regex-toast" class="regex-toast" role="status" aria-atomic="true"></div>
   </main>
 </body>
 </html>
