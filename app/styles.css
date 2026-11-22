@@ -192,3 +192,8 @@ body:has(#snippet-full-screen[open]) { overflow: hidden; }
 
 .multiline-field { grid-column: 1 / -1; }
 .multiline-field textarea { margin-top: 0; }
+
+.site-nav { display: flex; gap: 1rem; padding-bottom: .7rem; }
+.site-nav a { display: inline-flex; align-items: center; min-height: 2.5rem; color: var(--muted); text-decoration: none; }
+.site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--accent); }
+.site-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }

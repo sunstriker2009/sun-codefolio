@@ -10,11 +10,12 @@ dotnet publish "$repo_root/tools/regex-preview/CodeFolio.RegexPreview.csproj" \
   --configuration Release --output "$publish_dir"
 
 site_dir="$output_dir/sun-codefolio"
-mkdir -p "$site_dir/regex" "$site_dir/app" "$site_dir/branding/assets/icons"
+mkdir -p "$site_dir/regex"
+cp -R "$repo_root/app" "$repo_root/branding" "$site_dir/"
 cp -R "$publish_dir/wwwroot/." "$site_dir/regex/"
-cp "$repo_root/app/styles.css" "$site_dir/app/"
-cp "$repo_root/branding/assets/icons/icon-64.png" "$site_dir/branding/assets/icons/"
+sed 's/id="site-nav" aria-label="CodeFolio" hidden/id="site-nav" aria-label="CodeFolio"/' \
+  "$repo_root/index.html" > "$site_dir/index.html"
 
 test -s "$site_dir/regex/index.html"
 test -s "$site_dir/regex/_framework/dotnet.js"
-printf 'Preview built at %s/regex/\n' "$site_dir"
+printf 'Site built at %s/\n' "$site_dir"

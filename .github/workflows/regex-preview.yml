@@ -5,7 +5,9 @@ on:
     paths:
       - '.github/workflows/regex-preview.yml'
       - 'tools/regex-preview/**'
-      - 'app/styles.css'
+      - 'tests/runtime/regex/**'
+      - 'index.html'
+      - 'app/**'
       - 'branding/assets/icons/icon-64.png'
 permissions:
   contents: read
@@ -21,6 +23,21 @@ jobs:
         run: dotnet workload install wasm-tools --skip-manifest-update
       - name: Build Regex preview
         run: bash tools/regex-preview/build-preview.sh "$RUNNER_TEMP/codefolio-regex-preview"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test both engines in Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/regex-tests" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/regex-tests/node_modules/.bin/playwright" install --with-deps chromium
+          python3 -m http.server 8000 --bind 127.0.0.1 --directory "$RUNNER_TEMP/codefolio-regex-preview" &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:8000/sun-codefolio/regex/ -o /dev/null; then break; fi
+            sleep 0.25
+          done
+          NODE_PATH="$RUNNER_TEMP/regex-tests/node_modules" node tests/runtime/regex/browser.mjs http://127.0.0.1:8000/sun-codefolio/
       - uses: actions/upload-artifact@v4
         with:
           name: codefolio-regex-preview

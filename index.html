@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=linq-m8-1">
+  <link rel="stylesheet" href="./app/styles.css?v=regex-reference-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
     import('./app/workspace.mjs?v=linq-m8-1').then(
@@ -25,6 +25,10 @@
       <img src="./branding/assets/icons/icon-64.png" width="38" height="38" alt="">
       <span>CODEFOLIO <small>by Sun</small></span>
     </div>
+    <nav class="container site-nav" id="site-nav" aria-label="CodeFolio" hidden>
+      <a href="./" aria-current="page">Snippets</a>
+      <a href="./regex/">Regex</a>
+    </nav>
   </header>
   <main id="workspace" class="container">
     <section class="intro" aria-labelledby="page-title">
