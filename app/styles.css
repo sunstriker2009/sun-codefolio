@@ -200,3 +200,6 @@ body:has(#snippet-full-screen[open]) { overflow: hidden; }
 #link-status:not(:empty), #link-fallback { margin-bottom: .5rem; font-size: .85rem; }
 #jump-to-builder { margin-top: .7rem; }
 #builder-heading { scroll-margin-top: 4rem; }
+
+.multiline-field { grid-column: 1 / -1; }
+.multiline-field textarea { margin-top: 0; }
