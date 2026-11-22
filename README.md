@@ -10,11 +10,11 @@ A searchable library for customizing and reusing code snippets.
 
 [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
 
-CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse the left menu by language and topic, or search the full catalog by task or exact syntax. Browse or search up to eight results per page. Favorites appear first, with each group sorted alphabetically by snippet title. Open a snippet for a worked example and a shareable link. Use **Copy link** to share a snippet, **Jump to builder** to edit its parameters, or **Full screen** to focus on its detail. Mark it as a favorite to find it again in **Favorites** in the catalog menu. Favorites are saved in the current browser. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
+CodeFolio is an interactive reference for Git, JavaScript, C#, and XPath. Browse the left menu by language and topic, or search the full catalog by task or exact syntax. Browse or search up to eight results per page. Favorites appear first, with each group sorted alphabetically by snippet title. Open a snippet for a worked example and a shareable link. Use **Copy link** to share a snippet, **Jump to builder** to edit its parameters, or **Full screen** to focus on its detail. Mark it as a favorite to find it again with the **Favorites** filter. Favorites are saved in the current browser. Edit its parameters in the builder and copy the generated code, or save a named variant to reuse its values. Variants are scoped to the current browser and site. Saving a variant with the same name replaces it for that snippet.
 
 ### Tags
 
-Use **+** beside **Tags** to add a tag, or remove an existing tag from its chip. Tags stay in the current browser. Open **Filters** to search by tag or check **Saved** and **Favorites**. Results match every active filter, including text search and the catalog or topic selected in **Browse catalog**. Use **All catalogs** to search across the library. Remove any active filter chip to clear that filter.
+Use **+** beside **Tags** to add a tag, or remove an existing tag from its chip. Tags stay in the current browser. Open **Filters → Tags** and select one or more tags. A snippet matches if it has any selected tag. Text search, catalog or topic, **Saved**, and **Favorites** still combine with the tag selection. Use **All catalogs** to search across the library. Remove any active filter chip to clear that filter.
 
 ### Run locally
 
@@ -39,7 +39,7 @@ Enter the name and select **Save variant**. Reopen the snippet later and select 
 
 Check **Saved** in **Filters** to show snippets with saved variants and open the backup controls. Choose a catalog or topic in the navigation to set the backup scope. **Export** downloads a JSON backup of your saved variants, tags, and favorites. **Import** merges entries within the current selection and accepts older variant-only backups. Choose **All catalogs** while in **Saved** to transfer all your data. Import adds missing favorites and tags and skips tags that already match by name regardless of case. For variants, import checks names within a language and topic, such as C# → Regex. It skips matching variants for the same snippet. A name already used by another snippet in that category, or by the same snippet with different settings, gets an “(imported)” suffix. The same name can be reused in another category.
 
-Use **Shared** with **Saved** checked to send the current selection’s JSON file through the device’s share menu. Available apps depend on the device and which apps accept the file. If file sharing is unavailable, use **Export** and attach the downloaded JSON in your messaging or email app.
+Use **Share** with **Saved** checked to send the current selection’s JSON file through the device’s share menu. Available apps depend on the device and which apps accept the file. If file sharing is unavailable, use **Export** and attach the downloaded JSON in your messaging or email app.
 
 ### Maintain the catalog
 

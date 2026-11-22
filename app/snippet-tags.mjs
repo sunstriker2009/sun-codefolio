@@ -1,9 +1,9 @@
 export const cleanTag = (tag) => tag.trim().replace(/\s+/g, ' ');
 export const tagKey = (tag) => cleanTag(tag).toLowerCase();
 
-export function findTaggedSnippets(entries, tags, query) {
-  const term = tagKey(query);
-  if (!term) return entries;
+export function findTaggedSnippets(entries, tags, selectedTags) {
+  const keys = new Set(Array.from(selectedTags, tagKey));
+  if (!keys.size) return entries;
   return entries.filter(({ id }) =>
-    (tags[id] ?? []).some((tag) => tagKey(tag).includes(term)));
+    (tags[id] ?? []).some((tag) => keys.has(tagKey(tag))));
 }

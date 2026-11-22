@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=and-filters-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=multi-tags-1';
 import { restoreValues } from './parameters.mjs';
-import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=and-filters-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=and-filters-1';
+import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=multi-tags-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=multi-tags-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=and-filters-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=multi-tags-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -11,7 +11,11 @@ const backToResults = byId('back-to-results');
 const search = byId('search');
 const searchFilters = byId('search-filters');
 const activeFilters = byId('active-filters');
-const tagSearch = byId('tag-search');
+const tagFilter = byId('tag-filter');
+const tagFilterSummary = tagFilter.querySelector('summary');
+const tagFilterOptions = byId('tag-filter-options');
+const knownTagOptions = new Map();
+let selectedTags = new Set();
 const personalFilters = [
   { key: 'savedVariants', label: 'Saved', control: byId('filter-saved') },
   { key: 'favorites', label: 'Favorites', control: byId('filter-favorites') },
@@ -155,7 +159,8 @@ function rememberMobileResults(snippetId) {
     catalogPage: currentPage,
     mobileResults: {
       search: search.value,
-      tagSearch: tagSearch.value,
+      selectedTags: [...selectedTags],
+      tagFilterOpen: tagFilter.open,
       filtersOpen: searchFilters.open,
       scroll: window.scrollY,
       snippetId,
@@ -166,7 +171,8 @@ function rememberMobileResults(snippetId) {
 function restoreSearch(snapshot) {
   if (!snapshot) return;
   search.value = snapshot.search;
-  tagSearch.value = snapshot.tagSearch;
+  selectedTags = new Set((snapshot.selectedTags ?? []).filter((key) => knownTagOptions.has(key)));
+  tagFilter.open = Boolean(snapshot.tagFilterOpen);
   searchFilters.open = Boolean(snapshot.filtersOpen);
 }
 
@@ -261,13 +267,33 @@ function readTags() {
 }
 
 function updateTagOptions() {
-  const unique = new Map();
+  const names = new Map();
   for (const tag of Object.values(tags).flat()) {
-    if (!unique.has(tagKey(tag))) unique.set(tagKey(tag), tag);
+    const key = tagKey(tag);
+    if (key && !names.has(key)) names.set(key, cleanTag(tag));
   }
-  byId('known-tags').replaceChildren(...[...unique.values()]
-    .sort((left, right) => left.localeCompare(right))
-    .map((value) => new Option(value)));
+
+  knownTagOptions.clear();
+  tagFilterOptions.replaceChildren();
+  for (const [key, name] of [...names].sort((left, right) => left[1].localeCompare(right[1]))) {
+    const control = document.createElement('input');
+    control.type = 'checkbox';
+    control.addEventListener('change', () => setTagFilter(key, control.checked));
+    const label = document.createElement('label');
+    const caption = document.createElement('span');
+    caption.textContent = name;
+    label.append(control, caption);
+    tagFilterOptions.append(label);
+    knownTagOptions.set(key, { name, control });
+  }
+  selectedTags = new Set([...selectedTags].filter((key) => knownTagOptions.has(key)));
+  byId('no-tag-options').hidden = Boolean(knownTagOptions.size);
+}
+
+function setTagFilter(key, checked) {
+  if (checked) selectedTags.add(key);
+  else selectedTags.delete(key);
+  refreshSearchResults();
 }
 
 function setPersonalFilter(key, checked) {
@@ -275,7 +301,6 @@ function setPersonalFilter(key, checked) {
 }
 
 function renderActiveFilters() {
-  const tag = cleanTag(tagSearch.value);
   activeFilters.replaceChildren();
 
   function addChip(label, control, clear) {
@@ -289,11 +314,11 @@ function renderActiveFilters() {
     activeFilters.append(row);
   }
 
-  if (tag) {
-    addChip('Tag · ' + tag, tagSearch, () => {
-      tagSearch.value = '';
-      refreshSearchResults();
-    });
+  for (const [key, { name, control }] of knownTagOptions) {
+    control.checked = selectedTags.has(key);
+    if (control.checked) {
+      addChip('Tag · ' + name, tagFilter.open ? control : tagFilterSummary, () => setTagFilter(key, false));
+    }
   }
   for (const { key, label, control } of personalFilters) {
     control.checked = Boolean(scope[key]);
@@ -334,21 +359,22 @@ function changeTags(change) {
     tagStatus.textContent = 'Tags couldn’t be saved in this browser.';
     return false;
   }
+  const wasFilteringByTag = selectedTags.size > 0;
   tags = stored;
   updateTagOptions();
   showTags();
-  if (tagSearch.value.trim()) updateResults();
+  if (wasFilteringByTag) updateResults();
   return true;
 }
 
 function updateResults({ fromHistory = false } = {}) {
   renderActiveFilters();
-  const searchingTags = Boolean(tagSearch.value.trim());
+  const searchingTags = selectedTags.size > 0;
   const searchingText = Boolean(search.value.trim());
   const searching = searchingText || searchingTags;
   const showingFavorites = scope.favorites;
   const showingVariants = scope.savedVariants;
-  const matches = findTaggedSnippets(browseSnippets(search.value, scope), tags, tagSearch.value);
+  const matches = findTaggedSnippets(browseSnippets(search.value, scope), tags, selectedTags);
   let savedGroups;
   if (showingVariants) {
     try {
@@ -871,7 +897,12 @@ function refreshSearchResults() {
   updateResults();
 }
 
-tagSearch.addEventListener('input', refreshSearchResults);
+tagFilter.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || !tagFilter.open) return;
+  event.preventDefault();
+  tagFilter.open = false;
+  tagFilterSummary.focus();
+});
 for (const { key, control } of personalFilters) {
   control.addEventListener('change', () => setPersonalFilter(key, control.checked));
 }
@@ -883,10 +914,11 @@ window.addEventListener('storage', (event) => {
   }
   if (event.key === storageKey || event.key === null) refreshVariants();
   if (event.key === tagsStorageKey || event.key === null) {
+    const wasFilteringByTag = selectedTags.size > 0;
     tags = readTags();
     updateTagOptions();
     if (selected) showTags();
-    if (tagSearch.value.trim()) updateResults();
+    if (wasFilteringByTag) updateResults();
   }
 });
 window.addEventListener('popstate', () => {
