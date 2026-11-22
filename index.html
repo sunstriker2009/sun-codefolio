@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=personal-backup-1">
+  <link rel="stylesheet" href="./app/styles.css?v=and-filters-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=personal-backup-1').then(
+    import('./app/workspace.mjs?v=and-filters-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -30,24 +30,18 @@
     <section class="intro" aria-labelledby="page-title">
       <h1>Snippet library</h1>
       <p>Find a snippet, make it yours, and copy it into your workflow.</p>
-      <label for="search">Search all snippets</label>
+      <label for="search">Search snippets</label>
       <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
       <details id="search-filters" class="search-filters">
         <summary>Filters</summary>
         <div class="tag-search">
-          <div>
-            <label for="tag-search">Search by tag</label>
-            <input id="tag-search" type="search" list="known-tags" autocomplete="off">
-            <datalist id="known-tags"></datalist>
-          </div>
-          <div>
-            <label for="tag-scope">Tag scope</label>
-            <select id="tag-scope">
-              <option value="global">All catalogs</option>
-              <option value="catalog" id="tag-catalog" disabled>Current catalog</option>
-              <option value="topic" id="tag-topic" disabled>Current topic</option>
-            </select>
-          </div>
+          <label for="tag-search">Search by tag</label>
+          <input id="tag-search" type="search" list="known-tags" autocomplete="off">
+          <datalist id="known-tags"></datalist>
+        </div>
+        <div class="filter-options">
+          <label><input id="filter-saved" type="checkbox"> Saved</label>
+          <label><input id="filter-favorites" type="checkbox"> Favorites</label>
         </div>
       </details>
       <ul id="active-filters" class="active-filters" aria-label="Active filters" hidden></ul>
@@ -65,7 +59,7 @@
             <div class="variant-transfer">
               <button type="button" id="export-variants" aria-label="Export personal backup">Export</button>
               <button type="button" id="import-variants" aria-label="Import personal backup">Import</button>
-              <button type="button" id="share-variants">Share backup</button>
+              <button type="button" id="share-variants">Shared</button>
               <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
             </div>
             <p id="variant-transfer-status" class="muted" role="status"></p>

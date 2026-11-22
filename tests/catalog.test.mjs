@@ -201,12 +201,15 @@ test('catalog browsing includes a topic for every snippet and narrows by languag
   assert.deepEqual(browseSnippets('', { language: 'Git', topic: 'Regex' }), []);
 });
 
-test('a search uses the full All ranking regardless of the active language or topic', () => {
+test('text search is narrowed by catalog and topic while all catalogs still search globally', () => {
   const scope = { language: 'C#', topic: 'Regex' };
   const query = 'git log -L';
-  assert.deepEqual(browseSnippets(query, scope), findSnippets(query));
-  assert.equal(browseSnippets(query, scope)[0].id, 'git-line-history');
-  assert.equal(browseSnippets('items.Take(', scope)[0].topic, 'LINQ');
+  assert.deepEqual(browseSnippets(query), findSnippets(query));
+  assert.equal(browseSnippets(query)[0].id, 'git-line-history');
+  assert.deepEqual(browseSnippets(query, scope), []);
+  assert.equal(browseSnippets('items.Take(', { language: 'C#' })[0].topic, 'LINQ');
+  assert.deepEqual(browseSnippets('items.Take(', scope), []);
+  assert.equal(browseSnippets('Regex.Matches', scope)[0].id, 'csharp-regex-multiline-logs');
   assert.deepEqual(browseSnippets('  ', scope), browseSnippets('', scope));
 });
 
@@ -343,17 +346,20 @@ test('backup export and import follow the selected language or topic', () => {
   assert.equal(imported.outsideScope, 2);
 });
 
-test('personal tag search matches case-insensitively at every catalog level', () => {
+test('personal tag search matches case-insensitively within the current text, catalog, and topic results', () => {
   const git = 'git-file-history', linq = 'csharp-take-items', regex = 'csharp-regex-named-group';
   const tags = { [git]: ['Release review'], [linq]: ['Daily release'], [regex]: ['Audit'] };
   const scope = { language: 'C#', topic: 'Regex' };
+  const ids = (query, tag, selection) => findTaggedSnippets(browseSnippets(query, selection), tags, tag)
+    .map(({ id }) => id);
   assert.equal(cleanTag('  Release   Review  '), 'Release Review');
   assert.equal(tagKey('RELEASE Review'), 'release review');
-  assert.deepEqual(findTaggedSnippets(snippets, tags, 'RELEASE', 'global', scope).map(({ id }) => id), [git, linq]);
-  assert.deepEqual(findTaggedSnippets(snippets, tags, 'release', 'catalog', scope).map(({ id }) => id), [linq]);
-  assert.deepEqual(findTaggedSnippets(snippets, tags, 'release', 'topic', scope), []);
-  assert.deepEqual(findTaggedSnippets(snippets, tags, 'audit', 'topic', scope).map(({ id }) => id), [regex]);
-  assert.deepEqual(findTaggedSnippets(findSnippets('git log --oneline'), tags, 'release', 'global', scope).map(({ id }) => id), [git]);
+  assert.deepEqual(ids('', 'RELEASE'), [git, linq]);
+  assert.deepEqual(ids('', 'release', { language: 'C#' }), [linq]);
+  assert.deepEqual(ids('', 'release', scope), []);
+  assert.deepEqual(ids('', 'audit', scope), [regex]);
+  assert.deepEqual(ids('Regex.Matches', 'audit', scope), []);
+  assert.deepEqual(ids('git log --oneline', 'release'), [git]);
 });
 
 test('result sorting puts favorites first and orders both groups alphabetically without mutating the matches', () => {

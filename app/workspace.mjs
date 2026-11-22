@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=personal-backup-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=and-filters-1';
 import { restoreValues } from './parameters.mjs';
-import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=personal-backup-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=personal-backup-1';
+import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=and-filters-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=and-filters-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=personal-backup-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=and-filters-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -12,7 +12,10 @@ const search = byId('search');
 const searchFilters = byId('search-filters');
 const activeFilters = byId('active-filters');
 const tagSearch = byId('tag-search');
-const tagScope = byId('tag-scope');
+const personalFilters = [
+  { key: 'savedVariants', label: 'Saved', control: byId('filter-saved') },
+  { key: 'favorites', label: 'Favorites', control: byId('filter-favorites') },
+];
 const tagName = byId('tag-name');
 const tagEditor = byId('tag-editor');
 const tagToggle = byId('toggle-tag-editor');
@@ -103,10 +106,9 @@ function changeBrowsePage(page, nextScope = scope) {
   updateResults({ fromHistory: true });
 }
 
-function browseScope(nextScope, { closeMenu = true } = {}) {
-  search.value = '';
+function browseScope(nextScope) {
   changeBrowsePage(1, nextScope);
-  if (closeMenu && compactNavigation.matches) {
+  if (compactNavigation.matches) {
     disclosure.open = false;
     browseHeading.focus();
   }
@@ -118,28 +120,7 @@ function scopeItem(label, language, topic = '') {
   return control;
 }
 
-function viewName() {
-  if (scope.savedVariants) return 'Saved';
-  if (scope.favorites) return 'Favorites';
-  return 'All';
-}
-
-const viewRow = document.createElement('ul');
-viewRow.className = 'catalog-views';
-viewRow.setAttribute('aria-label', 'Catalog views');
-const viewButtons = new Map();
-for (const label of ['All', 'Saved', 'Favorites']) {
-  const row = document.createElement('li');
-  const control = button(label, () => browseScope({
-    ...scope, savedVariants: label === 'Saved', favorites: label === 'Favorites',
-  }, { closeMenu: false }));
-  viewButtons.set(label, control);
-  row.append(control);
-  viewRow.append(row);
-}
-const divider = document.createElement('hr');
-divider.className = 'catalog-divider';
-menu.append(viewRow, divider, scopeItem('All catalogs', ''));
+menu.append(scopeItem('All catalogs', ''));
 for (const [language, topics] of languages) {
   const group = document.createElement('details');
   const summary = document.createElement('summary');
@@ -175,7 +156,6 @@ function rememberMobileResults(snippetId) {
     mobileResults: {
       search: search.value,
       tagSearch: tagSearch.value,
-      tagScope: tagScope.value,
       filtersOpen: searchFilters.open,
       scroll: window.scrollY,
       snippetId,
@@ -187,7 +167,6 @@ function restoreSearch(snapshot) {
   if (!snapshot) return;
   search.value = snapshot.search;
   tagSearch.value = snapshot.tagSearch;
-  tagScope.value = snapshot.tagScope;
   searchFilters.open = Boolean(snapshot.filtersOpen);
 }
 
@@ -291,27 +270,18 @@ function updateTagOptions() {
     .map((value) => new Option(value)));
 }
 
-function updateTagScope() {
-  const catalog = byId('tag-catalog');
-  const topic = byId('tag-topic');
-  catalog.disabled = !scope.language;
-  topic.disabled = !scope.topic;
-  catalog.textContent = scope.language ? 'Catalog · ' + scope.language : 'Current catalog';
-  topic.textContent = scope.topic ? 'Topic · ' + scope.topic : 'Current topic';
-  if (tagScope.selectedOptions[0]?.disabled || !tagScope.value) tagScope.value = 'global';
+function setPersonalFilter(key, checked) {
+  changeBrowsePage(1, { ...scope, [key]: checked });
 }
 
 function renderActiveFilters() {
   const tag = cleanTag(tagSearch.value);
-  activeFilters.hidden = !tag;
   activeFilters.replaceChildren();
-  if (!tag) return;
 
   function addChip(label, control, clear) {
     const row = document.createElement('li');
     const chip = button(label + ' ×', () => {
       clear();
-      refreshSearchResults();
       (searchFilters.open ? control : searchFilters.querySelector('summary')).focus();
     });
     chip.setAttribute('aria-label', 'Remove filter ' + label);
@@ -319,10 +289,17 @@ function renderActiveFilters() {
     activeFilters.append(row);
   }
 
-  addChip('Tag · ' + tag, tagSearch, () => { tagSearch.value = ''; });
-  if (tagScope.value !== 'global') {
-    addChip(tagScope.selectedOptions[0].textContent, tagScope, () => { tagScope.value = 'global'; });
+  if (tag) {
+    addChip('Tag · ' + tag, tagSearch, () => {
+      tagSearch.value = '';
+      refreshSearchResults();
+    });
   }
+  for (const { key, label, control } of personalFilters) {
+    control.checked = Boolean(scope[key]);
+    if (control.checked) addChip(label, control, () => setPersonalFilter(key, false));
+  }
+  activeFilters.hidden = !activeFilters.childElementCount;
 }
 
 function showTags() {
@@ -365,17 +342,13 @@ function changeTags(change) {
 }
 
 function updateResults({ fromHistory = false } = {}) {
-  updateTagScope();
   renderActiveFilters();
   const searchingTags = Boolean(tagSearch.value.trim());
   const searchingText = Boolean(search.value.trim());
   const searching = searchingText || searchingTags;
-  const showingFavorites = !searching && scope.favorites;
-  const showingVariants = !searching && scope.savedVariants;
-  const matches = findTaggedSnippets(
-    browseSnippets(search.value, searchingTags ? allSnippets : scope),
-    tags, tagSearch.value, tagScope.value, scope,
-  );
+  const showingFavorites = scope.favorites;
+  const showingVariants = scope.savedVariants;
+  const matches = findTaggedSnippets(browseSnippets(search.value, scope), tags, tagSearch.value);
   let savedGroups;
   if (showingVariants) {
     try {
@@ -384,9 +357,8 @@ function updateResults({ fromHistory = false } = {}) {
       // The empty-state message will explain that the variants could not be read.
     }
   }
-  let filtered = matches;
-  if (showingFavorites) filtered = matches.filter(({ id }) => favorites.has(id));
-  if (showingVariants) filtered = matches.filter(({ id }) => savedGroups?.get(id).length);
+  const filtered = matches.filter(({ id }) =>
+    (!showingFavorites || favorites.has(id)) && (!showingVariants || savedGroups?.get(id).length));
   const { id, snippet } = readSnippetLink(location.search, snippets);
   updateMobileDetail(snippet);
   const ordered = sortSnippetResults(filtered, favorites);
@@ -395,18 +367,14 @@ function updateResults({ fromHistory = false } = {}) {
   const { page, pageCount, items } = paginateSnippets(ordered, currentPage);
   currentPage = page;
 
-  const view = viewName();
-  const scopeLabel = [scope.language, scope.topic, view === 'All' ? '' : view].filter(Boolean).join(' / ');
-  browseHeading.textContent = searchingTags ? 'Tag results' : searchingText ? 'Search results' : scopeLabel || 'All snippets';
-  for (const [label, control] of viewButtons) {
-    control.setAttribute('aria-pressed', !searching && label === view);
-  }
+  const scopeLabel = [scope.language, scope.topic].filter(Boolean).join(' / ');
+  browseHeading.textContent = scopeLabel || (searching ? 'Search results' : 'All snippets');
   for (const { control, language, topic } of scopeButtons) {
-    control.setAttribute('aria-pressed', !searchingText && scope.language === language && scope.topic === topic);
+    control.setAttribute('aria-pressed', scope.language === language && scope.topic === topic);
   }
   variantTools.hidden = !showingVariants;
   for (const group of menu.querySelectorAll('details')) {
-    const active = !searchingText && group.dataset.language === scope.language;
+    const active = group.dataset.language === scope.language;
     group.classList.toggle('active-language', active);
     if (fromHistory && active) group.open = true;
   }
@@ -415,10 +383,13 @@ function updateResults({ fromHistory = false } = {}) {
   byId('result-count').textContent = count + (count === 1 ? ' snippet' : ' snippets')
     + (showingVariants ? ' with saved variants' : '');
   byId('no-results').hidden = count > 0;
-  let emptyMessage = searchingTags ? 'No snippets match this tag search.' : 'Try a different search term.';
-  if (showingFavorites) emptyMessage = 'Mark a snippet as a favorite to see it here.';
-  if (showingVariants) {
-    emptyMessage = savedGroups ? 'No saved variants in this selection.' : 'Saved variants couldn’t be read.';
+  let emptyMessage = 'No snippets match this selection.';
+  if (showingVariants && !savedGroups) {
+    emptyMessage = 'Saved variants couldn’t be read.';
+  } else if (!searching && showingVariants && !showingFavorites) {
+    emptyMessage = 'No saved variants in this selection.';
+  } else if (!searching && showingFavorites && !showingVariants) {
+    emptyMessage = 'Mark a snippet as a favorite to see it here.';
   }
   byId('no-results').textContent = emptyMessage;
   byId('unknown-snippet').hidden = id === null || Boolean(snippet);
@@ -691,7 +662,7 @@ function showVariants() {
 }
 
 function refreshVariants() {
-  if (scope.savedVariants && !search.value.trim() && !tagSearch.value.trim()) updateResults();
+  if (scope.savedVariants) updateResults();
   if (selected) showVariants();
 }
 
@@ -901,7 +872,9 @@ function refreshSearchResults() {
 }
 
 tagSearch.addEventListener('input', refreshSearchResults);
-tagScope.addEventListener('change', refreshSearchResults);
+for (const { key, control } of personalFilters) {
+  control.addEventListener('change', () => setPersonalFilter(key, control.checked));
+}
 search.addEventListener('input', refreshSearchResults);
 window.addEventListener('storage', (event) => {
   if (event.key === favoritesStorageKey || event.key === null) {
