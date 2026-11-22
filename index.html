@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=variant-share-1">
+  <link rel="stylesheet" href="./app/styles.css?v=personal-backup-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=variant-share-1').then(
+    import('./app/workspace.mjs?v=personal-backup-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -61,10 +61,10 @@
         <section aria-labelledby="browse-heading" class="browse">
           <h2 id="browse-heading" tabindex="-1">All snippets</h2>
           <p id="workspace-status" class="muted" role="status">Loading snippets…</p>
-          <section id="variant-tools" aria-label="Saved variant backups" hidden>
+          <section id="variant-tools" aria-label="Personal backups" hidden>
             <div class="variant-transfer">
-              <button type="button" id="export-variants" aria-label="Export saved variants">Export</button>
-              <button type="button" id="import-variants" aria-label="Import saved variants">Import</button>
+              <button type="button" id="export-variants" aria-label="Export personal backup">Export</button>
+              <button type="button" id="import-variants" aria-label="Import personal backup">Import</button>
               <button type="button" id="share-variants">Share backup</button>
               <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
             </div>

@@ -1,9 +1,9 @@
-import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=variant-share-1';
+import { browseSnippets, buildSnippet, defaultValues, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from './catalog.mjs?v=personal-backup-1';
 import { restoreValues } from './parameters.mjs';
-import { exportVariantBackup, isRecord, mergeVariantBackup, readVariantBackup } from './variant-backup.mjs?v=variant-share-1';
-import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=variant-share-1';
+import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from './variant-backup.mjs?v=personal-backup-1';
+import { readSnippetLink, snippetHref } from './snippet-links.mjs?v=personal-backup-1';
 
-import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=variant-share-1';
+import { cleanTag, findTaggedSnippets, tagKey } from './snippet-tags.mjs?v=personal-backup-1';
 
 const byId = (id) => document.getElementById(id);
 const workspace = byId('workspace');
@@ -718,26 +718,30 @@ function backupFilename() {
   const parts = [scope.language.replace('#', 'sharp'), scope.topic]
     .filter(Boolean)
     .map((part) => part.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-  return ['codefolio-variants', ...parts].join('-') + '.json';
+  return ['codefolio-backup', ...parts].join('-') + '.json';
 }
 
-function prepareVariantBackup() {
+function readPersonalData() {
+  return { variants: readVariantStore(), tags: readTags(), favorites: [...readFavorites()] };
+}
+
+function preparePersonalBackup() {
   let backup;
   try {
-    backup = exportVariantBackup(readVariantStore(), transferSnippetIds(scope));
+    backup = exportPersonalBackup(readPersonalData(), transferSnippetIds(scope));
   } catch {
-    transferStatus.textContent = 'The saved variant backup couldn’t be prepared.';
+    transferStatus.textContent = 'The backup couldn’t be prepared.';
     return;
   }
   if (!backup.count) {
-    transferStatus.textContent = 'This selection has no saved variants.';
+    transferStatus.textContent = 'This selection has no saved variants, tags, or favorites.';
     return;
   }
   return backup;
 }
 
 exportVariants.addEventListener('click', () => {
-  const backup = prepareVariantBackup();
+  const backup = preparePersonalBackup();
   if (!backup) return;
 
   const href = URL.createObjectURL(new Blob([backup.json], { type: 'application/json' }));
@@ -748,24 +752,24 @@ exportVariants.addEventListener('click', () => {
   download.click();
   download.remove();
   setTimeout(() => URL.revokeObjectURL(href), 1000);
-  transferStatus.textContent = 'Exported ' + backup.count + ' saved ' + (backup.count === 1 ? 'variant.' : 'variants.');
+  transferStatus.textContent = 'Exported ' + backup.count + (backup.count === 1 ? ' saved item.' : ' saved items.');
 });
 
 function showShareFallback() {
   const draft = document.createElement('a');
-  draft.href = 'mailto:?subject=CodeFolio%20saved%20variants';
+  draft.href = 'mailto:?subject=CodeFolio%20backup';
   draft.textContent = 'open an email draft';
   transferStatus.replaceChildren('Use Export to download the JSON file and attach it in your app. You can also ',
     draft, '.');
 }
 
 shareVariants.addEventListener('click', async () => {
-  const backup = prepareVariantBackup();
+  const backup = preparePersonalBackup();
   if (!backup) return;
 
   const shareScope = scope;
   const file = new File([backup.json], backupFilename(), { type: 'application/json' });
-  const shareData = { files: [file], title: 'CodeFolio saved variants' };
+  const shareData = { files: [file], title: 'CodeFolio backup' };
   shareVariants.disabled = true;
   try {
     if (!navigator.share || !navigator.canShare?.(shareData)) {
@@ -789,6 +793,32 @@ shareVariants.addEventListener('click', async () => {
   }
 });
 
+function saveImportedBackup(backup) {
+  const changes = [
+    [backup.added, storageKey, backup.variants],
+    [backup.tagsAdded, tagsStorageKey, backup.tags],
+    [backup.favoritesAdded, favoritesStorageKey, backup.favorites],
+  ].filter(([count]) => count);
+  const applied = [];
+  try {
+    for (const [, key, value] of changes) {
+      const previous = localStorage.getItem(key);
+      localStorage.setItem(key, JSON.stringify(value));
+      applied.push([key, previous]);
+    }
+  } catch {
+    for (const [key, previous] of applied.reverse()) {
+      if (previous === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, previous);
+    }
+    throw new Error('The backup couldn’t be saved in this browser.');
+  }
+}
+
+function itemCount(count, singular) {
+  return count + ' ' + (count === 1 ? singular : singular + 's');
+}
+
 importVariants.addEventListener('click', () => backupFile.click());
 
 backupFile.addEventListener('change', async () => {
@@ -799,17 +829,25 @@ backupFile.addEventListener('change', async () => {
   importVariants.disabled = true;
   transferStatus.textContent = 'Reading backup…';
   try {
-    const imported = readVariantBackup(await file.text());
-    const { variants, added, renamed, duplicates, unavailable, outsideScope } =
-      mergeVariantBackup(readVariantStore(), imported, snippets, transferSnippetIds(importScope));
-    if (added) writeVariantStore(variants);
-    const summary = ['Imported ' + added + ' ' + (added === 1 ? 'variant.' : 'variants.')];
+    const imported = readPersonalBackup(await file.text());
+    const backup = mergePersonalBackup(readPersonalData(), imported, snippets, transferSnippetIds(importScope));
+    saveImportedBackup(backup);
+    const { added, tagsAdded, favoritesAdded, renamed, duplicates, unavailable, outsideScope } = backup;
+    const summary = ['Imported ' + itemCount(added, 'variant') + ', '
+      + itemCount(tagsAdded, 'tag') + ', and ' + itemCount(favoritesAdded, 'favorite') + '.'];
     if (renamed) summary.push(renamed + ' renamed to keep existing variants.');
     if (duplicates) summary.push(duplicates + ' already saved.');
     if (unavailable) summary.push(unavailable + ' skipped because the snippets are unavailable.');
     if (outsideScope) summary.push(outsideScope + ' skipped outside this selection.');
     if (sameScope(scope, importScope)) transferStatus.textContent = summary.join(' ');
-    refreshVariants();
+    tags = backup.tags;
+    favorites = new Set(backup.favorites);
+    updateTagOptions();
+    updateResults();
+    if (selected) {
+      showTags();
+      showVariants();
+    }
   } catch (error) {
     if (sameScope(scope, importScope)) transferStatus.textContent = error.message;
   } finally {

@@ -1,6 +1,9 @@
 import { parseValues, restoreValues } from './parameters.mjs';
 
-const backupFormat = 'codefolio.saved-variants';
+import { cleanTag, tagKey } from './snippet-tags.mjs';
+
+const backupFormat = 'codefolio.personal-backup';
+const legacyBackupFormat = 'codefolio.saved-variants';
 const backupVersion = 1;
 const maxNameLength = 80;
 
@@ -24,32 +27,63 @@ function validateVariants(variants) {
   return variants;
 }
 
-export function exportVariantBackup(stored, snippetIds) {
-  const scoped = snippetIds
-    ? Object.fromEntries(Object.entries(stored).filter(([id]) => snippetIds.has(id)))
-    : stored;
-  const variants = Object.fromEntries(Object.entries(validateVariants(scoped))
-    .filter(([, entries]) => entries.length > 0));
+function validatePersonalData({ variants, tags, favorites }) {
+  validateVariants(variants);
+  if (!isRecord(tags) || Object.values(tags).some((names) =>
+    !Array.isArray(names) || names.some((name) => typeof name !== 'string' || !cleanTag(name)))) {
+    throw new Error('The backup contains invalid tags.');
+  }
+  if (!Array.isArray(favorites) || favorites.some((id) => typeof id !== 'string' || !id.trim())) {
+    throw new Error('The backup contains invalid favorites.');
+  }
+  return { variants, tags, favorites };
+}
+
+function scopeEntries(entries, snippetIds) {
+  if (!snippetIds) return entries;
+  return Object.fromEntries(Object.entries(entries).filter(([id]) => snippetIds.has(id)));
+}
+
+function nonemptyEntries(entries) {
+  return Object.fromEntries(Object.entries(entries).filter(([, values]) => values.length > 0));
+}
+
+export function exportPersonalBackup(data, snippetIds) {
+  const { variants, tags, favorites } = validatePersonalData({
+    variants: scopeEntries(data.variants, snippetIds),
+    tags: scopeEntries(data.tags, snippetIds),
+    favorites: data.favorites.filter((id) => !snippetIds || snippetIds.has(id)),
+  });
+  const scoped = {
+    variants: nonemptyEntries(variants),
+    tags: nonemptyEntries(tags),
+    favorites: [...new Set(favorites)],
+  };
   return {
-    count: Object.values(variants).reduce((count, entries) => count + entries.length, 0),
-    json: JSON.stringify({ format: backupFormat, version: backupVersion, variants }, null, 2) + '\n',
+    count: Object.values(scoped.variants).reduce((count, entries) => count + entries.length, 0)
+      + Object.values(scoped.tags).reduce((count, names) => count + names.length, 0)
+      + scoped.favorites.length,
+    json: JSON.stringify({ format: backupFormat, version: backupVersion, ...scoped }, null, 2) + '\n',
   };
 }
 
-export function readVariantBackup(text) {
+export function readPersonalBackup(text) {
   let backup;
   try {
     backup = JSON.parse(text);
   } catch {
     throw new Error('Choose a valid JSON backup exported by CodeFolio.');
   }
-  if (!isRecord(backup) || backup.format !== backupFormat) {
-    throw new Error('Choose a saved-variants backup exported by CodeFolio.');
+  if (!isRecord(backup) || ![backupFormat, legacyBackupFormat].includes(backup.format)) {
+    throw new Error('Choose a backup exported by CodeFolio.');
   }
   if (backup.version !== backupVersion) {
     throw new Error('This version of CodeFolio cannot read the backup format.');
   }
-  return validateVariants(backup.variants);
+  if (backup.format === legacyBackupFormat) {
+    return { variants: validateVariants(backup.variants), tags: {}, favorites: [] };
+  }
+  return validatePersonalData(backup);
 }
 
 function comparableValues(snippet, values) {
@@ -133,4 +167,56 @@ export function mergeVariantBackup(stored, imported, snippets, snippetIds) {
   }
 
   return { variants, ...counts };
+}
+
+export function mergePersonalBackup(stored, imported, snippets, snippetIds) {
+  const { variants, ...counts } = mergeVariantBackup(stored.variants, imported.variants, snippets, snippetIds);
+  const tags = { ...stored.tags };
+  const favorites = new Set(stored.favorites);
+  const catalogIds = new Set(snippets.map(({ id }) => id));
+  counts.tagsAdded = 0;
+  counts.favoritesAdded = 0;
+
+  function inScope(id, count) {
+    if (!catalogIds.has(id)) {
+      counts.unavailable += count;
+      return false;
+    }
+    if (snippetIds && !snippetIds.has(id)) {
+      counts.outsideScope += count;
+      return false;
+    }
+    return true;
+  }
+
+  for (const [id, incoming] of Object.entries(imported.tags)) {
+    if (!incoming.length || !inScope(id, incoming.length)) continue;
+
+    const current = tags[id] ?? [];
+    const known = new Set(current.map(tagKey));
+    const additions = [];
+    for (const tag of incoming) {
+      const key = tagKey(tag);
+      if (known.has(key)) {
+        counts.duplicates++;
+      } else {
+        known.add(key);
+        additions.push(cleanTag(tag));
+      }
+    }
+    if (additions.length) tags[id] = [...current, ...additions];
+    counts.tagsAdded += additions.length;
+  }
+
+  for (const id of imported.favorites) {
+    if (!inScope(id, 1)) continue;
+    if (favorites.has(id)) {
+      counts.duplicates++;
+    } else {
+      favorites.add(id);
+      counts.favoritesAdded++;
+    }
+  }
+
+  return { variants, tags, favorites: [...favorites], ...counts };
 }

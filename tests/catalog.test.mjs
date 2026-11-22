@@ -3,9 +3,11 @@ import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { browseSnippets, buildSnippet, defaultValues, findSnippets, paginateSnippets, snippets, snippetsPerPage, sortSnippetResults } from '../app/catalog.mjs';
 import { restoreValues } from '../app/parameters.mjs';
-import { exportVariantBackup, mergeVariantBackup, readVariantBackup } from '../app/variant-backup.mjs';
+import { exportPersonalBackup, mergePersonalBackup, mergeVariantBackup, readPersonalBackup } from '../app/variant-backup.mjs';
 import { readSnippetLink, snippetHref } from '../app/snippet-links.mjs';
 import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs';
+
+const personalData = (variants = {}, tags = {}, favorites = []) => ({ variants, tags, favorites });
 
 const byId = (id) => snippets.find((snippet) => snippet.id === id);
 
@@ -226,17 +228,17 @@ test('variant backups round-trip typed values for multiple snippets and skip emp
     'git-file-history': [{ name: 'Daily', values: { path: 'work.txt', limit: 7, fileChanges: true } }],
     'csharp-take-items': [{ name: 'Top 3', values: { limit: '3' } }],
   };
-  const backup = exportVariantBackup({ ...stored, 'git-branch-list': [] });
+  const backup = exportPersonalBackup(personalData({ ...stored, 'git-branch-list': [] }));
   assert.equal(backup.count, 2);
-  assert.deepEqual(readVariantBackup(backup.json), stored);
-  assert.equal(exportVariantBackup({}).count, 0);
+  assert.deepEqual(readPersonalBackup(backup.json).variants, stored);
+  assert.equal(exportPersonalBackup(personalData()).count, 0);
 });
 
 test('invalid backup files fail before they can be merged', () => {
-  assert.throws(() => readVariantBackup('{unfinished'), /valid JSON/);
-  assert.throws(() => readVariantBackup('{"version":1}'), /exported by CodeFolio/);
-  assert.throws(() => readVariantBackup('{"format":"codefolio.saved-variants","version":2}'), /version/);
-  assert.throws(() => readVariantBackup(
+  assert.throws(() => readPersonalBackup('{unfinished'), /valid JSON/);
+  assert.throws(() => readPersonalBackup('{"version":1}'), /exported by CodeFolio/);
+  assert.throws(() => readPersonalBackup('{"format":"codefolio.saved-variants","version":2}'), /version/);
+  assert.throws(() => readPersonalBackup(
     '{"format":"codefolio.saved-variants","version":1,"variants":{"git-file-history":[{"name":"Daily","values":{"path":[]}}]}}',
   ), /invalid saved variants/);
 });
@@ -278,7 +280,7 @@ test('renaming conflicts keeps long variant names within the builder limit', () 
   assert.equal(merged.renamed, 2);
   assert.ok(merged.variants[id].every((item) => item.name.length <= 80 && item.name.isWellFormed()));
   assert.equal(new Set(merged.variants[id].map((item) => item.name)).size, 3);
-  assert.doesNotThrow(() => readVariantBackup(exportVariantBackup(merged.variants).json));
+  assert.doesNotThrow(() => readPersonalBackup(exportPersonalBackup(personalData(merged.variants)).json));
 });
 
 test('variant import checks names across snippets in the same language and topic only', () => {
@@ -331,10 +333,10 @@ test('backup export and import follow the selected language or topic', () => {
     [regex]: [{ name: 'Daily', values: { group: 'level' } }],
   };
   const idsFor = (scope) => new Set(browseSnippets('', scope).map(({ id }) => id));
-  const csharp = exportVariantBackup(stored, idsFor({ language: 'C#' }));
-  assert.deepEqual(readVariantBackup(csharp.json), { [linq]: stored[linq], [regex]: stored[regex] });
+  const csharp = exportPersonalBackup(personalData(stored), idsFor({ language: 'C#' }));
+  assert.deepEqual(readPersonalBackup(csharp.json).variants, { [linq]: stored[linq], [regex]: stored[regex] });
   const regexOnly = idsFor({ language: 'C#', topic: 'Regex' });
-  assert.deepEqual(readVariantBackup(exportVariantBackup(stored, regexOnly).json), { [regex]: stored[regex] });
+  assert.deepEqual(readPersonalBackup(exportPersonalBackup(personalData(stored), regexOnly).json).variants, { [regex]: stored[regex] });
   const imported = mergeVariantBackup({ [git]: stored[git] }, stored, snippets, regexOnly);
   assert.deepEqual(imported.variants, { [git]: stored[git], [regex]: stored[regex] });
   assert.equal(imported.added, 1);
@@ -409,4 +411,58 @@ test('C# Regex timeout example generates distinct match, no-match, and timeout r
   assert.match(result.output, /catch \(RegexMatchTimeoutException\)\s*\{\s*return null;/);
   assert.match(result.output, /true => "Matched",\s*false => "No match",\s*null => "Timed out"/);
   assert.equal(buildSnippet(snippet, { ...defaults, timeout: 9 }).fieldId, 'timeout');
+});
+
+test('personal backups round-trip all three data types and import older variant-only files', () => {
+  const id = 'git-file-history';
+  const variants = { [id]: [{ name: 'Daily', values: { limit: 5 } }] };
+  const data = personalData(variants, { [id]: ['Release'] }, [id]);
+  const backup = exportPersonalBackup(data);
+  assert.equal(backup.count, 3);
+  assert.deepEqual(readPersonalBackup(backup.json), data);
+  assert.deepEqual(readPersonalBackup(JSON.stringify({
+    format: 'codefolio.saved-variants', version: 1, variants,
+  })), personalData(variants));
+
+  for (const malformed of [
+    { ...data, tags: { [id]: ['  '] } },
+    { ...data, favorites: [{ id }] },
+  ]) {
+    assert.throws(() => readPersonalBackup(JSON.stringify({
+      format: 'codefolio.personal-backup', version: 1, ...malformed,
+    })), /invalid (tags|favorites)/);
+  }
+});
+
+test('scoped personal backups merge tags and favorites without duplicates or data loss', () => {
+  const git = 'git-file-history', regex = 'csharp-regex-mask-ids', linq = 'csharp-take-items';
+  const scope = new Set([regex]);
+  const existing = personalData({}, { [git]: ['Local'], [regex]: ['Release Review'] }, [git]);
+  const incoming = personalData({}, {
+    [regex]: [' release  review ', ' Team  notes ', 'team notes'],
+    [linq]: ['Outside'],
+    'removed-snippet': ['Unknown'],
+  }, [regex, regex, linq, 'removed-snippet']);
+
+  const exported = exportPersonalBackup(incoming, scope);
+  assert.deepEqual(readPersonalBackup(exported.json), personalData({}, {
+    [regex]: incoming.tags[regex],
+  }, [regex]));
+  assert.equal(exported.count, 4);
+
+  const merged = mergePersonalBackup(existing, incoming, snippets, scope);
+  assert.deepEqual(merged.tags, { [git]: ['Local'], [regex]: ['Release Review', 'Team notes'] });
+  assert.deepEqual(merged.favorites, [git, regex]);
+  assert.equal(merged.tagsAdded, 1);
+  assert.equal(merged.favoritesAdded, 1);
+  assert.equal(merged.duplicates, 3);
+  assert.equal(merged.unavailable, 2);
+  assert.equal(merged.outsideScope, 2);
+  assert.deepEqual(existing.tags[regex], ['Release Review']);
+
+  const repeated = mergePersonalBackup(merged, incoming, snippets, scope);
+  assert.equal(repeated.tagsAdded, 0);
+  assert.equal(repeated.favoritesAdded, 0);
+  assert.deepEqual(repeated.tags, merged.tags);
+  assert.deepEqual(repeated.favorites, merged.favorites);
 });
