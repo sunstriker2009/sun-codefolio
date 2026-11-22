@@ -1,6 +1,14 @@
-.regex-search { display: flex; gap: .6rem; flex-wrap: wrap; max-width: 42rem; }
-.regex-search > div:first-child { flex: 1 1 16rem; }
-.regex-search > div:last-child { flex: 0 1 12rem; }
+.regex-reference > .intro { padding: 1rem 0 .85rem; }
+.regex-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .6rem; max-width: 42rem; }
+.regex-search select, #detail-platform { width: auto; }
+.regex-detail-top, .pattern-navigation { display: flex; flex-wrap: wrap; gap: .4rem; }
+.regex-detail-top { justify-content: space-between; align-items: center; margin-bottom: .45rem; }
+.pattern-navigation { margin-inline-start: auto; }
+.regex-reference .pattern-navigation button { padding: .4rem .55rem; font-size: .85rem; }
+.regex-reference.mobile-detail .layout > #detail #back-to-results { position: static; margin: 0; }
+.pattern-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .6rem; margin-top: .5rem; padding: .35rem; border: 1px solid var(--border); border-radius: .55rem; background: var(--field); }
+.pattern-field pre { margin: 0; padding: .35rem .45rem; border: 0; background: transparent; white-space: pre-wrap; overflow-wrap: anywhere; }
+#detail-platform { padding: .4rem .5rem; font-size: .875rem; }
 .regex-reference .snippet-actions { margin: .65rem 0; flex-wrap: wrap; }
 #pattern-mode, #backup-status:not(:empty), #detail-status:not(:empty) { margin-top: .55rem; }
 .regex-examples { display: grid; gap: .35rem; }
@@ -10,5 +18,5 @@
 #match-result { white-space: pre-wrap; overflow-wrap: anywhere; }
 #no-tags { margin: .35rem 0; }
 @media (max-width: 720px) {
-  .regex-reference.mobile-detail > .intro { display: none; }
+  .regex-reference.mobile-detail .regex-detail-top { position: sticky; top: .5rem; z-index: 1; background: var(--surface); }
 }
