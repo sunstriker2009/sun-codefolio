@@ -2,12 +2,6 @@
 
 CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath snippets. Use the builder to customize an example, copy the generated code, or save your settings for later in the same browser. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
 
-## Planned
-
-| Milestone | What’s coming |
-| --- | --- |
-| M8 · Practical C# LINQ | Select the latest record per group, join collections by key, and find duplicates by a composite key. |
-
 ## Shipped
 
 | Milestone | What shipped |
@@ -20,3 +14,4 @@ CodeFolio is a searchable reference for practical Git, JavaScript, C#, and XPath
 | M5 · Workspace improvements | Added mobile snippet navigation, a unified Filters panel, favorites, tags, and personal backups. |
 | M6 · Practical C# Regex | Extract structured log records, mask IDs while keeping the last four digits, and distinguish a match timeout from a completed search. |
 | M7 · JavaScript example validation | Added runtime checks for the generated array filtering, joining, and property extraction examples. |
+| M8 · Practical C# LINQ | Added examples for selecting the latest record per group, joining collections by key, and finding duplicates by a composite key. |
