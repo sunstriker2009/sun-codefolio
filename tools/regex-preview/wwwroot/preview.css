@@ -1,0 +1,5 @@
+.regex-preview { padding-bottom: 3rem; }
+.regex-preview .intro, .regex-preview .panel { max-width: 42rem; }
+.regex-preview .intro p { margin-bottom: 0; }
+#test-input { margin-top: .35rem; }
+#test-button { margin-top: .65rem; }

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Regex preview · CodeFolio by Sun</title>
+  <link rel="stylesheet" href="../app/styles.css">
+  <link rel="stylesheet" href="./preview.css">
+  <script type="module" src="./preview.mjs"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container brand">
+      <img src="../branding/assets/icons/icon-64.png" width="38" height="38" alt="">
+      <span>CODEFOLIO <small>by Sun</small></span>
+    </div>
+  </header>
+  <main class="container regex-preview">
+    <section class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">Regex reference preview</h1>
+      <p>Try a reference pattern with C# and .NET 10. The runner loads when you first test it.</p>
+    </section>
+    <article class="panel" aria-labelledby="pattern-title">
+      <p class="language">C# · .NET 10</p>
+      <h2 id="pattern-title">Signed integer</h2>
+      <p>Matches a whole string of ASCII digits with an optional plus or minus sign.</p>
+      <pre><code id="pattern">\A[+-]?[0-9]+\z</code></pre>
+      <dl class="reference-details">
+        <div><dt>Matches</dt><dd><code>-42</code> and <code>+7</code></dd></div>
+        <div><dt>Doesn’t match</dt><dd><code>3.5</code> or a number surrounded by spaces</dd></div>
+      </dl>
+      <form id="try-it">
+        <h3>Try It</h3>
+        <label for="test-input">Test text</label>
+        <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false">-42</textarea>
+        <button id="test-button" type="submit">Test pattern</button>
+        <p id="test-status" class="status" role="status"></p>
+      </form>
+    </article>
+  </main>
+</body>
+</html>
