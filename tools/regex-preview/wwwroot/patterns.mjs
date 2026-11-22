@@ -2,9 +2,10 @@ const whole = (source) => ({
   csharp: '\\A(?:' + source + ')\\z',
   javascript: '^(?:' + source + ')(?![\\s\\S])',
   python: '\\A(?:' + source + ')\\Z',
+  pcre2: '\\A(?:' + source + ')\\z',
 });
 
-export const platforms = { csharp: 'C# / .NET 10', javascript: 'JavaScript', python: 'Python' };
+export const platforms = { csharp: 'C# / .NET 10', javascript: 'JavaScript', python: 'Python', pcre2: 'PCRE2' };
 
 export const patterns = [
   {
@@ -34,7 +35,7 @@ export const patterns = [
   {
     id: 'spaces-tabs', title: 'Spaces and tabs', mode: 'find',
     description: 'Finds the first run of spaces or tabs within text. A line break alone is excluded.',
-    expressions: { csharp: String.raw`[ \t]+`, javascript: String.raw`[ \t]+`, python: String.raw`[ \t]+` },
+    expressions: Object.fromEntries(Object.keys(platforms).map(engine => [engine, String.raw`[ \t]+`])),
     examples: { match: 'one\t two', noMatch: 'one\ntwo' },
   },
 ].map(entry => ({ ...entry, source: 'native' }));
