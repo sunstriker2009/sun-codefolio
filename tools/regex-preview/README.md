@@ -13,8 +13,8 @@ bash tools/regex-preview/build-preview.sh "$preview_dir"
 python3 -m http.server 8000 --directory "$preview_dir"
 ```
 
-Open [the Regex page](http://localhost:8000/sun-codefolio/regex/), or open the snippet library at [the site root](http://localhost:8000/sun-codefolio/). Pass `--regex-only` after the output directory to build the standalone Regex preview. The [Regex preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads that preview.
+Open [the site root](http://localhost:8000/sun-codefolio/) to enter the [Regex reference](http://localhost:8000/sun-codefolio/regex/). The [Regex preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads the same site build.
 
 ## Publish
 
-The [Pages workflow](../../.github/workflows/publish-pages.yml) builds the snippet library and Regex page in one artifact. It publishes on changes to site files once the repository’s Pages source is set to **GitHub Actions**. Run **Publish CodeFolio** from `main` for the first deployment after switching the source.
+The [Pages workflow](../../.github/workflows/publish-pages.yml) publishes the Regex reference and the site entry page. It runs on changes to site files when the repository’s Pages source is set to **GitHub Actions**.
