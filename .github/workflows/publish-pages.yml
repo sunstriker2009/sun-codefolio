@@ -1,0 +1,55 @@
+name: Publish CodeFolio
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'app/**'
+      - 'branding/**'
+      - 'tools/regex-preview/**'
+      - '.github/workflows/publish-pages.yml'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: codefolio-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Check the Pages source
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)
+          echo "type=$source" >> "$GITHUB_OUTPUT"
+          if [[ "$source" != workflow ]]; then
+            echo "::notice::Select GitHub Actions as the Pages source before publishing this build."
+            if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then exit 1; fi
+          fi
+      - uses: actions/checkout@v4
+        if: steps.source.outputs.type == 'workflow'
+      - uses: actions/setup-dotnet@v5
+        if: steps.source.outputs.type == 'workflow'
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install .NET WebAssembly tools
+        if: steps.source.outputs.type == 'workflow'
+        run: dotnet workload install wasm-tools --skip-manifest-update
+      - name: Build site
+        if: steps.source.outputs.type == 'workflow'
+        run: bash tools/regex-preview/build-preview.sh "$RUNNER_TEMP/codefolio-pages"
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.source.outputs.type == 'workflow'
+        with:
+          path: ${{ runner.temp }}/codefolio-pages/sun-codefolio
+      - uses: actions/deploy-pages@v4
+        if: steps.source.outputs.type == 'workflow'
+        id: deploy
