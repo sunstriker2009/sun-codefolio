@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./app/styles.css?v=and-filters-1">
+  <link rel="stylesheet" href="./app/styles.css?v=multi-tags-1">
   <script type="module">
     const status = document.getElementById('workspace-status');
-    import('./app/workspace.mjs?v=and-filters-1').then(
+    import('./app/workspace.mjs?v=multi-tags-1').then(
       () => { status.hidden = true; },
       (error) => {
         status.textContent = 'The snippet catalog couldn’t load. Reload the page to try again.';
@@ -34,11 +34,11 @@
       <input id="search" type="search" placeholder="Try “git history” or “filter array”" autocomplete="off">
       <details id="search-filters" class="search-filters">
         <summary>Filters</summary>
-        <div class="tag-search">
-          <label for="tag-search">Search by tag</label>
-          <input id="tag-search" type="search" list="known-tags" autocomplete="off">
-          <datalist id="known-tags"></datalist>
-        </div>
+        <details id="tag-filter" class="tag-filter">
+          <summary>Tags</summary>
+          <div id="tag-filter-options" class="tag-filter-options" role="group" aria-label="Filter by tags"></div>
+          <span id="no-tag-options" class="muted">No tags added yet.</span>
+        </details>
         <div class="filter-options">
           <label><input id="filter-saved" type="checkbox"> Saved</label>
           <label><input id="filter-favorites" type="checkbox"> Favorites</label>
@@ -59,7 +59,7 @@
             <div class="variant-transfer">
               <button type="button" id="export-variants" aria-label="Export personal backup">Export</button>
               <button type="button" id="import-variants" aria-label="Import personal backup">Import</button>
-              <button type="button" id="share-variants">Shared</button>
+              <button type="button" id="share-variants">Share</button>
               <input type="file" id="variant-backup-file" accept=".json,application/json" hidden>
             </div>
             <p id="variant-transfer-status" class="muted" role="status"></p>

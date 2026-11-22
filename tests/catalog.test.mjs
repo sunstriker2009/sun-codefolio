@@ -346,20 +346,21 @@ test('backup export and import follow the selected language or topic', () => {
   assert.equal(imported.outsideScope, 2);
 });
 
-test('personal tag search matches case-insensitively within the current text, catalog, and topic results', () => {
+test('selected tags match by whole name with OR within current text, catalog, and topic results', () => {
   const git = 'git-file-history', linq = 'csharp-take-items', regex = 'csharp-regex-named-group';
-  const tags = { [git]: ['Release review'], [linq]: ['Daily release'], [regex]: ['Audit'] };
+  const tags = { [git]: ['Release review', 'Audit'], [linq]: ['Daily release'], [regex]: ['Audit'] };
   const scope = { language: 'C#', topic: 'Regex' };
-  const ids = (query, tag, selection) => findTaggedSnippets(browseSnippets(query, selection), tags, tag)
-    .map(({ id }) => id);
+  const ids = (query, selected, selection) =>
+    findTaggedSnippets(browseSnippets(query, selection), tags, selected).map(({ id }) => id);
   assert.equal(cleanTag('  Release   Review  '), 'Release Review');
   assert.equal(tagKey('RELEASE Review'), 'release review');
-  assert.deepEqual(ids('', 'RELEASE'), [git, linq]);
-  assert.deepEqual(ids('', 'release', { language: 'C#' }), [linq]);
-  assert.deepEqual(ids('', 'release', scope), []);
-  assert.deepEqual(ids('', 'audit', scope), [regex]);
-  assert.deepEqual(ids('Regex.Matches', 'audit', scope), []);
-  assert.deepEqual(ids('git log --oneline', 'release'), [git]);
+  assert.deepEqual(ids('', [' RELEASE   REVIEW ', 'audit']), [git, regex]);
+  assert.deepEqual(ids('', ['release']), []);
+  assert.deepEqual(ids('', ['Daily release', 'Audit'], { language: 'C#' }), [linq, regex]);
+  assert.deepEqual(ids('', ['Daily release', 'Audit'], scope), [regex]);
+  assert.deepEqual(ids('Regex.Matches', ['audit'], scope), []);
+  assert.deepEqual(ids('git log --oneline', ['release review', 'daily release']), [git]);
+  assert.deepEqual(ids('', [], scope), browseSnippets('', scope).map(({ id }) => id));
 });
 
 test('result sorting puts favorites first and orders both groups alphabetically without mutating the matches', () => {
