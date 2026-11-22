@@ -1,5 +1,5 @@
 import { exportPersonalBackup, isRecord, mergePersonalBackup, readPersonalBackup } from '../app/variant-backup.mjs?v=regex-reference-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-pcre2-1';
+import { patterns, platforms } from './patterns.mjs?v=regex-go-1';
 
 const format = 'codefolio.regex-backup';
 const storageKey = 'codefolio.regex-personal.v1';

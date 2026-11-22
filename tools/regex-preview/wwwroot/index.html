@@ -9,7 +9,7 @@
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../app/styles.css?v=regex-reference-1">
   <link rel="stylesheet" href="./preview.css?v=regex-python-1">
-  <script type="module" src="./preview.mjs?v=regex-pcre2-1"></script>
+  <script type="module" src="./preview.mjs?v=regex-go-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -81,6 +81,7 @@
             <option value="javascript">JavaScript</option>
             <option value="python">Python</option>
             <option value="pcre2">PCRE2</option>
+            <option value="go">Go</option>
           </select>
         </div>
         <div class="pattern-field">
@@ -118,6 +119,11 @@
           <a href="https://www.php.net/manual/en/regexp.reference.delimiters.php">delimiters</a> and
           <a href="https://www.php.net/manual/en/reference.pcre.pattern.modifiers.php">modifiers</a>,
           for example <code>preg_match('~\A[0-9]+\z~u', $text)</code>.
+        </p>
+        <p id="go-note" class="muted" hidden>
+          Go’s <a href="https://pkg.go.dev/regexp/syntax">regexp syntax</a> supports named captures such as
+          <code>(?P&lt;name&gt;...)</code>. Lookaround and backreferences are unsupported. Go reports byte
+          offsets in code. Try It shows UTF-16 offsets across all engines.
         </p>
         <div id="pattern-notes" class="pattern-notes">
           <p id="pattern-mode" class="muted"></p>

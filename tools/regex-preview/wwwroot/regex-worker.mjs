@@ -1,4 +1,4 @@
-import { matchJavaScript } from './patterns.mjs?v=regex-pcre2-1';
+import { matchJavaScript } from './patterns.mjs?v=regex-go-1';
 
 const platform = new URL(self.location.href).searchParams.get('platform');
 let match = matchJavaScript;
@@ -18,6 +18,9 @@ if (platform === 'csharp') {
 } else if (platform === 'pcre2') {
   const { startPcre2Regex } = await import('./pcre2-regex.mjs?v=regex-pcre2-1');
   ({ match, validate } = await startPcre2Regex());
+} else if (platform === 'go') {
+  const { startGoRegex } = await import('./go-regex.mjs?v=regex-go-1');
+  ({ match, validate } = await startGoRegex());
 }
 
 self.addEventListener('message', ({ data }) => {

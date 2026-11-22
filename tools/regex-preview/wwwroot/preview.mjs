@@ -1,7 +1,7 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../app/snippet-tags.mjs?v=regex-reference-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-pcre2-1';
-import { createRunner } from './runner.mjs?v=regex-pcre2-1';
-import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-pcre2-1';
+import { patterns, platforms } from './patterns.mjs?v=regex-go-1';
+import { createRunner } from './runner.mjs?v=regex-go-1';
+import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-go-1';
 
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
@@ -258,6 +258,7 @@ function showEditor(editing) {
   };
   for (const [id, hidden] of Object.entries(controls)) byId(id).hidden = hidden;
   byId('pcre2-note').hidden = platform.value !== 'pcre2';
+  byId('go-note').hidden = platform.value !== 'go';
   detail.querySelector('.pattern-navigation').hidden = editing;
   newPattern.disabled = editing;
   detail.classList.toggle('editing-pattern', editing);

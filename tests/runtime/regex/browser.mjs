@@ -117,6 +117,18 @@ try {
   assert.equal(pcre2Requests().length, pcre2RequestsAfterStart);
   console.log(`PCRE2 at 390 px in Chromium: ${firstPcre2} ms first test, ${repeatPcre2} ms repeat test.`);
 
+  const goRequests = () => requests.filter(url => url.includes('/_go/'));
+  await detailPlatform.selectOption('go');
+  await page.locator('#go-note').getByRole('link', { name: 'regexp syntax' }).waitFor();
+  assert.equal(pcre2Requests().length, pcre2RequestsAfterStart);
+  assert.equal(goRequests().length, 0);
+  const firstGo = await run('-42', 'Match.');
+  const goRequestsAfterStart = goRequests().length;
+  assert.ok(goRequests().some(url => new URL(url).pathname.endsWith('/regex.wasm')));
+  const repeatGo = await run('42', 'Match.');
+  assert.equal(goRequests().length, goRequestsAfterStart);
+  console.log(`Go at 390 px in Chromium: ${firstGo} ms first test, ${repeatGo} ms repeat test.`);
+
   for (const engine of Object.keys(platforms)) {
     for (const entry of patterns) {
       const url = new URL(regex);
@@ -195,6 +207,7 @@ try {
   const customCsharp = patterns.find(entry => entry.id === 'signed-integer').expressions.csharp;
   const customPython = String.raw`(?P<word>café)\b`;
   const customPcre2 = String.raw`prefix:\K(\p{L}++)`;
+  const customGo = String.raw`(?P<word>\p{L}+)([0-9]+)?`;
   await page.getByRole('button', { name: 'New pattern' }).click();
   const title = page.getByLabel('Pattern title');
   const expression = page.getByLabel('Pattern expression');
@@ -251,6 +264,16 @@ try {
   await run('😀 prefix:café', 'Match.');
   assert.match(await page.locator('#match-result').textContent(), /Matched "café" at index 10/);
   assert.match(await page.locator('#match-result').textContent(), /Group 1 · "café"/);
+  await engine.selectOption('go');
+  await expression.fill('(?=café)');
+  await save.click();
+  await editorStatus.getByText(/Go · .*invalid or unsupported/).waitFor();
+  assert.equal(await expression.getAttribute('aria-invalid'), 'true');
+  await expression.fill(customGo);
+  await run('😀 café', 'Match.');
+  assert.match(await page.locator('#match-result').textContent(), /Matched "café" at index 3/);
+  assert.match(await page.locator('#match-result').textContent(), /Group 1 · "café"/);
+  assert.match(await page.locator('#match-result').textContent(), /Group 2 · unmatched/);
   await engine.selectOption('javascript');
   await save.click();
   await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
@@ -279,6 +302,7 @@ try {
   assert.equal(exported.customPatterns[0].expressions.csharp, customCsharp);
   assert.equal(exported.customPatterns[0].expressions.python, customPython);
   assert.equal(exported.customPatterns[0].expressions.pcre2, customPcre2);
+  assert.equal(exported.customPatterns[0].expressions.go, customGo);
   assert.doesNotMatch(customJson, /private-input|sample/);
 
   await page.evaluate(() => localStorage.removeItem('codefolio.regex-personal.v1'));
@@ -302,6 +326,11 @@ try {
   await upload(invalid);
   await page.locator('#backup-status').getByText(/Portable example · PCRE2/).waitFor();
   await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  invalid.customPatterns[0].expressions.pcre2 = customPcre2;
+  invalid.customPatterns[0].expressions.go = String.raw`(\w+)\1`;
+  await upload(invalid);
+  await page.locator('#backup-status').getByText(/Portable example · Go/).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
   await upload(exported);
   await page.getByRole('heading', { name: 'Patterns (6)', exact: true }).waitFor();
   await upload(exported);
@@ -315,6 +344,8 @@ try {
   assert.equal(await page.locator('#pattern-source').textContent(), customPython);
   await engine.selectOption('pcre2');
   assert.equal(await page.locator('#pattern-source').textContent(), customPcre2);
+  await engine.selectOption('go');
+  assert.equal(await page.locator('#pattern-source').textContent(), customGo);
   await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
   assert.equal(await title.inputValue(), 'Portable example copy');
   await engine.selectOption('csharp');

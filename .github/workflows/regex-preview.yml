@@ -21,6 +21,10 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Install .NET WebAssembly tools
         run: dotnet workload install wasm-tools --skip-manifest-update
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: 'tools/regex-preview/.go-version'
+          cache: false
       - name: Build Regex preview
         run: bash tools/regex-preview/build-preview.sh "$RUNNER_TEMP/codefolio-regex-preview"
       - uses: actions/setup-node@v4
