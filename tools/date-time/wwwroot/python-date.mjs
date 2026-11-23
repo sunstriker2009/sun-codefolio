@@ -1,8 +1,7 @@
-const runtime = new URL('../regex/_python/314.0.8/', import.meta.url);
+import { loadPython } from '../shared/runtime-loaders.mjs?v=topics-2';
 
 export async function startDatePython(readZone) {
-  const { loadPyodide } = await import(new URL('pyodide.mjs', runtime));
-  const python = await loadPyodide({ indexURL: runtime.href });
+  const python = await loadPython();
   const run = python.runPython([
     'from base64 import b64decode',
     'from datetime import datetime',

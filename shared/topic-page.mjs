@@ -1,4 +1,4 @@
-export function mountTopic({ recipes, platforms, usage, run }) {
+export function mountTopic({ recipes, platforms, usage, run, normalizeInput = value => value }) {
   const byId = id => document.getElementById(id);
   const recipeSelect = byId('topic-recipe');
   const platformSelect = byId('topic-platform');
@@ -32,7 +32,8 @@ export function mountTopic({ recipes, platforms, usage, run }) {
     if (recipe !== nextRecipe) {
       recipe = nextRecipe;
       recipeSelect.value = recipe.id;
-      examples.replaceChildren(option('Examples', ''), ...recipe.examples.map((sample, index) => option(sample.input, String(index))));
+      examples.replaceChildren(option('Examples', ''), ...recipe.examples.map((sample, index) =>
+        option(sample.label ?? sample.input, String(index))));
       examples.value = '';
       input.value = recipe.examples[0].input;
       byId('topic-description').textContent = recipe.description;
@@ -77,7 +78,7 @@ export function mountTopic({ recipes, platforms, usage, run }) {
     const current = version;
     runButton.disabled = true;
     status.textContent = 'Running ' + platforms[platformSelect.value] + '…';
-    const result = await run(platformSelect.value, recipe.id, input.value.trim());
+    const result = await run(platformSelect.value, recipe.id, normalizeInput(input.value));
     if (current !== version) return;
     runButton.disabled = false;
     const labels = {
