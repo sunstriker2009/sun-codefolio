@@ -27,6 +27,11 @@ try {
     await page.getByRole('link', { name: new RegExp('^' + name) }).click();
     await page.waitForURL(new URL(path, root).href);
     await page.getByRole('heading', { name, exact: true }).waitFor();
+    const [text, picker, button] = await Promise.all([input.boundingBox(), examplePicker.boundingBox(), run.boundingBox()]);
+    assert.ok(text && picker && button);
+    assert.ok(picker.y >= text.y + text.height && button.y >= text.y + text.height);
+    assert.ok(Math.abs(picker.y + picker.height / 2 - button.y - button.height / 2) < 2);
+    assert.ok(Math.abs(picker.x - text.x) < 2 && Math.abs(button.x + button.width - text.x - text.width) < 2);
 
     for (const platform of Object.keys(platforms)) {
       await platformPicker.selectOption(platform);

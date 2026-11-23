@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="dark">
   <title>Date &amp; Time · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="../shared/styles.css?v=topics-1">
-  <link rel="stylesheet" href="../shared/topic-page.css?v=topics-1">
+  <link rel="stylesheet" href="../shared/styles.css?v=topic-controls-1">
+  <link rel="stylesheet" href="../shared/topic-page.css?v=topic-controls-1">
   <script type="module" src="./app.mjs?v=topics-2"></script>
 </head>
 <body>
@@ -33,13 +33,13 @@
     </div>
     <p id="topic-description" class="muted"></p>
     <form id="topic-try-it" aria-label="Try It">
-      <div class="topic-input-heading">
-        <label for="topic-input">Input</label>
-        <select id="topic-examples" aria-label="Load example"><option value="">Examples</option></select>
-      </div>
+      <label for="topic-input">Input</label>
       <p id="topic-format" class="muted"></p>
       <textarea id="topic-input" aria-describedby="topic-format" rows="2" maxlength="200" spellcheck="false"></textarea>
-      <button id="topic-run" type="submit">Run</button>
+      <div class="try-it-actions">
+        <select id="topic-examples" aria-label="Load example"><option value="">Examples</option></select>
+        <button id="topic-run" type="submit">Run</button>
+      </div>
       <p id="topic-status" class="status" role="status"></p>
       <pre id="topic-output" aria-label="Result" hidden></pre>
     </form>
