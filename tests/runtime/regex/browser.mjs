@@ -43,6 +43,7 @@ try {
 
   await page.goto(root.href);
   await page.waitForURL(regex.href);
+  assert.equal(await page.getByRole('banner').getByRole('link', { name: 'Playground', exact: true }).count(), 0);
   await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   assert.equal(await page.getByLabel('Platform', { exact: true }).count(), 0);
   assert.equal(requests.some(url => url.includes('/_framework/')), false);
