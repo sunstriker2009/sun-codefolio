@@ -43,7 +43,7 @@ try {
 
   await page.goto(root.href);
   await page.waitForURL(regex.href);
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   assert.equal(await page.getByLabel('Platform', { exact: true }).count(), 0);
   assert.equal(requests.some(url => url.includes('/_framework/')), false);
 
@@ -129,6 +129,24 @@ try {
   assert.equal(goRequests().length, goRequestsAfterStart);
   console.log(`Go at 390 px in Chromium: ${firstGo} ms first test, ${repeatGo} ms repeat test.`);
 
+  const quoted = patterns.find(entry => entry.id === 'double-quoted-string');
+  await page.goto(new URL('?pattern=double-quoted-string&platform=go', regex).href);
+  await page.getByText('Expected captures and usage', { exact: true }).click();
+  await page.locator('#recipe-captures').getByText(/Quoted contents/).waitFor();
+  assert.match(await page.locator('#recipe-code').textContent(), /regexp\.MustCompile/);
+  await detailPlatform.selectOption('python');
+  assert.match(await page.locator('#recipe-code').textContent(), /re\.search/);
+  await page.getByRole('button', { name: 'Copy usage example' }).click();
+  assert.equal(await page.evaluate(() => window.copiedText), await page.locator('#recipe-code').textContent());
+  await examples.selectOption('edge');
+  assert.equal(await input.inputValue(), quoted.examples.edge);
+
+  function assertCaptures(groups, rendered) {
+    groups.forEach((capture, index) => {
+      assert.ok(rendered.includes('Group ' + (index + 1) + ' · ' + JSON.stringify(capture)));
+    });
+  }
+
   for (const engine of Object.keys(platforms)) {
     for (const entry of patterns) {
       const url = new URL(regex);
@@ -136,7 +154,15 @@ try {
       url.searchParams.set('pattern', entry.id);
       await page.goto(url.href);
       await run(entry.examples.match, 'Match.');
-      assert.match(await page.locator('#match-result').textContent(), /Matched /);
+      const result = page.locator('#match-result');
+      const matched = await result.textContent();
+      assert.match(matched, /Matched /);
+      if (entry.recipe) {
+        assertCaptures(entry.recipe.matchGroups, matched);
+        const { edgeGroups } = entry.recipe;
+        await run(entry.examples.edge, edgeGroups ? 'Match.' : 'No match.');
+        if (edgeGroups) assertCaptures(edgeGroups, await result.textContent());
+      }
       await run(entry.examples.noMatch, 'No match.');
     }
     const decimal = new URL('?platform=' + engine + '&pattern=decimal-number', regex);
@@ -196,7 +222,7 @@ try {
   await page.getByText('Imported 0 patterns, 0 tags, and 0 favorites.', { exact: true }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
   await page.setViewportSize({ width: 1280, height: 850 });
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   await page.getByLabel('Detail platform').waitFor();
   const patternBox = await page.locator('.pattern-field pre').boundingBox();
   const copyBox = await page.locator('.pattern-field').getByRole('button', { name: 'Copy pattern' }).boundingBox();
@@ -315,24 +341,24 @@ try {
   invalid.customPatterns[0].expressions.javascript = '(';
   await upload(invalid);
   await page.locator('#backup-status').getByText(/Portable example · JavaScript/).waitFor();
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   invalid.customPatterns[0].expressions.javascript = '';
   invalid.customPatterns[0].expressions.python = '(?P<word>';
   await upload(invalid);
   await page.locator('#backup-status').getByText(/Portable example · Python/).waitFor();
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   invalid.customPatterns[0].expressions.python = customPython;
   invalid.customPatterns[0].expressions.pcre2 = '(';
   await upload(invalid);
   await page.locator('#backup-status').getByText(/Portable example · PCRE2/).waitFor();
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   invalid.customPatterns[0].expressions.pcre2 = customPcre2;
   invalid.customPatterns[0].expressions.go = String.raw`(\w+)\1`;
   await upload(invalid);
   await page.locator('#backup-status').getByText(/Portable example · Go/).waitFor();
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   await upload(exported);
-  await page.getByRole('heading', { name: 'Patterns (6)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + (patterns.length + 1) + ')', exact: true }).waitFor();
   await upload(exported);
   await page.locator('#backup-status').getByText('Imported 0 patterns, 0 tags, and 0 favorites.', { exact: true }).waitFor();
   await upload({ format: exported.format, version: 1, tags: { 'signed-integer': ['Legacy'] }, favorites: [] });
@@ -353,7 +379,7 @@ try {
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Delete pattern', exact: true }).click();
-  await page.getByRole('heading', { name: 'Patterns (5)', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   assert.equal(requests.some(url => new URL(url).pathname.startsWith(new URL('app/', root).pathname)), false);
   assert.deepEqual(errors, []);
   console.log('Verified native patterns, engine-specific validation, saved custom variants, editing, duplication, deletion, and backup round trips.');

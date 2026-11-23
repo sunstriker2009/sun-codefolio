@@ -7,6 +7,7 @@ const whole = (source) => ({
 });
 
 export const platforms = { csharp: 'C# / .NET 10', javascript: 'JavaScript', python: 'Python', pcre2: 'PCRE2', go: 'Go' };
+const sameExpression = source => Object.fromEntries(Object.keys(platforms).map(engine => [engine, source]));
 
 export const patterns = [
   {
@@ -36,8 +37,53 @@ export const patterns = [
   {
     id: 'spaces-tabs', title: 'Spaces and tabs', mode: 'find',
     description: 'Finds the first run of spaces or tabs within text. A line break alone is excluded.',
-    expressions: Object.fromEntries(Object.keys(platforms).map(engine => [engine, String.raw`[ \t]+`])),
+    expressions: sameExpression(String.raw`[ \t]+`),
     examples: { match: 'one\t two', noMatch: 'one\ntwo' },
+  },
+  {
+    id: 'structured-log-line', title: 'Structured log line', mode: 'whole',
+    description: 'Extracts a UTC timestamp, severity level, and message from one log line. The timestamp check verifies the format.',
+    expressions: whole(String.raw`([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)[ \t]+(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)[ \t]+([^ \t\r\n][^\r\n]*)`),
+    examples: {
+      match: '2026-11-22T14:05:17Z WARN Cache miss for order 42',
+      noMatch: 'WARN Cache miss for order 42',
+      edge: '2026-11-22T14:05:17Z INFO ',
+    },
+    recipe: {
+      captures: ['Timestamp', 'Level', 'Message'],
+      matchGroups: ['2026-11-22T14:05:17Z', 'WARN', 'Cache miss for order 42'],
+      edgeGroups: null,
+    },
+  },
+  {
+    id: 'key-value-field', title: 'Key-value field', mode: 'find',
+    description: 'Extracts the first key=value field separated by whitespace. Values start with an unquoted character and can contain equals signs. The match can include a leading separator.',
+    expressions: sameExpression(String.raw`(?:^|[ \t\r\n])([A-Za-z_][A-Za-z0-9_.-]*)=([^ \t\r\n"'][^ \t\r\n]*)`),
+    examples: {
+      match: 'host=api-1 env=prod',
+      noMatch: 'request-id: 42',
+      edge: 'route=/orders?id=42',
+    },
+    recipe: {
+      captures: ['Key', 'Value'],
+      matchGroups: ['host', 'api-1'],
+      edgeGroups: ['route', '/orders?id=42'],
+    },
+  },
+  {
+    id: 'double-quoted-string', title: 'Double-quoted string', mode: 'find',
+    description: 'Extracts the contents of the first double-quoted string, including escaped quotes and backslashes. The capture preserves escape sequences.',
+    expressions: sameExpression(String.raw`"((?:[^"\\\r\n]|\\[^\r\n])*)"`),
+    examples: {
+      match: String.raw`name="Ada \"A\" Lovelace"`,
+      noMatch: 'name="Ada',
+      edge: 'name=""',
+    },
+    recipe: {
+      captures: ['Quoted contents'],
+      matchGroups: [String.raw`Ada \"A\" Lovelace`],
+      edgeGroups: [''],
+    },
   },
 ].map(entry => ({ ...entry, source: 'native' }));
 

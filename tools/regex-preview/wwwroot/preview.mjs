@@ -1,7 +1,8 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=standalone-regex-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-go-1';
+import { patterns, platforms } from './patterns.mjs?v=regex-recipes-1';
+import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
 import { createRunner } from './runner.mjs?v=regex-go-1';
-import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=standalone-regex-1';
+import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-recipes-1';
 
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
@@ -277,6 +278,27 @@ function renderDraft() {
   clearTest();
 }
 
+function renderRecipe(entry, changed) {
+  const details = byId('recipe-usage');
+  const edge = examplePicker.querySelector('[value="edge"]');
+  const { recipe, examples } = entry;
+  details.hidden = !recipe;
+  edge.hidden = edge.disabled = !recipe;
+  if (changed) details.open = false;
+  if (!recipe) return;
+
+  edge.textContent = 'Edge case · ' + JSON.stringify(examples.edge);
+  const captures = recipe.captures.map((label, index) => {
+    const item = document.createElement('li');
+    item.textContent = 'Group ' + (index + 1) + ' · ' + label + ' · ' + JSON.stringify(recipe.matchGroups[index]);
+    return item;
+  });
+  byId('recipe-captures').replaceChildren(...captures);
+  byId('recipe-edge').textContent = 'Edge case ' + JSON.stringify(examples.edge)
+    + (recipe.edgeGroups ? ' captures ' + recipe.edgeGroups.map(value => JSON.stringify(value)).join(', ') + '.' : ' gives no match.');
+  byId('recipe-code').textContent = recipeUsage(platform.value, activeExpression(), examples.match);
+}
+
 function renderDetail(entry) {
   const changed = entry !== selected;
   selected = entry;
@@ -303,6 +325,7 @@ function renderDetail(entry) {
   examplePicker.options[1].textContent = 'Match · ' + JSON.stringify(entry.examples?.match ?? '');
   examplePicker.options[2].textContent = 'No match · ' + JSON.stringify(entry.examples?.noMatch ?? '');
   examplePicker.value = '';
+  renderRecipe(entry, changed);
   renderPersonal();
 }
 
@@ -502,6 +525,7 @@ async function copy(value, label) {
 
 byId('copy-pattern').addEventListener('click', () => copy(activeExpression(), 'Pattern'));
 byId('copy-link').addEventListener('click', () => copy(patternUrl(selected.id, platform.value).href, 'Link'));
+byId('copy-recipe-code').addEventListener('click', () => copy(byId('recipe-code').textContent, 'Usage example'));
 examplePicker.addEventListener('change', () => {
   const choice = examplePicker.value;
   if (!choice) return;

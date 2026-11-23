@@ -1,5 +1,5 @@
 import { compactMetadata, isRecord, mergeMetadata, validateMetadata } from '../shared/personal-metadata.mjs?v=standalone-regex-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-go-1';
+import { patterns, platforms } from './patterns.mjs?v=regex-recipes-1';
 
 const format = 'codefolio.regex-backup';
 const storageKey = 'codefolio.regex-personal.v1';

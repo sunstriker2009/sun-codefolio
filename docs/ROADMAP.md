@@ -21,3 +21,12 @@ CodeFolio is a searchable Regex reference with Try It for C#, JavaScript, Python
 | M13 · PCRE2 | Browse, test, and save patterns using PCRE2. See how to wrap raw expressions for PHP’s `preg_match`. |
 | M14 · Go Regex | Browse, test, and save patterns using Go’s standard `regexp` engine, with guidance on Go’s syntax and match offsets. Manual iPhone Safari verification is complete. |
 | M15 · Playground split | Made Regex the CodeFolio home page and moved the original snippet workspace to Playground. Existing snippet links forward to their new home. |
+
+## Next
+
+| Milestone | Status | Scope |
+| --- | --- | --- |
+| M16 · Practical Regex recipes | In progress | Add 8–12 task-focused recipes with sample input, expected captures, edge cases, and usage examples for the selected engine. Start with log lines, key-value fields, and quoted strings. |
+| M17 · Better Try It results | Planned | Add Find all, highlight matches, and display numbered and named captures. |
+| M18 · Saved test cases | Planned | Attach named test cases to custom patterns and run them together after edits. |
+| M19 · Replace preview | Planned | Preview the output of a replacement before using the expression in code. |
