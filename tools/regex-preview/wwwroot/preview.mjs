@@ -1,8 +1,10 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=standalone-regex-1';
 import { patterns, platforms } from './patterns.mjs?v=match-results-1';
 import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
-import { createRunner } from './runner.mjs?v=match-results-1';
-import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-recipes-1';
+import { createRunner } from './runner.mjs?v=date-topics-1';
+import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-cases-1';
+import { createCasePanel } from './case-panel.mjs?v=regex-cases-1';
+import { readTestCases } from './test-cases.mjs?v=regex-cases-1';
 
 const byId = id => document.getElementById(id);
 const search = byId('pattern-search');
@@ -37,6 +39,13 @@ const matchResult = byId('match-result');
 const backupFile = byId('backup-file');
 const backupStatus = byId('backup-status');
 const runners = Object.fromEntries(Object.keys(platforms).map(key => [key, createRunner(key)]));
+const casePanel = createCasePanel({
+  expression: activeExpression,
+  engine: () => platform.value,
+  run: (engine, pattern, text) => runners[engine](pattern, text),
+  onStart: clearTest,
+  onBusyChange: syncTestButton,
+});
 
 let personal = loadPersonalData();
 const selectedTags = new Set();
@@ -207,12 +216,16 @@ function activeExpression() {
   return (draft ?? selected)?.expressions[platform.value] ?? '';
 }
 
+function syncTestButton() {
+  testButton.disabled = validating || casePanel.busy || !activeExpression();
+}
+
 function clearTest() {
   testVersion++;
   testStatus.textContent = '';
   matchOutput.hidden = true;
   currentMatches = undefined;
-  testButton.disabled = validating || !activeExpression();
+  syncTestButton();
 }
 
 function renderPersonal() {
@@ -282,6 +295,7 @@ function renderDraft() {
   customExpression.removeAttribute('aria-invalid');
   editorStatus.textContent = '';
   clearTest();
+  casePanel.render(draft.testCases, true);
 }
 
 function renderRecipe(entry, changed) {
@@ -332,6 +346,7 @@ function renderDetail(entry) {
   examplePicker.options[2].textContent = 'No match · ' + JSON.stringify(entry.examples?.noMatch ?? '');
   examplePicker.value = '';
   renderRecipe(entry, changed);
+  casePanel.render(entry.testCases, false);
   renderPersonal();
 }
 
@@ -388,6 +403,7 @@ function beginDraft(entry, duplicate = false) {
     id: isNew ? 'custom-' + crypto.randomUUID() : entry.id,
     title: duplicate ? (entry.title + ' copy').slice(0, 100) : entry?.title ?? '',
     expressions: { ...entry?.expressions },
+    testCases: (entry?.testCases ?? []).map(testCase => ({ ...testCase })),
   };
   if (isNew) input.value = '';
   renderDraft();
@@ -404,6 +420,7 @@ customExpression.addEventListener('input', () => {
   customExpression.removeAttribute('aria-invalid');
   editorStatus.textContent = '';
   clearTest();
+  casePanel.invalidate();
 });
 
 function setValidating(value) {
@@ -414,6 +431,7 @@ function setValidating(value) {
   platform.disabled = value;
   byId('cancel-pattern').disabled = value;
   byId('import-backup').disabled = value;
+  casePanel.lock(value);
   clearTest();
 }
 
@@ -446,6 +464,13 @@ savePattern.addEventListener('click', async () => {
     customExpression.focus();
     return;
   }
+  let testCases;
+  try {
+    testCases = readTestCases(current.testCases);
+  } catch (error) {
+    editorStatus.textContent = error.message;
+    return;
+  }
 
   setValidating(true);
   editorStatus.textContent = 'Validating patterns…';
@@ -459,7 +484,7 @@ savePattern.addEventListener('click', async () => {
     customExpression.focus();
     return;
   }
-  const entry = { id: current.id, source: 'custom', title, expressions: current.expressions };
+  const entry = { id: current.id, source: 'custom', title, expressions: current.expressions, testCases };
   const customPatterns = current.isNew
     ? [...personal.customPatterns, entry]
     : personal.customPatterns.map(item => item.id === entry.id ? entry : item);
@@ -587,6 +612,7 @@ function showMatches(result, text) {
 
 byId('try-it').addEventListener('submit', async event => {
   event.preventDefault();
+  if (casePanel.busy) return;
   clearTest();
   const expression = activeExpression();
   if (!expression || validating) return;

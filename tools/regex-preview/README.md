@@ -4,6 +4,8 @@ The Regex reference runs C#, JavaScript, Python, PCRE2, and Go in browser worker
 
 Try It defaults to **First match**. Select **Find all** to highlight up to 100 matches in a copy of the input and inspect the numbered and named captures of each match. The preview marks empty matches with `∅`. Partial-character matches reported by an engine appear in the match inspector.
 
+Edit a custom pattern to add up to 20 named **Test cases** with input and an expected match or no-match result. **Run cases** uses the selected engine and works while you edit the pattern. Saving the pattern stores its test cases in this browser and includes them in Regex backups. Ordinary Try It input stays in the current page.
+
 ## Build and run
 
 Use the .NET 10 SDK with its WebAssembly workload and the Go SDK version in [`.go-version`](.go-version). The build downloads and verifies the pinned [Pyodide core runtime](https://github.com/pyodide/pyodide/tree/314.0.8) and [PCRE2 WebAssembly package](https://github.com/gudoshnikovn/pcre2-wasm). It builds the Go runtime from source and publishes all runtime assets alongside the site. Build into a fresh output directory and serve it over HTTP.
@@ -15,7 +17,7 @@ bash tools/regex-preview/build-preview.sh "$preview_dir"
 python3 -m http.server 8000 --directory "$preview_dir"
 ```
 
-Open [the site root](http://localhost:8000/sun-codefolio/) to enter the [Regex reference](http://localhost:8000/sun-codefolio/regex/). The [Regex preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads the same site build.
+Open [the Topics index](http://localhost:8000/sun-codefolio/) to browse [Regex](http://localhost:8000/sun-codefolio/regex/), [Date & Time](http://localhost:8000/sun-codefolio/date-time/), and [Encoding & Escaping](http://localhost:8000/sun-codefolio/encoding/). The [preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads the same site build. The topics share the .NET, Python, and Go packages. The Date & Time worker reads Toronto time-zone data from the pinned Go SDK’s zone database.
 
 ## Publish
 

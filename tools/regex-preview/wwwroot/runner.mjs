@@ -1,4 +1,4 @@
-export function createRunner(platform) {
+export function createRunner(platform, module = './regex-worker.mjs?v=date-topics-1') {
   let worker;
   let ready = false;
   let pending;
@@ -34,7 +34,7 @@ export function createRunner(platform) {
     }
 
     try {
-      const url = new URL('./regex-worker.mjs?v=match-results-1', import.meta.url);
+      const url = new URL(module, import.meta.url);
       url.searchParams.set('platform', platform);
       const current = new Worker(url, { type: 'module' });
       worker = current;

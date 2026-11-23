@@ -9,6 +9,8 @@ on:
       - 'shared/**'
       - 'branding/**'
       - 'tools/regex-preview/**'
+      - 'tools/date-time/**'
+      - 'tools/encoding/**'
       - '.github/workflows/publish-pages.yml'
 permissions:
   contents: read

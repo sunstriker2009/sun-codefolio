@@ -16,6 +16,7 @@ body { margin: 0; }
 .site-header { border-bottom: 1px solid var(--border); }
 .brand { display: flex; align-items: center; gap: .6rem; padding-block: .85rem; font-weight: 750; letter-spacing: .11em; }
 .brand small { margin-left: .3rem; color: var(--muted); font-weight: 500; letter-spacing: normal; }
+.topics-link { margin-inline-start: auto; color: var(--accent); font-size: .875rem; font-weight: 650; letter-spacing: normal; }
 .intro { padding: clamp(2rem, 6vw, 4rem) 0 2rem; }
 h1, h2, h3, p { margin: 0; }
 h1 { font-size: clamp(2rem, 5vw, 3.4rem); letter-spacing: -.045em; line-height: 1.12; }

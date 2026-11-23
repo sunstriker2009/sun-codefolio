@@ -4,8 +4,9 @@ import { destinationFor } from '../redirect.mjs';
 
 const home = 'https://sunstriker2009.github.io/sun-codefolio/';
 
-test('the CodeFolio home page opens Regex and preserves Regex deep links', () => {
-  assert.equal(destinationFor(home), home + 'regex/');
+test('the home page shows Topics and preserves earlier Regex deep links', () => {
+  assert.equal(destinationFor(home), null);
+  assert.equal(destinationFor(home + '?campaign=topics'), null);
   assert.equal(
     destinationFor(home + 'index.html?pattern=decimal-number&platform=go#try-it'),
     home + 'regex/?pattern=decimal-number&platform=go#try-it',

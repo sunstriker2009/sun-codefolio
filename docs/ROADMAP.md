@@ -1,6 +1,6 @@
 # CodeFolio roadmap
 
-CodeFolio is a searchable Regex reference with Try It for C#, JavaScript, Python, PCRE2, and Go. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/). The original snippet workspace now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/).
+CodeFolio is a cross-language reference with runnable Regex, Date & Time, and Encoding & Escaping examples. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/). The original snippet workspace now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/).
 
 ## Shipped
 
@@ -22,15 +22,15 @@ CodeFolio is a searchable Regex reference with Try It for C#, JavaScript, Python
 | M14 · Go Regex | Browse, test, and save patterns using Go’s standard `regexp` engine, with guidance on Go’s syntax and match offsets. Manual iPhone Safari verification is complete. |
 | M15 · Playground split | Made Regex the CodeFolio home page and moved the original snippet workspace to Playground. Existing snippet links forward to their new home. |
 | M17 · Better Try It results | Find and highlight the first match or the first 100 matches. Inspect numbered and named captures for any displayed match. |
+| M18 · Saved test cases | Save named match and no-match cases with custom patterns. Run them against the selected engine, including after edits, and transfer them in Regex backups. |
+| M19 · Date & Time and Topics | Browse topics and run date formatting, UTC-to-Toronto conversion, and explicit-format parsing in C#, JavaScript, Python, and Go. Existing Regex links continue to resolve. |
+| M20 · Encoding & Escaping | Encode URL components, round-trip Unicode through Base64, and serialize JSON strings in C#, JavaScript, Python, and Go. |
 
 ## Next
 
 | Milestone | Status | Scope |
 | --- | --- | --- |
 | M16 · Practical Regex recipes | In progress | Add 8–12 task-focused recipes with sample input, expected captures, edge cases, and usage examples for the selected engine. Start with log lines, key-value fields, and quoted strings. |
-| M18 · Saved test cases | Planned | Attach named test cases to custom patterns and run them together after edits. |
-| M19 · Date & Time and Topics | Planned | Add a topic index and a Date & Time reference for C#, JavaScript, Python, and Go. Start with date formatting, UTC-to-Toronto conversion, and parsing with an explicit format. Preserve existing `/regex/` links. |
-| M20 · Encoding & Escaping | Planned | Add runnable examples for URL component encoding, Unicode Base64 round trips, and JSON string escaping in C#, JavaScript, Python, and Go. |
 | M21 · XPath | Planned | Query XML and inspect the selected nodes in C#, browser JavaScript, and Python. Include recipes for namespaces, attributes, and text. |
 | M22 · CSV | Planned | Parse CSV with quoted commas, escaped quotes, and embedded newlines in C#, JavaScript, Python, and Go. |
 | M23 · Replace preview | Planned | Preview the output of a replacement before using the expression in code. |

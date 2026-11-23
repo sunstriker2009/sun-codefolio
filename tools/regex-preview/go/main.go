@@ -56,7 +56,9 @@ func runRegex(_ js.Value, args []js.Value) any {
 }
 
 func main() {
-	run := js.FuncOf(runRegex)
-	js.Global().Get("codefolioGoRegexReady").Invoke(run)
+	regex := js.FuncOf(runRegex)
+	date := js.FuncOf(runDate)
+	encoding := js.FuncOf(runEncoding)
+	js.Global().Get("codefolioGoReady").Invoke(regex, date, encoding)
 	select {}
 }

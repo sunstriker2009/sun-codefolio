@@ -58,6 +58,7 @@ try {
   }
 
   await page.goto(root.href);
+  await page.getByRole('link', { name: /^Regex/ }).click();
   await page.waitForURL(regex.href);
   assert.equal(await page.getByRole('banner').getByRole('link', { name: 'Playground', exact: true }).count(), 0);
   await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
@@ -269,7 +270,7 @@ try {
   const json = await readFile(await download.path(), 'utf8');
   assert.deepEqual(JSON.parse(json), {
     format: 'codefolio.regex-backup',
-    version: 2,
+    version: 3,
     customPatterns: [],
     tags: { 'signed-integer': ['Numbers'], 'spaces-tabs': ['Layout'] },
     favorites: ['signed-integer', 'spaces-tabs'],
@@ -369,6 +370,26 @@ try {
   assert.match(await page.locator('#match-result').textContent(), /Group 1 · "café"/);
   assert.match(await page.locator('#match-result').textContent(), /Group 2 · unmatched/);
   await engine.selectOption('javascript');
+  const casePanel = page.locator('#test-cases');
+  const runCases = casePanel.getByRole('button', { name: 'Run cases' });
+  await casePanel.locator('summary').first().click();
+  const savedCases = [
+    { name: 'Letters', input: 'catalog', expected: 'match' },
+    { name: 'Digits', input: '42', expected: 'no-match' },
+  ];
+  for (const [index, entry] of savedCases.entries()) {
+    await casePanel.getByRole('button', { name: 'Add case' }).click();
+    const row = casePanel.locator('li').nth(index);
+    await row.getByLabel('Case name').fill(entry.name);
+    await row.getByLabel('Case input').fill(entry.input);
+    await row.getByLabel('Expected result').selectOption(entry.expected);
+  }
+  await runCases.click();
+  await casePanel.getByRole('status').getByText('2 passed, 0 failed, 0 errors.').waitFor();
+  await expression.fill('^[a-z0-9]+$');
+  await runCases.click();
+  await casePanel.getByRole('status').getByText('1 passed, 1 failed, 0 errors.').waitFor();
+  await expression.fill('^[a-z]+$');
   await save.click();
   await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
   const customUrl = page.url();
@@ -397,6 +418,7 @@ try {
   assert.equal(exported.customPatterns[0].expressions.python, customPython);
   assert.equal(exported.customPatterns[0].expressions.pcre2, customPcre2);
   assert.equal(exported.customPatterns[0].expressions.go, customGo);
+  assert.deepEqual(exported.customPatterns[0].testCases, savedCases);
   assert.doesNotMatch(customJson, /private-input|sample/);
 
   await page.evaluate(() => localStorage.removeItem('codefolio.regex-personal.v1'));
@@ -434,6 +456,9 @@ try {
 
   await page.goto(customUrl);
   await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
+  await casePanel.locator('summary').first().click();
+  await casePanel.getByText('Letters', { exact: true }).waitFor();
+  await casePanel.getByText('Digits', { exact: true }).waitFor();
   await engine.selectOption('python');
   assert.equal(await page.locator('#pattern-source').textContent(), customPython);
   await engine.selectOption('pcre2');

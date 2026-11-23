@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 permissions:
   contents: read
 jobs:
@@ -24,5 +25,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Validate site routing
-        run: node --test tests/redirect.test.mjs
+      - name: Run fast CodeFolio checks
+        run: node --test tests/*.test.mjs

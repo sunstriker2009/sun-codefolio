@@ -3,21 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browse, test, and save regular expressions in CodeFolio by Sun.">
+  <meta name="description" content="Run practical Regex, Date & Time, and Encoding & Escaping examples across languages in CodeFolio by Sun.">
   <meta name="color-scheme" content="dark">
   <title>CodeFolio by Sun</title>
   <link rel="icon" href="./branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="./shared/styles.css?v=standalone-regex-1">
+  <link rel="stylesheet" href="./shared/styles.css?v=topics-1">
   <script type="module">
-    import { destinationFor } from './redirect.mjs';
-    window.location.replace(destinationFor(window.location.href));
+    import { destinationFor } from './redirect.mjs?v=topics-1';
+    const destination = destinationFor(window.location.href);
+    if (destination) window.location.replace(destination);
   </script>
 </head>
 <body>
+  <header class="site-header">
+    <div class="container brand">
+      <img src="./branding/assets/icons/icon-64.png" width="38" height="38" alt="">
+      <span>CODEFOLIO <small>by Sun</small></span>
+    </div>
+  </header>
   <main class="container intro">
-    <h1>CodeFolio by Sun</h1>
-    <p><a href="./regex/">Open the Regex reference</a></p>
-    <p><a href="https://sunstriker2009.github.io/sun-playground/">Open the Snippets workspace in Playground</a></p>
+    <h1>Topics</h1>
+    <ul class="results">
+      <li><a class="result" href="./regex/">Regex <span class="muted">Find, test, and save regular expressions.</span></a></li>
+      <li><a class="result" href="./date-time/">Date &amp; Time <span class="muted">Format, parse, and convert dates across languages.</span></a></li>
+      <li><a class="result" href="./encoding/">Encoding &amp; Escaping <span class="muted">Encode URL components, round-trip text through Base64, and escape JSON strings.</span></a></li>
+    </ul>
   </main>
 </body>
 </html>

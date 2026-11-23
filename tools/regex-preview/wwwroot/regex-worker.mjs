@@ -8,7 +8,7 @@ let validate = (pattern) => {
   return null;
 };
 if (platform === 'csharp') {
-  const { dotnet } = await import('./_framework/dotnet.js?v=match-results-1');
+  const { dotnet } = await import('./_framework/dotnet.js?v=topics-2');
   const { getAssemblyExports, getConfig } = await dotnet.create();
   const { RegexRunner } = await getAssemblyExports(getConfig().mainAssemblyName);
   match = (pattern, input, limit) => JSON.parse(RegexRunner.Test(pattern, input, limit));
@@ -20,7 +20,7 @@ if (platform === 'csharp') {
   const { startPcre2Regex } = await import('./pcre2-regex.mjs?v=match-results-1');
   ({ match, validate } = await startPcre2Regex());
 } else if (platform === 'go') {
-  const { startGoRegex } = await import('./go-regex.mjs?v=match-results-1');
+  const { startGoRegex } = await import('./go-regex.mjs?v=topics-2');
   ({ match, validate } = await startGoRegex());
 }
 
