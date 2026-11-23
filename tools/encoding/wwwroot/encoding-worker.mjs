@@ -1,4 +1,4 @@
-import { loadDotnet, loadPython } from '../shared/runtime-loaders.mjs?v=topics-2';
+import { loadDotnet, loadPython } from '../shared/runtime-loaders.mjs?v=xpath-1';
 import { encodeJavaScript, recipes } from './recipes.mjs?v=topics-2';
 
 const platform = new URL(self.location.href).searchParams.get('platform');

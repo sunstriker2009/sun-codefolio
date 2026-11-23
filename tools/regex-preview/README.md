@@ -17,7 +17,7 @@ bash tools/regex-preview/build-preview.sh "$preview_dir"
 python3 -m http.server 8000 --directory "$preview_dir"
 ```
 
-Open [the Topics index](http://localhost:8000/sun-codefolio/) to browse [Regex](http://localhost:8000/sun-codefolio/regex/), [Date & Time](http://localhost:8000/sun-codefolio/date-time/), and [Encoding & Escaping](http://localhost:8000/sun-codefolio/encoding/). The [preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads the same site build. The topics share the .NET, Python, and Go packages. The Date & Time worker reads Toronto time-zone data from the pinned Go SDK’s zone database.
+Open [the Topics index](http://localhost:8000/sun-codefolio/) to browse [Regex](http://localhost:8000/sun-codefolio/regex/), [Date & Time](http://localhost:8000/sun-codefolio/date-time/), [Encoding & Escaping](http://localhost:8000/sun-codefolio/encoding/), and [XPath](http://localhost:8000/sun-codefolio/xpath/). The [preview workflow](../../.github/workflows/regex-preview.yml) tests and uploads the same site build. The topics share the .NET, Python, and Go packages. The Date & Time worker reads Toronto time-zone data from the pinned Go SDK’s zone database. Python XPath loads a checksum-pinned lxml wheel only when requested.
 
 ## Publish
 

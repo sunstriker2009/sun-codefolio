@@ -8,7 +8,7 @@ let validate = (pattern) => {
   return null;
 };
 if (platform === 'csharp') {
-  const { dotnet } = await import('./_framework/dotnet.js?v=topics-2');
+  const { dotnet } = await import('./_framework/dotnet.js?v=xpath-1');
   const { getAssemblyExports, getConfig } = await dotnet.create();
   const { RegexRunner } = await getAssemblyExports(getConfig().mainAssemblyName);
   match = (pattern, input, limit) => JSON.parse(RegexRunner.Test(pattern, input, limit));

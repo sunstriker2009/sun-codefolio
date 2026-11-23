@@ -1,5 +1,5 @@
 export async function loadDotnet() {
-  const { dotnet } = await import('../regex/_framework/dotnet.js?v=topics-2');
+  const { dotnet } = await import('../regex/_framework/dotnet.js?v=xpath-1');
   const { getAssemblyExports, getConfig } = await dotnet.create();
   return getAssemblyExports(getConfig().mainAssemblyName);
 }
