@@ -1,5 +1,6 @@
 import { compactMetadata, isRecord, mergeMetadata, validateMetadata } from '../shared/personal-metadata.mjs?v=standalone-regex-1';
 import { patterns, platforms } from './patterns.mjs?v=regex-recipes-1';
+import { readTestCases } from './test-cases.mjs?v=regex-cases-1';
 
 const format = 'codefolio.regex-backup';
 const storageKey = 'codefolio.regex-personal.v1';
@@ -11,11 +12,11 @@ export function exportRegexBackup(data) {
   const { customPatterns } = data;
   return {
     count: count + customPatterns.length,
-    json: JSON.stringify({ format, version: 2, customPatterns, tags, favorites }, null, 2) + '\n',
+    json: JSON.stringify({ format, version: 3, customPatterns, tags, favorites }, null, 2) + '\n',
   };
 }
 
-function readCustomPatterns(entries) {
+function readCustomPatterns(entries, version) {
   if (!Array.isArray(entries)) throw new Error('The custom pattern list is invalid.');
   const ids = new Set();
   return entries.map(entry => {
@@ -27,7 +28,8 @@ function readCustomPatterns(entries) {
       throw new Error('The backup contains an invalid or duplicate custom pattern.');
     }
     ids.add(entry.id);
-    return { id: entry.id, source: 'custom', title: entry.title.trim(), expressions: entry.expressions };
+    const testCases = version === 3 && Object.hasOwn(entry, 'testCases') ? readTestCases(entry.testCases) : [];
+    return { id: entry.id, source: 'custom', title: entry.title.trim(), expressions: entry.expressions, testCases };
   });
 }
 
@@ -39,9 +41,9 @@ export function readRegexBackup(text) {
     throw new Error('Choose a valid CodeFolio Regex JSON backup.');
   }
   if (file?.format !== format) throw new Error('Choose a CodeFolio Regex backup.');
-  if (![1, 2].includes(file.version)) throw new Error('This version of CodeFolio can’t read the Regex backup format.');
+  if (![1, 2, 3].includes(file.version)) throw new Error('This version of CodeFolio can’t read the Regex backup format.');
   const { tags, favorites } = validateMetadata(file);
-  const customPatterns = file.version === 2 ? readCustomPatterns(file.customPatterns) : [];
+  const customPatterns = file.version >= 2 ? readCustomPatterns(file.customPatterns, file.version) : [];
   return { tags, favorites, customPatterns };
 }
 
@@ -55,7 +57,8 @@ export function mergeRegexBackup(current, imported) {
       byId.set(entry.id, entry);
       patternsAdded++;
     } else if (local.title !== entry.title || Object.keys(platforms).some(key =>
-      (local.expressions[key] ?? '') !== (entry.expressions[key] ?? ''))) {
+      (local.expressions[key] ?? '') !== (entry.expressions[key] ?? ''))
+      || JSON.stringify(local.testCases ?? []) !== JSON.stringify(entry.testCases ?? [])) {
       conflicts.add(entry.id);
     }
   }

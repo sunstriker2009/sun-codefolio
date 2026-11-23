@@ -8,8 +8,8 @@
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../shared/styles.css?v=standalone-regex-1">
-  <link rel="stylesheet" href="./preview.css?v=try-it-layout-1">
-  <script type="module" src="./preview.mjs?v=match-results-1"></script>
+  <link rel="stylesheet" href="./preview.css?v=regex-cases-1">
+  <script type="module" src="./preview.mjs?v=regex-cases-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -124,6 +124,18 @@
             <pre id="match-result"></pre>
           </div>
         </form>
+        <details id="test-cases" hidden>
+          <summary id="test-cases-summary">Test cases</summary>
+          <div class="regex-case-actions">
+            <button id="add-test-case" type="button" hidden>Add case</button>
+            <button id="run-test-cases" type="button">Run cases</button>
+          </div>
+          <p id="no-test-cases" class="muted" hidden>Edit this pattern to add test cases.</p>
+          <p id="test-cases-status" class="status" role="status"></p>
+          <fieldset id="test-case-fields" aria-label="Test cases">
+            <ol id="test-case-list"></ol>
+          </fieldset>
+        </details>
         <p id="pcre2-note" class="muted" hidden>
           Enter a raw PCRE2 expression. PHP’s <code>preg_match</code> uses
           <a href="https://www.php.net/manual/en/regexp.reference.delimiters.php">delimiters</a> and

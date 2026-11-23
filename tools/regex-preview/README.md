@@ -4,6 +4,8 @@ The Regex reference runs C#, JavaScript, Python, PCRE2, and Go in browser worker
 
 Try It defaults to **First match**. Select **Find all** to highlight up to 100 matches in a copy of the input and inspect the numbered and named captures of each match. The preview marks empty matches with `∅`. Partial-character matches reported by an engine appear in the match inspector.
 
+Edit a custom pattern to add up to 20 named **Test cases** with input and an expected match or no-match result. **Run cases** uses the selected engine and works while you edit the pattern. Saving the pattern stores its test cases in this browser and includes them in Regex backups. Ordinary Try It input stays in the current page.
+
 ## Build and run
 
 Use the .NET 10 SDK with its WebAssembly workload and the Go SDK version in [`.go-version`](.go-version). The build downloads and verifies the pinned [Pyodide core runtime](https://github.com/pyodide/pyodide/tree/314.0.8) and [PCRE2 WebAssembly package](https://github.com/gudoshnikovn/pcre2-wasm). It builds the Go runtime from source and publishes all runtime assets alongside the site. Build into a fresh output directory and serve it over HTTP.
