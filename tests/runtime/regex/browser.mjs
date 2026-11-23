@@ -26,7 +26,23 @@ try {
   const root = new URL(process.argv[2]);
   const regex = new URL('regex/', root);
   const input = page.getByLabel('Test text');
-  const test = page.getByRole('button', { name: 'Test pattern', exact: true });
+  const test = page.getByRole('button', { name: 'Run', exact: true });
+  const examples = page.getByRole('combobox', { name: 'Load example' });
+  const matchMode = page.getByLabel('Match mode');
+
+  async function assertTryItLayout() {
+    const [text, label, picker, mode, run] = await Promise.all([
+      input.boundingBox(), page.locator('label[for="test-input"]').boundingBox(),
+      examples.boundingBox(), matchMode.boundingBox(), test.boundingBox(),
+    ]);
+    assert.ok(text && label && picker && mode && run);
+    const center = box => box.y + box.height / 2;
+    const right = box => box.x + box.width;
+    assert.ok(picker.y + picker.height <= text.y && Math.abs(center(label) - center(picker)) < 2);
+    assert.ok(Math.abs(right(picker) - right(text)) < 2 && right(label) < picker.x);
+    assert.ok(mode.y >= text.y + text.height && Math.abs(center(mode) - center(run)) < 2);
+    assert.ok(Math.abs(mode.x - text.x) < 2 && Math.abs(right(run) - right(text)) < 2);
+  }
 
   async function run(text, expected) {
     await input.fill(text);
@@ -79,7 +95,7 @@ try {
   assert.ok(patternField && testInput && testInput.y - (patternField.y + patternField.height) < 55);
   const addTag = await page.getByRole('button', { name: 'Add a tag', exact: true }).boundingBox();
   assert.ok(addTag && addTag.height <= 26);
-  const examples = page.getByRole('combobox', { name: 'Load example' });
+  await assertTryItLayout();
   await examples.selectOption('noMatch');
   assert.equal(await input.inputValue(), '3.5');
   await test.click();
@@ -183,7 +199,6 @@ try {
     await page.getByRole('button', { name: 'Remove tag ' + tag }).waitFor();
   }
   await page.goto(regex.href);
-  const matchMode = page.getByLabel('Match mode');
   const matchPicker = page.getByLabel('Inspect match');
   const marks = page.locator('#highlighted-input mark');
   const matchResult = page.locator('#match-result');
@@ -276,6 +291,7 @@ try {
   await page.setViewportSize({ width: 1280, height: 850 });
   await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   await page.getByLabel('Detail platform').waitFor();
+  await assertTryItLayout();
   const patternBox = await page.locator('.pattern-field pre').boundingBox();
   const copyBox = await page.locator('.pattern-field').getByRole('button', { name: 'Copy pattern' }).boundingBox();
   assert.ok(patternBox && copyBox && copyBox.x > patternBox.x);

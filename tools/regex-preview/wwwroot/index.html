@@ -8,7 +8,7 @@
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../shared/styles.css?v=standalone-regex-1">
-  <link rel="stylesheet" href="./preview.css?v=match-results-1">
+  <link rel="stylesheet" href="./preview.css?v=try-it-layout-1">
   <script type="module" src="./preview.mjs?v=match-results-1"></script>
 </head>
 <body>
@@ -97,20 +97,22 @@
           <input id="copy-value" readonly>
         </div>
         <form id="try-it" aria-label="Try It">
-          <label for="test-input">Test text</label>
-          <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
-          <div class="regex-test-actions">
-            <button id="test-button" type="submit">Test pattern</button>
-            <select id="match-mode" aria-label="Match mode">
-              <option value="match">First match</option>
-              <option value="match-all">Find all</option>
-            </select>
+          <div class="regex-test-heading">
+            <label for="test-input">Test text</label>
             <select id="example-picker" aria-label="Load example">
               <option value="">Examples</option>
               <option value="match"></option>
               <option value="noMatch"></option>
               <option value="edge" hidden disabled></option>
             </select>
+          </div>
+          <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
+          <div class="regex-test-actions">
+            <select id="match-mode" aria-label="Match mode">
+              <option value="match">First match</option>
+              <option value="match-all">Find all</option>
+            </select>
+            <button id="test-button" type="submit">Run</button>
           </div>
           <p id="test-status" class="status" role="status"></p>
           <div id="match-output" hidden>
