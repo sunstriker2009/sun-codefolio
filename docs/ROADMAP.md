@@ -29,4 +29,8 @@ CodeFolio is a searchable Regex reference with Try It for C#, JavaScript, Python
 | M16 · Practical Regex recipes | In progress | Add 8–12 task-focused recipes with sample input, expected captures, edge cases, and usage examples for the selected engine. Start with log lines, key-value fields, and quoted strings. |
 | M17 · Better Try It results | Planned | Add Find all, highlight matches, and display numbered and named captures. |
 | M18 · Saved test cases | Planned | Attach named test cases to custom patterns and run them together after edits. |
-| M19 · Replace preview | Planned | Preview the output of a replacement before using the expression in code. |
+| M19 · Date & Time and Topics | Planned | Add a topic index and a Date & Time reference for C#, JavaScript, Python, and Go. Start with date formatting, UTC-to-Toronto conversion, and parsing with an explicit format. Preserve existing `/regex/` links. |
+| M20 · Encoding & Escaping | Planned | Add runnable examples for URL component encoding, Unicode Base64 round trips, and JSON string escaping in C#, JavaScript, Python, and Go. |
+| M21 · XPath | Planned | Query XML and inspect the selected nodes in C#, browser JavaScript, and Python. Include recipes for namespaces, attributes, and text. |
+| M22 · CSV | Planned | Parse CSV with quoted commas, escaped quotes, and embedded newlines in C#, JavaScript, Python, and Go. |
+| M23 · Replace preview | Planned | Preview the output of a replacement before using the expression in code. |
