@@ -38,10 +38,10 @@ try {
     assert.ok(text && label && picker && mode && run);
     const center = box => box.y + box.height / 2;
     const right = box => box.x + box.width;
-    assert.ok(picker.y + picker.height <= text.y && Math.abs(center(label) - center(picker)) < 2);
-    assert.ok(Math.abs(right(picker) - right(text)) < 2 && right(label) < picker.x);
-    assert.ok(mode.y >= text.y + text.height && Math.abs(center(mode) - center(run)) < 2);
-    assert.ok(Math.abs(mode.x - text.x) < 2 && Math.abs(right(run) - right(text)) < 2);
+    assert.ok(mode.y + mode.height <= text.y && Math.abs(center(label) - center(mode)) < 2);
+    assert.ok(Math.abs(right(mode) - right(text)) < 2 && right(label) < mode.x);
+    assert.ok(picker.y >= text.y + text.height && Math.abs(center(picker) - center(run)) < 2);
+    assert.ok(Math.abs(picker.x - text.x) < 2 && Math.abs(right(run) - right(text)) < 2);
   }
 
   async function run(text, expected) {
@@ -60,6 +60,7 @@ try {
   await page.goto(root.href);
   await page.getByRole('link', { name: /^Regex/ }).click();
   await page.waitForURL(regex.href);
+  await page.getByRole('heading', { level: 1, name: 'Regex', exact: true }).waitFor();
   assert.equal(await page.getByRole('banner').getByRole('link', { name: 'Playground', exact: true }).count(), 0);
   await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();
   assert.equal(await page.getByLabel('Platform', { exact: true }).count(), 0);

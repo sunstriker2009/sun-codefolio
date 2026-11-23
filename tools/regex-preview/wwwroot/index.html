@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="dark">
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
-  <link rel="stylesheet" href="../shared/styles.css?v=topics-1">
-  <link rel="stylesheet" href="./preview.css?v=regex-cases-1">
+  <link rel="stylesheet" href="../shared/styles.css?v=topic-controls-1">
+  <link rel="stylesheet" href="./preview.css?v=topic-controls-1">
   <script type="module" src="./preview.mjs?v=date-topics-1"></script>
 </head>
 <body>
@@ -21,6 +21,7 @@
   </header>
   <main class="container regex-reference">
     <section class="intro" aria-label="Search and filter patterns">
+      <h1>Regex</h1>
       <div class="regex-search">
         <input id="pattern-search" type="search" placeholder="Search patterns" aria-label="Search patterns" autocomplete="off">
         <button id="new-pattern" type="button">New pattern</button>
@@ -100,18 +101,18 @@
         <form id="try-it" aria-label="Try It">
           <div class="regex-test-heading">
             <label for="test-input">Test text</label>
+            <select id="match-mode" aria-label="Match mode">
+              <option value="match">First match</option>
+              <option value="match-all">Find all</option>
+            </select>
+          </div>
+          <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
+          <div class="try-it-actions">
             <select id="example-picker" aria-label="Load example">
               <option value="">Examples</option>
               <option value="match"></option>
               <option value="noMatch"></option>
               <option value="edge" hidden disabled></option>
-            </select>
-          </div>
-          <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
-          <div class="regex-test-actions">
-            <select id="match-mode" aria-label="Match mode">
-              <option value="match">First match</option>
-              <option value="match-all">Find all</option>
             </select>
             <button id="test-button" type="submit">Run</button>
           </div>
