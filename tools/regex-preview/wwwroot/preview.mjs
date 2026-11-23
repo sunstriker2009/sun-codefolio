@@ -1,7 +1,7 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=standalone-regex-1';
 import { patterns, platforms } from './patterns.mjs?v=match-results-1';
 import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
-import { createRunner } from './runner.mjs?v=match-results-1';
+import { createRunner } from './runner.mjs?v=date-topics-1';
 import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-cases-1';
 import { createCasePanel } from './case-panel.mjs?v=regex-cases-1';
 import { readTestCases } from './test-cases.mjs?v=regex-cases-1';

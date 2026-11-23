@@ -58,6 +58,7 @@ try {
   }
 
   await page.goto(root.href);
+  await page.getByRole('link', { name: /^Regex/ }).click();
   await page.waitForURL(regex.href);
   assert.equal(await page.getByRole('banner').getByRole('link', { name: 'Playground', exact: true }).count(), 0);
   await page.getByRole('heading', { name: 'Patterns (' + patterns.length + ')', exact: true }).waitFor();

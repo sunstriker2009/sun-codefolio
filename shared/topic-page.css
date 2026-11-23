@@ -1,0 +1,11 @@
+.topic-page { max-width: 46rem; padding-top: 1.25rem; }
+.topic-selectors { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: .65rem; margin-top: 1rem; }
+.topic-selectors select { margin-top: .3rem; }
+.topic-input-heading { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .45rem; }
+.topic-input-heading label { margin: 0; }
+.topic-input-heading select { justify-self: end; width: auto; min-width: 0; max-width: 100%; }
+.topic-page #topic-format { margin: .3rem 0; font-size: .875rem; }
+.topic-page #topic-run, .topic-page #topic-copy { margin-top: .5rem; }
+.topic-page .status:empty { display: none; }
+.topic-page #topic-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+.topic-usage { margin-top: 1rem; }
