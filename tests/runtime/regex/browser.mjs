@@ -371,9 +371,16 @@ try {
   assert.match(await page.locator('#match-result').textContent(), /Group 1 · "café"/);
   assert.match(await page.locator('#match-result').textContent(), /Group 2 · unmatched/);
   await engine.selectOption('javascript');
-  const casePanel = page.locator('#test-cases');
+  const casePanel = page.getByRole('tabpanel', { name: /^Saved test cases/ });
+  const casesTab = page.getByRole('tab', { name: /^Saved test cases/ });
+  const tryItTab = page.getByRole('tab', { name: 'Try It', exact: true });
+  assert.equal(await tryItTab.getAttribute('aria-selected'), 'true');
+  assert.equal(await test.isVisible(), true);
+  await tryItTab.focus();
+  await tryItTab.press('ArrowRight');
+  assert.equal(await casesTab.getAttribute('aria-selected'), 'true');
+  assert.equal(await test.isVisible(), false);
   const runCases = casePanel.getByRole('button', { name: 'Run cases' });
-  await casePanel.locator('summary').first().click();
   const savedCases = [
     { name: 'Letters', input: 'catalog', expected: 'match' },
     { name: 'Digits', input: '42', expected: 'no-match' },
@@ -457,7 +464,7 @@ try {
 
   await page.goto(customUrl);
   await page.getByRole('heading', { name: 'Portable example', exact: true }).waitFor();
-  await casePanel.locator('summary').first().click();
+  await casesTab.click();
   await casePanel.getByText('Letters', { exact: true }).waitFor();
   await casePanel.getByText('Digits', { exact: true }).waitFor();
   await engine.selectOption('python');

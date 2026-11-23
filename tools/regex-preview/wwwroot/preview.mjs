@@ -3,7 +3,7 @@ import { patterns, platforms } from './patterns.mjs?v=match-results-1';
 import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
 import { createRunner } from './runner.mjs?v=xpath-1';
 import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-cases-1';
-import { createCasePanel } from './case-panel.mjs?v=regex-cases-1';
+import { createCasePanel } from './case-panel.mjs?v=detail-tabs-1';
 import { readTestCases } from './test-cases.mjs?v=regex-cases-1';
 
 const byId = id => document.getElementById(id);
@@ -25,6 +25,7 @@ const tagEditor = byId('tag-editor');
 const tagName = byId('tag-name');
 const detail = byId('detail');
 const detailStatus = byId('detail-status');
+const testingTabs = [byId('try-it-tab'), byId('test-cases-tab')];
 const input = byId('test-input');
 const examplePicker = byId('example-picker');
 const toast = byId('regex-toast');
@@ -58,6 +59,27 @@ let backPlatform;
 let testVersion = 0;
 let currentMatches;
 let linked = false;
+
+function selectTestingTab(selectedTab) {
+  for (const tab of testingTabs) {
+    const active = tab === selectedTab;
+    tab.setAttribute('aria-selected', active);
+    tab.tabIndex = active ? 0 : -1;
+    byId(tab.getAttribute('aria-controls')).hidden = !active;
+  }
+}
+
+for (const [index, tab] of testingTabs.entries()) {
+  tab.addEventListener('click', () => selectTestingTab(tab));
+  tab.addEventListener('keydown', event => {
+    const destinations = { ArrowLeft: 1 - index, ArrowRight: 1 - index, Home: 0, End: 1 };
+    if (!Object.hasOwn(destinations, event.key)) return;
+    const next = testingTabs[destinations[event.key]];
+    event.preventDefault();
+    selectTestingTab(next);
+    next.focus();
+  });
+}
 
 function button(text, act) {
   const control = document.createElement('button');
@@ -329,6 +351,7 @@ function renderDetail(entry) {
   editorStatus.textContent = '';
   clearTest();
   if (changed) {
+    selectTestingTab(testingTabs[0]);
     input.value = entry.examples?.match ?? '';
     setTagEditor(false);
   }
@@ -352,6 +375,7 @@ function renderDetail(entry) {
 
 function readLocation() {
   draft = undefined;
+  selectTestingTab(testingTabs[0]);
   const query = new URLSearchParams(location.search);
   const engine = backPlatform ?? query.get('platform');
   platform.value = Object.hasOwn(platforms, engine) ? engine : 'csharp';
