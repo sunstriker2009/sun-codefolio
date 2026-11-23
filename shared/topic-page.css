@@ -1,6 +1,5 @@
 .topic-page { max-width: 46rem; padding-top: 1.25rem; }
 .topic-selectors { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: .65rem; margin-top: 1rem; }
-.topic-selectors select { margin-top: .3rem; }
 .topic-input-heading { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .45rem; }
 .topic-input-heading label { margin: 0; }
 .topic-input-heading select { justify-self: end; width: auto; min-width: 0; max-width: 100%; }

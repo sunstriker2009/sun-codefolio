@@ -10,7 +10,7 @@ export const recipes = [
     id: 'url-component',
     title: 'Encode a URL component',
     description: 'Percent-encode text for a single URL component such as a query value.',
-    inputFormat: 'Spaces become %20. Letters, digits, and - . _ ~ stay as written.',
+    inputFormat: 'Spaces become %20. ASCII letters, digits, and - . _ ~ stay as written.',
     examples: [
       { input: 'München / 東京 +?', output: 'M%C3%BCnchen%20%2F%20%E6%9D%B1%E4%BA%AC%20%2B%3F' },
       { input: "a!()'*~", output: 'a%21%28%29%27%2A~' },
