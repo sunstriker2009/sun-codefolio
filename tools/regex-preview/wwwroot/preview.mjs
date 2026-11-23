@@ -1,7 +1,7 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=standalone-regex-1';
-import { patterns, platforms } from './patterns.mjs?v=regex-recipes-1';
+import { patterns, platforms } from './patterns.mjs?v=match-results-1';
 import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
-import { createRunner } from './runner.mjs?v=regex-go-1';
+import { createRunner } from './runner.mjs?v=match-results-1';
 import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-recipes-1';
 
 const byId = id => document.getElementById(id);
@@ -29,6 +29,10 @@ const toast = byId('regex-toast');
 let toastTimer;
 const testButton = byId('test-button');
 const testStatus = byId('test-status');
+const matchMode = byId('match-mode');
+const matchOutput = byId('match-output');
+const highlightedInput = byId('highlighted-input');
+const matchPicker = byId('match-picker');
 const matchResult = byId('match-result');
 const backupFile = byId('backup-file');
 const backupStatus = byId('backup-status');
@@ -43,6 +47,7 @@ let validating = false;
 let entries = [];
 let backPlatform;
 let testVersion = 0;
+let currentMatches;
 let linked = false;
 
 function button(text, act) {
@@ -205,7 +210,8 @@ function activeExpression() {
 function clearTest() {
   testVersion++;
   testStatus.textContent = '';
-  matchResult.hidden = true;
+  matchOutput.hidden = true;
+  currentMatches = undefined;
   testButton.disabled = validating || !activeExpression();
 }
 
@@ -535,6 +541,50 @@ examplePicker.addEventListener('change', () => {
   input.focus();
 });
 input.addEventListener('input', clearTest);
+matchMode.addEventListener('change', clearTest);
+
+function highlightMatches(text, matches) {
+  const preview = document.createDocumentFragment();
+  let cursor = 0;
+  for (const { index, text: match } of matches) {
+    const end = index + match.length;
+    // Some engine matches can consume only part of a UTF-8 character.
+    if (index < cursor || end > text.length || text.slice(index, end) !== match) continue;
+    preview.append(text.slice(cursor, index));
+    const mark = document.createElement('mark');
+    mark.textContent = match || '∅';
+    if (!match) mark.setAttribute('aria-label', 'Empty match at index ' + index);
+    preview.append(mark);
+    cursor = end;
+  }
+  preview.append(text.slice(cursor));
+  highlightedInput.replaceChildren(preview);
+}
+
+function inspectMatch() {
+  const { matches, groupNumbers } = currentMatches;
+  const match = matches[Number(matchPicker.value)];
+  const describe = value => value === null ? 'unmatched' : JSON.stringify(value);
+  matchResult.textContent = [
+    'Matched ' + JSON.stringify(match.text) + ' at index ' + match.index,
+    ...match.groups.map((value, index) => 'Group ' + (groupNumbers?.[index] ?? index + 1) + ' · ' + describe(value)),
+    ...match.named.map(({ name, value }) => 'Name ' + name + ' · ' + describe(value)),
+  ].join('\n');
+}
+
+matchPicker.addEventListener('change', inspectMatch);
+
+function showMatches(result, text) {
+  currentMatches = result;
+  highlightMatches(text, result.matches);
+  matchPicker.replaceChildren(...result.matches.map(({ index }, matchIndex) =>
+    new Option('Match ' + (matchIndex + 1) + ' · index ' + index, matchIndex)));
+  matchPicker.selectedIndex = 0;
+  byId('match-picker-row').hidden = result.matches.length < 2;
+  inspectMatch();
+  matchOutput.hidden = false;
+}
+
 byId('try-it').addEventListener('submit', async event => {
   event.preventDefault();
   clearTest();
@@ -542,13 +592,22 @@ byId('try-it').addEventListener('submit', async event => {
   if (!expression || validating) return;
   const version = testVersion;
   const engine = platform.value;
+  const mode = matchMode.value;
+  const text = input.value;
   testButton.disabled = true;
   testStatus.textContent = 'Running ' + platforms[engine] + '…';
-  const result = await runners[engine](expression, input.value);
+  const result = await runners[engine](expression, text, mode);
   if (version !== testVersion) return;
   testButton.disabled = false;
+  if (result.status === 'match') {
+    const count = result.matches.length;
+    testStatus.textContent = mode === 'match' ? 'Match.' : result.truncated
+      ? 'Showing the first ' + count + ' matches.'
+      : count + (count === 1 ? ' match.' : ' matches.');
+    showMatches(result, text);
+    return;
+  }
   const labels = {
-    match: 'Match.',
     invalid: result.message,
     'no-match': 'No match.',
     timeout: 'The match timed out. Try shorter text.',
@@ -556,13 +615,6 @@ byId('try-it').addEventListener('submit', async event => {
     'load-error': 'The runner couldn’t load. Try again.',
   };
   testStatus.textContent = labels[result.status] ?? 'The runner couldn’t complete the test.';
-  if (result.status === 'match') {
-    matchResult.textContent = [
-      'Matched ' + JSON.stringify(result.text) + ' at index ' + result.index,
-      ...result.groups.map((value, index) => 'Group ' + (index + 1) + ' · ' + (value === null ? 'unmatched' : JSON.stringify(value))),
-    ].join('\n');
-    matchResult.hidden = false;
-  }
 });
 
 const countLabel = (count, noun) => count + ' ' + (count === 1 ? noun : noun + 's');

@@ -8,8 +8,8 @@
   <title>Regex reference · CodeFolio by Sun</title>
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../shared/styles.css?v=standalone-regex-1">
-  <link rel="stylesheet" href="./preview.css?v=regex-python-1">
-  <script type="module" src="./preview.mjs?v=regex-recipes-1"></script>
+  <link rel="stylesheet" href="./preview.css?v=match-results-1">
+  <script type="module" src="./preview.mjs?v=match-results-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -101,6 +101,10 @@
           <textarea id="test-input" rows="3" maxlength="10000" spellcheck="false"></textarea>
           <div class="regex-test-actions">
             <button id="test-button" type="submit">Test pattern</button>
+            <select id="match-mode" aria-label="Match mode">
+              <option value="match">First match</option>
+              <option value="match-all">Find all</option>
+            </select>
             <select id="example-picker" aria-label="Load example">
               <option value="">Examples</option>
               <option value="match"></option>
@@ -109,7 +113,14 @@
             </select>
           </div>
           <p id="test-status" class="status" role="status"></p>
-          <pre id="match-result" hidden></pre>
+          <div id="match-output" hidden>
+            <pre id="highlighted-input" aria-label="Highlighted input" tabindex="0"></pre>
+            <div id="match-picker-row" hidden>
+              <label for="match-picker">Inspect match</label>
+              <select id="match-picker"></select>
+            </div>
+            <pre id="match-result"></pre>
+          </div>
         </form>
         <p id="pcre2-note" class="muted" hidden>
           Enter a raw PCRE2 expression. PHP’s <code>preg_match</code> uses

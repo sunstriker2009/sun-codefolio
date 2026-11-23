@@ -8,12 +8,22 @@ export async function startPcre2Regex() {
   const pcre2 = await createPCRE2();
 
   return {
-    match(pattern, input) {
+    match(pattern, input, limit) {
       try {
-        const result = pcre2.match(pattern, input, FLAGS.UTF);
-        return result
-          ? { status: 'match', text: result.match, index: result.index, groups: result.groups }
-          : { status: 'no-match' };
+        const regex = pcre2.compile(pattern, FLAGS.UTF);
+        try {
+          const matches = [];
+          for (const result of regex.matchAllIterator(input)) {
+            matches.push({
+              text: result.match, index: result.index, groups: result.groups,
+              named: Object.entries(result.namedGroups ?? {}).map(([name, value]) => ({ name, value })),
+            });
+            if (matches.length === limit) break;
+          }
+          return matches.length ? { status: 'match', matches } : { status: 'no-match' };
+        } finally {
+          regex.destroy();
+        }
       } catch (error) {
         if (error instanceof PCRE2CompileError) return { status: 'invalid', message: error.message };
         if (error instanceof PCRE2MatchError && limitErrors.has(error.code)) return { status: 'limit' };

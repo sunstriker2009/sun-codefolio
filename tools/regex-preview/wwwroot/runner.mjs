@@ -34,7 +34,7 @@ export function createRunner(platform) {
     }
 
     try {
-      const url = new URL('./regex-worker.mjs?v=regex-go-1', import.meta.url);
+      const url = new URL('./regex-worker.mjs?v=match-results-1', import.meta.url);
       url.searchParams.set('platform', platform);
       const current = new Worker(url, { type: 'module' });
       worker = current;
