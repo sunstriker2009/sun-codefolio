@@ -9,7 +9,7 @@
   <link rel="icon" href="../branding/assets/icons/icon-32.png">
   <link rel="stylesheet" href="../shared/styles.css?v=standalone-regex-1">
   <link rel="stylesheet" href="./preview.css?v=regex-python-1">
-  <script type="module" src="./preview.mjs?v=standalone-regex-1"></script>
+  <script type="module" src="./preview.mjs?v=regex-recipes-1"></script>
 </head>
 <body>
   <header class="site-header">
@@ -109,6 +109,7 @@
               <option value="">Examples</option>
               <option value="match"></option>
               <option value="noMatch"></option>
+              <option value="edge" hidden disabled></option>
             </select>
           </div>
           <p id="test-status" class="status" role="status"></p>
@@ -128,6 +129,14 @@
         <div id="pattern-notes" class="pattern-notes">
           <p id="pattern-mode" class="muted"></p>
           <p id="pattern-description" class="muted"></p>
+          <details id="recipe-usage" hidden>
+            <summary>Expected captures and usage</summary>
+            <ul id="recipe-captures"></ul>
+            <p id="recipe-edge" class="muted"></p>
+            <p class="muted">This example prints the first capture from the sample input.</p>
+            <pre><code id="recipe-code"></code></pre>
+            <button id="copy-recipe-code" type="button">Copy usage example</button>
+          </details>
         </div>
         <section id="detail-tags" aria-labelledby="regex-tags-title">
           <div class="tag-heading">
