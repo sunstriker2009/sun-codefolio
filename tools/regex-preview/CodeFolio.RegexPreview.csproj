@@ -5,4 +5,7 @@
     <Nullable>enable</Nullable>
     <InvariantTimezone>false</InvariantTimezone>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
+  </ItemGroup>
 </Project>

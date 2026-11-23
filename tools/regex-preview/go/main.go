@@ -59,6 +59,7 @@ func main() {
 	regex := js.FuncOf(runRegex)
 	date := js.FuncOf(runDate)
 	encoding := js.FuncOf(runEncoding)
-	js.Global().Get("codefolioGoReady").Invoke(regex, date, encoding)
+	csv := js.FuncOf(runCsv)
+	js.Global().Get("codefolioGoReady").Invoke(regex, date, encoding, csv)
 	select {}
 }

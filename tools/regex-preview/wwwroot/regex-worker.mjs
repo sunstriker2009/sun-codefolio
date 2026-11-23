@@ -20,7 +20,7 @@ if (platform === 'csharp') {
   const { startPcre2Regex } = await import('./pcre2-regex.mjs?v=match-results-1');
   ({ match, validate } = await startPcre2Regex());
 } else if (platform === 'go') {
-  const { startGoRegex } = await import('./go-regex.mjs?v=topics-2');
+  const { startGoRegex } = await import('./go-regex.mjs?v=csv-1');
   ({ match, validate } = await startGoRegex());
 }
 

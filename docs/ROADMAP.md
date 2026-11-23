@@ -1,6 +1,6 @@
 # CodeFolio roadmap
 
-CodeFolio is a cross-language reference with runnable Regex, Date & Time, Encoding & Escaping, and XPath examples. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/). The original snippet workspace now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/).
+CodeFolio is a cross-language reference with runnable Regex, Date & Time, Encoding & Escaping, XPath, and CSV examples. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/). The original snippet workspace now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/).
 
 ## Shipped
 
@@ -26,11 +26,11 @@ CodeFolio is a cross-language reference with runnable Regex, Date & Time, Encodi
 | M19 · Date & Time and Topics | Browse topics and run date formatting, UTC-to-Toronto conversion, and explicit-format parsing in C#, JavaScript, Python, and Go. Existing Regex links continue to resolve. |
 | M20 · Encoding & Escaping | Encode URL components, round-trip Unicode through Base64, and serialize JSON strings in C#, JavaScript, Python, and Go. |
 | M21 · XPath | Query XML in C#, browser JavaScript, or Python. Inspect elements, attributes, text, and scalar results, and bind prefixes for namespaced documents. |
+| M22 · CSV | Parse quoted commas, escaped quotes, and multiline fields in C#, JavaScript, Python, and Go. Inspect CSV records as arrays of strings and copy platform-specific usage examples. |
 
 ## Next
 
 | Milestone | Status | Scope |
 | --- | --- | --- |
 | M16 · Practical Regex recipes | In progress | Add 8–12 task-focused recipes with sample input, expected captures, edge cases, and usage examples for the selected engine. Start with log lines, key-value fields, and quoted strings. |
-| M22 · CSV | Planned | Parse CSV with quoted commas, escaped quotes, and embedded newlines in C#, JavaScript, Python, and Go. |
 | M23 · Replace preview | Planned | Preview the output of a replacement before using the expression in code. |

@@ -14,6 +14,8 @@ A cross-language reference with runnable examples.
 
 [XPath](https://sunstriker2009.github.io/sun-codefolio/xpath/) queries XML and inspects elements, attributes, text, and scalar results in C#, browser JavaScript, and Python with lxml.
 
+[CSV](https://sunstriker2009.github.io/sun-codefolio/csv/) parses quoted commas, escaped quotes, and multiline fields in C#, JavaScript, Python, and Go.
+
 Browse worked patterns and test your own text in C#, JavaScript, Python, PCRE2, or Go. Create or duplicate a pattern, save a separate expression per engine, and organize your reference with tags and favorites. Export and import Regex backups to move personal patterns between browsers.
 
 The Git, JavaScript, C#, and XPath snippet builder now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/). Existing shared snippet links forward to their entry in Playground.

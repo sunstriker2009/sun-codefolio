@@ -16,7 +16,7 @@ async function loadRunner() {
       return DateTimeRunner.Run;
     }
     case 'go': {
-      const { startGoRuntime } = await import('../regex/go-regex.mjs?v=topics-2');
+      const { startGoRuntime } = await import('../regex/go-regex.mjs?v=csv-1');
       const { date } = await startGoRuntime();
       let zone;
       return async (recipe, input) => {

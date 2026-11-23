@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { platforms, recipes as dates } from '../../../tools/date-time/wwwroot/recipes.mjs';
 import { recipes as encodings } from '../../../tools/encoding/wwwroot/recipes.mjs';
+import { recipes as csv } from '../../../tools/csv/wwwroot/recipes.mjs';
 
 const { chromium } = createRequire(import.meta.url)('playwright');
 const executablePath = process.env.CODEFOLIO_CHROMIUM_EXECUTABLE;
@@ -61,6 +62,7 @@ try {
   await page.goto(root.href);
   await exerciseTopic({ name: 'Date & Time', path: 'date-time/', recipes: dates });
   await exerciseTopic({ name: 'Encoding & Escaping', path: 'encoding/', recipes: encodings });
+  await exerciseTopic({ name: 'CSV', path: 'csv/', recipes: csv });
   await page.getByRole('link', { name: /^XPath/ }).click();
   await page.waitForURL(new URL('xpath/', root).href);
   await page.getByRole('heading', { name: 'XPath', exact: true }).waitFor();
@@ -100,7 +102,7 @@ try {
   assert.equal(await page.getByLabel('Prefix bindings').inputValue(), 'b=urn:books');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
 
-  for (const [path, recipe] of [['date-time', 'utc-to-toronto'], ['encoding', 'json-string']]) {
+  for (const [path, recipe] of [['date-time', 'utc-to-toronto'], ['encoding', 'json-string'], ['csv', 'multiline-fields']]) {
     await page.goto(new URL(path + '/?recipe=' + recipe + '&platform=python', root).href);
     assert.equal(await recipePicker.inputValue(), recipe);
     assert.equal(await platformPicker.inputValue(), 'python');
@@ -113,7 +115,7 @@ try {
   await page.waitForURL(new URL('regex/?pattern=signed-integer&platform=go', root).href);
   await page.getByRole('heading', { name: 'Signed integer', exact: true }).waitFor();
   assert.deepEqual(errors, []);
-  console.log('Verified Topics, topic deep links, legacy Regex links, and native Date & Time, Encoding & Escaping, and XPath results.');
+  console.log('Verified Topics, topic deep links, legacy Regex links, and native Date & Time, Encoding & Escaping, XPath, and CSV results.');
 } finally {
   await browser.close();
 }
