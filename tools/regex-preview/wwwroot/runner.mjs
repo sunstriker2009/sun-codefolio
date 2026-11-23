@@ -1,4 +1,4 @@
-export function createRunner(platform, module = './regex-worker.mjs?v=date-topics-1') {
+export function createRunner(platform, module = './regex-worker.mjs?v=xpath-1') {
   let worker;
   let ready = false;
   let pending;

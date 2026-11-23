@@ -11,12 +11,12 @@ async function readZone() {
 async function loadRunner() {
   switch (platform) {
     case 'csharp': {
-      const { loadDotnet } = await import('../shared/runtime-loaders.mjs?v=topics-2');
+      const { loadDotnet } = await import('../shared/runtime-loaders.mjs?v=xpath-1');
       const { DateTimeRunner } = await loadDotnet();
       return DateTimeRunner.Run;
     }
     case 'go': {
-      const { startGoRuntime } = await import('../regex/go-regex.mjs?v=topics-2');
+      const { startGoRuntime } = await import('../regex/go-regex.mjs?v=csv-1');
       const { date } = await startGoRuntime();
       let zone;
       return async (recipe, input) => {

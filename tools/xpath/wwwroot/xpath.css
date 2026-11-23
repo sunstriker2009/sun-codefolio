@@ -1,0 +1,7 @@
+.xpath-platform { margin-top: 1rem; max-width: 15rem; }
+.xpath-fields { display: grid; gap: .65rem; }
+.xpath-fields textarea { margin: 0; }
+.xpath-fields details label { margin-top: .45rem; }
+#xpath-namespace-help { margin: .3rem 0; font-size: .875rem; }
+#xpath-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+#xpath-copy { margin-top: .5rem; }

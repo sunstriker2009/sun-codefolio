@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Run XPath expressions against XML in C#, browser JavaScript, and Python.">
+  <meta name="color-scheme" content="dark">
+  <title>XPath · CodeFolio by Sun</title>
+  <link rel="icon" href="../branding/assets/icons/icon-32.png">
+  <link rel="stylesheet" href="../shared/styles.css?v=topic-controls-1">
+  <link rel="stylesheet" href="../shared/topic-page.css?v=topic-controls-1">
+  <link rel="stylesheet" href="./xpath.css?v=xpath-1">
+  <script type="module" src="./app.mjs?v=xpath-1"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container brand">
+      <img src="../branding/assets/icons/icon-64.png" width="38" height="38" alt="">
+      <span>CODEFOLIO <small>by Sun</small></span>
+      <a class="topics-link" href="../">Topics</a>
+    </div>
+  </header>
+  <main class="container intro topic-page">
+    <h1>XPath</h1>
+    <div class="xpath-platform">
+      <label for="xpath-platform">Platform</label>
+      <select id="xpath-platform"></select>
+    </div>
+    <p id="xpath-description" class="muted"></p>
+    <form id="xpath-try-it" aria-label="Try It">
+      <div class="xpath-fields">
+        <div>
+          <label for="xpath-xml">XML</label>
+          <textarea id="xpath-xml" rows="7" maxlength="20000" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <label for="xpath-query">XPath expression</label>
+          <input id="xpath-query" maxlength="1000" spellcheck="false" autocomplete="off">
+        </div>
+        <details id="xpath-namespace-section">
+          <summary>Namespaces</summary>
+          <label for="xpath-namespaces">Prefix bindings</label>
+          <textarea id="xpath-namespaces" rows="2" maxlength="1000" placeholder="b=urn:books"
+            aria-describedby="xpath-namespace-help" spellcheck="false"></textarea>
+          <p id="xpath-namespace-help" class="muted">Use one prefix=URI binding per line. Give default namespaces a prefix in the query.</p>
+        </details>
+      </div>
+      <div class="try-it-actions">
+        <select id="xpath-examples" aria-label="Load example"><option value="">Examples</option></select>
+        <button id="xpath-run" type="submit">Run</button>
+      </div>
+      <p id="xpath-status" class="status" role="status"></p>
+      <pre id="xpath-output" aria-label="Result" hidden></pre>
+    </form>
+    <details class="topic-usage">
+      <summary>Usage example</summary>
+      <pre><code id="xpath-code"></code></pre>
+      <button id="xpath-copy" type="button">Copy usage example</button>
+      <p id="xpath-copy-status" class="status" role="status"></p>
+    </details>
+  </main>
+</body>
+</html>

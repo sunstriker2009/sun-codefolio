@@ -11,6 +11,8 @@ on:
       - 'tools/regex-preview/**'
       - 'tools/date-time/**'
       - 'tools/encoding/**'
+      - 'tools/xpath/**'
+      - 'tools/csv/**'
       - '.github/workflows/publish-pages.yml'
 permissions:
   contents: read

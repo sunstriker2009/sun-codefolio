@@ -9,6 +9,8 @@ on:
       - 'tools/regex-preview/**'
       - 'tools/date-time/**'
       - 'tools/encoding/**'
+      - 'tools/xpath/**'
+      - 'tools/csv/**'
       - 'tests/runtime/topics/**'
       - 'tests/runtime/regex/**'
       - 'shared/**'
