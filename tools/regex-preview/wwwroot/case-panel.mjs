@@ -17,8 +17,8 @@ function field(name, control) {
 
 export function createCasePanel({ expression, engine, run, onStart, onBusyChange }) {
   const byId = id => document.getElementById(id);
-  const panel = byId('test-cases');
-  const summary = byId('test-cases-summary');
+  const count = byId('test-case-count');
+  const empty = byId('no-test-cases');
   const list = byId('test-case-list');
   const fields = byId('test-case-fields');
   const add = byId('add-test-case');
@@ -35,6 +35,7 @@ export function createCasePanel({ expression, engine, run, onStart, onBusyChange
     add.hidden = !editing;
     add.disabled = locked || cases?.length >= maxTestCases;
     fields.disabled = locked;
+    runButton.hidden = !cases?.length;
     runButton.disabled = locked || (!busy && (!cases?.length || !expression()));
     runButton.textContent = busy ? 'Stop' : 'Run cases';
     onBusyChange();
@@ -108,9 +109,9 @@ export function createCasePanel({ expression, engine, run, onStart, onBusyChange
   function render(nextCases, editable, focusIndex) {
     cases = nextCases;
     editing = editable;
-    panel.hidden = !cases;
-    byId('no-test-cases').hidden = editing || Boolean(cases?.length);
-    summary.textContent = cases?.length ? 'Test cases (' + cases.length + ')' : 'Test cases';
+    empty.hidden = editing || Boolean(cases?.length);
+    empty.textContent = cases ? 'Edit this pattern to add test cases.' : 'Duplicate this pattern to save your own test cases.';
+    count.textContent = cases?.length ? ' (' + cases.length + ')' : '';
     rows = (cases ?? []).map(renderRow);
     list.replaceChildren(...rows.map(row => row.item));
     if (rows[focusIndex]) {
