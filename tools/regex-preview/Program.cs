@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using System.Text.Json;
@@ -25,18 +27,43 @@ public static partial class RegexRunner
     }
 
     [JSExport]
-    public static string Test(string pattern, string input)
+    public static string Test(string pattern, string input, int limit)
     {
         try
         {
-            var match = Regex.Match(input, pattern, RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(250));
+            var regex = new Regex(pattern, RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(250));
+            var match = regex.Match(input);
             if (!match.Success) return "{\"status\":\"no-match\"}";
 
-            var groups = new string?[match.Groups.Count - 1];
-            for (var i = 1; i < match.Groups.Count; i++)
-                groups[i - 1] = match.Groups[i].Success ? match.Groups[i].Value : null;
+            var numbers = regex.GetGroupNumbers()[1..];
+            var namedGroups = new List<(int Number, string Name)>();
+            foreach (var number in numbers)
+            {
+                var name = regex.GroupNameFromNumber(number);
+                if (name != number.ToString(CultureInfo.InvariantCulture))
+                    namedGroups.Add((number, name));
+            }
 
-            return JsonSerializer.Serialize(new RegexResult("match", match.Value, match.Index, groups),
+            var matches = new List<RegexMatch>();
+            while (match.Success)
+            {
+                var groups = new string?[numbers.Length];
+                for (var i = 0; i < numbers.Length; i++)
+                    groups[i] = CaptureValue(match.Groups[numbers[i]]);
+
+                var named = new RegexNamedCapture[namedGroups.Count];
+                for (var i = 0; i < namedGroups.Count; i++)
+                {
+                    var (number, name) = namedGroups[i];
+                    named[i] = new RegexNamedCapture(name, CaptureValue(match.Groups[number]));
+                }
+
+                matches.Add(new RegexMatch(match.Value, match.Index, groups, named));
+                if (matches.Count == limit) break;
+                match = match.NextMatch();
+            }
+
+            return JsonSerializer.Serialize(new RegexResult("match", matches, numbers),
                 RegexJsonContext.Default.RegexResult);
         }
         catch (RegexMatchTimeoutException)
@@ -49,9 +76,13 @@ public static partial class RegexRunner
                 RegexJsonContext.Default.RegexError);
         }
     }
+
+    private static string? CaptureValue(Group group) => group.Success ? group.Value : null;
 }
 
-internal sealed record RegexResult(string Status, string Text, int Index, string?[] Groups);
+internal sealed record RegexResult(string Status, List<RegexMatch> Matches, int[] GroupNumbers);
+internal sealed record RegexMatch(string Text, int Index, string?[] Groups, RegexNamedCapture[] Named);
+internal sealed record RegexNamedCapture(string Name, string? Value);
 
 internal sealed record RegexError(string Status, string Message);
 

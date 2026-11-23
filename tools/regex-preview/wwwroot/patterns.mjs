@@ -87,8 +87,16 @@ export const patterns = [
   },
 ].map(entry => ({ ...entry, source: 'native' }));
 
-export function matchJavaScript(pattern, text) {
-  const match = new RegExp(pattern).exec(text);
-  if (!match) return { status: 'no-match' };
-  return { status: 'match', text: match[0], index: match.index, groups: match.slice(1).map(value => value ?? null) };
+export function matchJavaScript(pattern, text, limit = 1) {
+  const matches = [];
+  for (const match of text.matchAll(new RegExp(pattern, 'g'))) {
+    matches.push({
+      text: match[0],
+      index: match.index,
+      groups: match.slice(1).map(value => value ?? null),
+      named: Object.entries(match.groups ?? {}).map(([name, value]) => ({ name, value: value ?? null })),
+    });
+    if (matches.length === limit) break;
+  }
+  return matches.length ? { status: 'match', matches } : { status: 'no-match' };
 }

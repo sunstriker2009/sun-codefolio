@@ -182,6 +182,57 @@ try {
     await page.locator('#tag-editor').getByRole('button', { name: 'Add tag', exact: true }).click();
     await page.getByRole('button', { name: 'Remove tag ' + tag }).waitFor();
   }
+  await page.goto(regex.href);
+  const matchMode = page.getByLabel('Match mode');
+  const matchPicker = page.getByLabel('Inspect match');
+  const marks = page.locator('#highlighted-input mark');
+  const matchResult = page.locator('#match-result');
+  await page.getByRole('button', { name: 'New pattern' }).click();
+  const matchExpression = page.getByLabel('Pattern expression');
+  assert.equal(await matchMode.inputValue(), 'match');
+
+  for (const engine of Object.keys(platforms)) {
+    await detailPlatform.selectOption(engine);
+    await matchExpression.fill(engine === 'python'
+      ? '(?P<word>[a-z]+)(?P<suffix>[0-9]+)?'
+      : '(?<word>[a-z]+)(?<suffix>[0-9]+)?');
+    await matchMode.selectOption('match');
+    await run('😀 cat1 🥑 dog', 'Match.');
+    assert.deepEqual(await marks.allTextContents(), ['cat1']);
+    assert.equal(await matchPicker.isVisible(), false);
+    assert.match(await matchResult.textContent(), /Name word · "cat"/);
+
+    await matchMode.selectOption('match-all');
+    await run('😀 cat1 🥑 dog', '2 matches.');
+    assert.deepEqual(await marks.allTextContents(), ['cat1', 'dog']);
+    assert.equal(await page.locator('#highlighted-input').textContent(), '😀 cat1 🥑 dog');
+    await matchPicker.selectOption('1');
+    const second = await matchResult.textContent();
+    assert.match(second, /Matched "dog" at index 11/);
+    assert.match(second, /Group 2 · unmatched/);
+    assert.match(second, /Name word · "dog"/);
+    assert.match(second, /Name suffix · unmatched/);
+
+    await matchExpression.fill('()');
+    await run('ab', '3 matches.');
+    assert.deepEqual(await marks.allTextContents(), ['∅', '∅', '∅']);
+    await matchPicker.selectOption('2');
+    assert.match(await matchResult.textContent(), /Matched "" at index 2/);
+    assert.match(await matchResult.textContent(), /Group 1 · ""/);
+  }
+  await detailPlatform.selectOption('javascript');
+  await matchExpression.fill('a');
+  await run('a'.repeat(101), 'Showing the first 100 matches.');
+  assert.equal(await marks.count(), 100);
+  await input.fill('b');
+  assert.equal(await matchResult.isVisible(), false);
+  await run('b', 'No match.');
+  await detailPlatform.selectOption('csharp');
+  await matchExpression.fill('(?<7>z)');
+  await run('z', '1 match.');
+  assert.match(await matchResult.textContent(), /Group 7 · "z"/);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+
   await setPersonal('signed-integer', 'csharp', 'Numbers');
   await setPersonal('spaces-tabs', 'javascript', 'Layout');
   await page.getByRole('button', { name: 'Back to results' }).click();
