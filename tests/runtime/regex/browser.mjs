@@ -113,6 +113,13 @@ try {
   assert.equal(await search.inputValue(), 'ascii');
   assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
 
+  await page.goto(new URL('?pattern=structured-log-line&platform=javascript', regex).href);
+  await page.getByText('Expected captures and usage', { exact: true }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+  const recipeBounds = await page.locator('#recipe-usage pre').boundingBox();
+  const detailBounds = await page.locator('#detail').boundingBox();
+  assert.ok(recipeBounds && detailBounds && recipeBounds.x + recipeBounds.width <= detailBounds.x + detailBounds.width);
+
   const pythonRequests = () => requests.filter(url => url.includes('/_python/'));
   const detailPlatform = page.getByLabel('Detail platform');
   await page.goto(new URL('?pattern=signed-integer', regex).href);
