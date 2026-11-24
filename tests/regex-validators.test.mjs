@@ -12,7 +12,7 @@ test('validator examples match the entire input', () => {
     const expression = entry.expressions.javascript;
     const { match, noMatch } = entry.examples;
     assert.equal(matchJavaScript(expression, match).status, 'match', entry.id);
-    for (const input of [noMatch, match + '\n', ' ' + match]) {
+    for (const input of [noMatch, match + '\n', '\n' + match]) {
       assert.equal(matchJavaScript(expression, input).status, 'no-match', entry.id);
     }
   }
