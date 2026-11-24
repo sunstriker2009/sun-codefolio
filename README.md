@@ -8,15 +8,17 @@ A cross-language reference with runnable examples.
 
 [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/)
 
-[Date & Time](https://sunstriker2009.github.io/sun-codefolio/date-time/) formats UTC dates, converts UTC to Toronto time, and parses day-first dates in C#, JavaScript, Python, and Go.
+**Phase 1 is complete.** CodeFolio is a cross-language reference with examples you can run in the browser. The [roadmap](docs/ROADMAP.md) records what shipped and the proposed Phase 2.
 
-[Encoding & Escaping](https://sunstriker2009.github.io/sun-codefolio/encoding/) encodes URL components, round-trips UTF-8 through Base64, and serializes JSON strings in those same four languages.
+| Topic | What you can try |
+| --- | --- |
+| [Regex](https://sunstriker2009.github.io/sun-codefolio/regex/) | Test validation and extraction patterns in C#, JavaScript, Python, PCRE2, or Go. Inspect highlights and captures, save custom patterns and named test cases, and browse by tags or favorites. |
+| [Date & Time](https://sunstriker2009.github.io/sun-codefolio/date-time/) | Format UTC dates, convert UTC to Toronto time, and parse day-first dates. |
+| [Encoding & Escaping](https://sunstriker2009.github.io/sun-codefolio/encoding/) | Encode URL components, round-trip UTF-8 through Base64, and serialize JSON strings. |
+| [XPath](https://sunstriker2009.github.io/sun-codefolio/xpath/) | Query XML and inspect nodes and scalar results in C#, browser JavaScript, and Python with lxml. |
+| [CSV](https://sunstriker2009.github.io/sun-codefolio/csv/) | Parse quoted commas, escaped quotes, and multiline fields. |
 
-[XPath](https://sunstriker2009.github.io/sun-codefolio/xpath/) queries XML and inspects elements, attributes, text, and scalar results in C#, browser JavaScript, and Python with lxml.
-
-[CSV](https://sunstriker2009.github.io/sun-codefolio/csv/) parses quoted commas, escaped quotes, and multiline fields in C#, JavaScript, Python, and Go.
-
-Browse worked patterns and test your own text in C#, JavaScript, Python, PCRE2, or Go. Create or duplicate a pattern, save a separate expression per engine, and organize your reference with tags and favorites. Export and import Regex backups to move personal patterns between browsers.
+Date & Time, Encoding & Escaping, and CSV support C#, JavaScript, Python, and Go. Personal Regex data stays in your browser. Use JSON export and import to move custom patterns, test cases, tags, and favorites.
 
 The Git, JavaScript, C#, and XPath snippet builder now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/). Existing shared snippet links forward to their entry in Playground.
 
