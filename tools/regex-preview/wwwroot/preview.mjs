@@ -1,5 +1,5 @@
-import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=standalone-regex-1';
-import { patterns, platforms } from './patterns.mjs?v=match-results-1';
+import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=validators-1';
+import { patterns, platforms } from './patterns.mjs?v=validators-1';
 import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
 import { createRunner } from './runner.mjs?v=xpath-1';
 import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-cases-1';
@@ -109,7 +109,7 @@ function save(data, status) {
 
 function updateTagOptions() {
   const names = new Map();
-  for (const raw of Object.values(personal.tags).flat()) {
+  for (const raw of [...patterns.flatMap(entry => entry.tags), ...Object.values(personal.tags).flat()]) {
     const name = cleanTag(raw);
     if (name && !names.has(tagKey(name))) names.set(tagKey(name), name);
   }
@@ -252,7 +252,19 @@ function clearTest() {
 
 function renderPersonal() {
   favorite.setAttribute('aria-pressed', personal.favorites.includes(selected.id));
-  byId('pattern-tags').replaceChildren(...(personal.tags[selected.id] ?? []).map(name => {
+  const catalogTags = selected.tags ?? [];
+  const savedTags = personal.tags[selected.id] ?? [];
+  const catalogKeys = new Set(catalogTags.map(tagKey));
+  const personalOnly = savedTags.filter(tag => !catalogKeys.has(tagKey(tag)));
+  const labels = catalogTags.map(name => {
+    const item = document.createElement('li');
+    item.className = 'catalog-tag';
+    const text = document.createElement('span');
+    text.textContent = name;
+    item.append(text);
+    return item;
+  });
+  byId('pattern-tags').replaceChildren(...labels, ...personalOnly.map(name => {
     const item = document.createElement('li');
     const text = document.createElement('span');
     text.textContent = name;
@@ -551,7 +563,7 @@ tagEditor.addEventListener('submit', event => {
   event.preventDefault();
   const name = cleanTag(tagName.value);
   const current = personal.tags[selected.id] ?? [];
-  if (!name || current.some(tag => tagKey(tag) === tagKey(name))) {
+  if (!name || [...(selected.tags ?? []), ...current].some(tag => tagKey(tag) === tagKey(name))) {
     detailStatus.textContent = name ? 'That tag is already added.' : 'Enter a tag name.';
     return;
   }

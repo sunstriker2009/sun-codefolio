@@ -35,6 +35,48 @@ export const patterns = [
     examples: { match: 'CodeFolio42', noMatch: 'Code_Folio' },
   },
   {
+    id: 'ipv4-address', title: 'IPv4 address', mode: 'whole',
+    description: 'Checks four decimal octets from 0 to 255. An octet cannot have a leading zero.',
+    expressions: whole('(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])'),
+    examples: { match: '192.0.2.255', noMatch: '192.0.2.256' },
+  },
+  {
+    id: 'uuid-v4', title: 'UUID v4', mode: 'whole',
+    description: 'Checks the hyphenated UUID v4 format, including the version and variant digits.',
+    expressions: whole('[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-4[0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}'),
+    examples: { match: '123e4567-e89b-42d3-a456-426614174000', noMatch: '123e4567-e89b-12d3-a456-426614174000' },
+  },
+  {
+    id: 'css-hex-color', title: 'CSS hex color', mode: 'whole',
+    description: 'Checks #RGB, #RGBA, #RRGGBB, or #RRGGBBAA using hexadecimal digits.',
+    expressions: whole('#(?:[0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})'),
+    examples: { match: '#ff9e4080', noMatch: '#ff9e4' },
+  },
+  {
+    id: 'canadian-postal-code', title: 'Canadian postal code format', mode: 'whole',
+    description: 'Checks the uppercase A1A 1A1 format with a single space. Use an address lookup to confirm delivery.',
+    expressions: whole('[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9]'),
+    examples: { match: 'K1A 0B1', noMatch: 'D1A 0B1' },
+  },
+  {
+    id: 'iso-date-format', title: 'ISO date format', mode: 'whole',
+    description: 'Checks YYYY-MM-DD with months 01–12 and days 01–31. Use a date parser to check month lengths and leap years.',
+    expressions: whole('[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])'),
+    examples: { match: '2026-11-23', noMatch: '2026-13-23' },
+  },
+  {
+    id: 'time-24-hour', title: '24-hour time', mode: 'whole',
+    description: 'Checks HH:MM or HH:MM:SS, with hours 00–23 and minutes and seconds 00–59.',
+    expressions: whole('(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?'),
+    examples: { match: '23:59:59', noMatch: '24:00' },
+  },
+  {
+    id: 'url-slug', title: 'URL slug', mode: 'whole',
+    description: 'Checks lowercase letters and digits with single hyphens between segments.',
+    expressions: whole('[a-z0-9]+(?:-[a-z0-9]+)*'),
+    examples: { match: 'release-notes-2026', noMatch: 'release--notes' },
+  },
+  {
     id: 'spaces-tabs', title: 'Spaces and tabs', mode: 'find',
     description: 'Finds the first run of spaces or tabs within text. A line break alone is excluded.',
     expressions: sameExpression(String.raw`[ \t]+`),
@@ -85,7 +127,11 @@ export const patterns = [
       edgeGroups: [''],
     },
   },
-].map(entry => ({ ...entry, source: 'native' }));
+].map(entry => ({
+  ...entry,
+  source: 'native',
+  tags: entry.mode === 'whole' && !entry.recipe ? ['validator'] : [],
+}));
 
 export function matchJavaScript(pattern, text, limit = 1) {
   const matches = [];
