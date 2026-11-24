@@ -2,7 +2,11 @@
 
 CodeFolio is a cross-language reference with runnable Regex, Date & Time, Encoding & Escaping, XPath, and CSV examples. [Open CodeFolio](https://sunstriker2009.github.io/sun-codefolio/). The original snippet workspace now lives in [Playground by Sun](https://sunstriker2009.github.io/sun-playground/).
 
-## Shipped
+## Phase 1 complete
+
+CodeFolio is live as a browser-based reference across five topics. Regex is the lead topic, with 21 built-in patterns and five engine options. Custom patterns, saved test cases, favorites, and personal tags use browser-local storage and JSON backups. The Topics index is the site entry point, and direct Regex and legacy snippet links still resolve.
+
+### Shipped milestones
 
 | Milestone | What shipped |
 | --- | --- |
@@ -21,16 +25,29 @@ CodeFolio is a cross-language reference with runnable Regex, Date & Time, Encodi
 | M13 · PCRE2 | Browse, test, and save patterns using PCRE2. See how to wrap raw expressions for PHP’s `preg_match`. |
 | M14 · Go Regex | Browse, test, and save patterns using Go’s standard `regexp` engine, with guidance on Go’s syntax and match offsets. Manual iPhone Safari verification is complete. |
 | M15 · Playground split | Made Regex the CodeFolio home page and moved the original snippet workspace to Playground. Existing snippet links forward to their new home. |
+| M16 · Practical Regex recipes | Shipped an initial set of three worked extraction recipes covering log lines, key-value fields, and quoted strings. The larger 8–12-recipe goal is deferred. |
 | M17 · Better Try It results | Find and highlight the first match or the first 100 matches. Inspect numbered and named captures for any displayed match. |
 | M18 · Saved test cases | Save named match and no-match cases with custom patterns. Run them against the selected engine, including after edits, and transfer them in Regex backups. |
 | M19 · Date & Time and Topics | Browse topics and run date formatting, UTC-to-Toronto conversion, and explicit-format parsing in C#, JavaScript, Python, and Go. Existing Regex links continue to resolve. |
 | M20 · Encoding & Escaping | Encode URL components, round-trip Unicode through Base64, and serialize JSON strings in C#, JavaScript, Python, and Go. |
 | M21 · XPath | Query XML in C#, browser JavaScript, or Python. Inspect elements, attributes, text, and scalar results, and bind prefixes for namespaced documents. |
 | M22 · CSV | Parse quoted commas, escaped quotes, and multiline fields in C#, JavaScript, Python, and Go. Inspect CSV records as arrays of strings and copy platform-specific usage examples. |
+| Regex catalog and detail polish | Added the Saved test cases tab, a bordered Try It result, more validation patterns, built-in validator and extractor tags, and deletion of personal tags. |
 
-## Next
+### Deferred at closeout
 
-| Milestone | Status | Scope |
+- **M23 · Regex Replace Preview.** Skipped for the M21–M22 release and carried into the Phase 2 proposal.
+- **M16 · Remaining recipe expansion.** The initial three recipes shipped. Further additions are part of the Phase 2 catalog proposal.
+- **M9 · Broader mobile performance baseline.** Deferred. The earlier manual iPhone Safari check is complete.
+
+## Phase 2 proposal
+
+Phase 2 can start when development resumes. The sequence below is proposed.
+
+| Order | Focus | Proposed outcome |
 | --- | --- | --- |
-| M16 · Practical Regex recipes | In progress | Add 8–12 task-focused recipes with sample input, expected captures, edge cases, and usage examples for the selected engine. Start with log lines, key-value fields, and quoted strings. |
-| M23 · Replace preview | Planned | Preview the output of a replacement before using the expression in code. |
+| 1 | Regex Replace Preview | Show replacement output before copying the expression into code. Cover numbered and named substitutions, show engine-specific syntax, and verify first and all matches. |
+| 2 | Catalog depth and discovery | Expand the practical extraction recipes with expected results, edge cases, and platform notes. Add cross-topic discovery as the catalog grows. |
+| 3 | Mobile and maintenance | Record cold and repeat runner timings, check accessibility and keyboard use, and review runtime updates and backup compatibility as part of a batched release. |
+
+Keep the static site and browser-local data model as the starting point. A custom domain or account sync would need a separate decision and a data-portability plan.

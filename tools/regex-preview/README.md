@@ -1,10 +1,10 @@
 # CodeFolio Regex reference
 
-The Regex reference runs C#, JavaScript, Python, PCRE2, and Go in browser workers. The first test or validation for C# loads .NET 10 WebAssembly. Python loads Pyodide and runs CPython’s standard `re` module. PCRE2 loads its WebAssembly runtime and accepts raw expressions in UTF-8 mode. Go runs the standard library’s `regexp` package in WebAssembly and converts byte offsets to the UTF-16 units shown in Try It. Test text and custom expressions stay in the browser. Custom patterns have a title and an expression for each platform you supply. Each engine validates its expressions before save or import. Regex backups include custom patterns, tags, and favorites.
+The Regex reference runs C#, JavaScript, Python, PCRE2, and Go in browser workers. The first test or validation for C# loads .NET 10 WebAssembly. Python loads Pyodide and runs CPython’s standard `re` module. PCRE2 loads its WebAssembly runtime and accepts raw expressions in UTF-8 mode. Go runs the standard library’s `regexp` package in WebAssembly and converts byte offsets to the UTF-16 units shown in Try It. Test text and custom expressions stay in the browser. Custom patterns have a title and an expression for each platform you supply. Each engine validates its expressions before save or import. Regex backups include custom patterns, saved test cases, personal tags, and favorites. The catalog provides built-in validator and extractor tags. Use **Filters → Tags** to delete a personal tag from every pattern.
 
 Try It defaults to **First match**. Select **Find all** to highlight up to 100 matches in a copy of the input and inspect the numbered and named captures of each match. The preview marks empty matches with `∅`. Partial-character matches reported by an engine appear in the match inspector.
 
-Edit a custom pattern to add up to 20 named **Test cases** with input and an expected match or no-match result. **Run cases** uses the selected engine and works while you edit the pattern. Saving the pattern stores its test cases in this browser and includes them in Regex backups. Ordinary Try It input stays in the current page.
+On a custom pattern, open the **Saved test cases** tab and edit the pattern to add up to 20 named cases with input and an expected match or no-match result. **Run cases** uses the selected engine and works while you edit the pattern. Saving the pattern stores its test cases in this browser and includes them in Regex backups. Ordinary Try It input stays in the current page.
 
 ## Build and run
 
@@ -21,4 +21,4 @@ Open [the Topics index](http://localhost:8000/sun-codefolio/) to browse [Regex](
 
 ## Publish
 
-The [Pages workflow](../../.github/workflows/publish-pages.yml) publishes the Regex reference and the site entry page. It runs on changes to site files when the repository’s Pages source is set to **GitHub Actions**.
+The [Pages workflow](../../.github/workflows/publish-pages.yml) publishes the Topics index and all five topic pages. It runs on changes to site files when the repository’s Pages source is set to **GitHub Actions**.
