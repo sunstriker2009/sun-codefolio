@@ -69,7 +69,7 @@ try {
   const search = page.getByPlaceholder('Search patterns');
   const previous = page.getByRole('button', { name: 'Previous', exact: true });
   const next = page.getByRole('button', { name: 'Next', exact: true });
-  await search.fill('ascii');
+  await search.fill('ascii digits');
   await page.getByRole('heading', { name: 'Patterns (2)', exact: true }).waitFor();
   await page.getByRole('link', { name: 'ASCII alphanumeric', exact: true }).click();
   assert.equal(await previous.isDisabled(), true);
@@ -110,7 +110,7 @@ try {
   assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
   await page.getByRole('button', { name: 'Back to results' }).click();
   await page.getByRole('heading', { name: 'Patterns (2)', exact: true }).waitFor();
-  assert.equal(await search.inputValue(), 'ascii');
+  assert.equal(await search.inputValue(), 'ascii digits');
   assert.equal(new URL(page.url()).searchParams.get('platform'), 'javascript');
 
   await page.goto(new URL('?pattern=structured-log-line&platform=javascript', regex).href);
@@ -179,6 +179,10 @@ try {
       url.searchParams.set('platform', engine);
       url.searchParams.set('pattern', entry.id);
       await page.goto(url.href);
+      if (!entry.expressions[engine]) {
+        assert.equal(await test.isDisabled(), true);
+        continue;
+      }
       await run(entry.examples.match, 'Match.');
       const result = page.locator('#match-result');
       const matched = await result.textContent();

@@ -1,5 +1,5 @@
 import { cleanTag, findTaggedSnippets, tagKey } from '../shared/snippet-tags.mjs?v=validators-1';
-import { patterns, platforms } from './patterns.mjs?v=validators-1';
+import { patterns, platforms } from './patterns.mjs?v=tag-management-1';
 import { recipeUsage } from './recipe-usage.mjs?v=regex-recipes-1';
 import { createRunner } from './runner.mjs?v=xpath-1';
 import { exportRegexBackup, loadPersonalData, mergeRegexBackup, readRegexBackup, savePersonalData } from './personal.mjs?v=regex-cases-1';
@@ -21,6 +21,8 @@ const chips = byId('active-filters');
 const favorite = byId('favorite');
 const favoritesOnly = byId('favorites-only');
 const tagOptions = byId('tag-options');
+const tagManagementStatus = byId('tag-management-status');
+const systemTags = new Set(patterns.flatMap(entry => entry.tags).map(tagKey));
 const tagEditor = byId('tag-editor');
 const tagName = byId('tag-name');
 const detail = byId('detail');
@@ -126,10 +128,31 @@ function updateTagOptions() {
       renderResults();
     });
     label.append(control, name);
-    tagOptions.append(label);
+    const row = document.createElement('div');
+    row.className = 'tag-filter-row';
+    row.append(label);
+    if (!systemTags.has(key)) {
+      const remove = button('Delete', () => deletePersonalTag(key, name));
+      remove.setAttribute('aria-label', 'Delete tag ' + name + ' from all patterns');
+      row.append(remove);
+    }
+    tagOptions.append(row);
     tagControls.set(key, { control, name });
   }
   byId('no-tags').hidden = Boolean(names.size);
+}
+
+function deletePersonalTag(key, name) {
+  if (systemTags.has(key) || !window.confirm('Delete the tag "' + name + '" from all patterns?')) return;
+  const tags = Object.fromEntries(Object.entries(personal.tags)
+    .map(([id, labels]) => [id, labels.filter(tag => tagKey(tag) !== key)])
+    .filter(([, labels]) => labels.length));
+  if (!save({ ...personal, tags }, tagManagementStatus)) return;
+  updateTagOptions();
+  renderResults();
+  if (selected) renderPersonal();
+  focusTagPicker();
+  tagManagementStatus.textContent = 'Deleted the tag "' + name + '".';
 }
 
 function filterChip(label, remove, focus) {
@@ -563,7 +586,11 @@ tagEditor.addEventListener('submit', event => {
   event.preventDefault();
   const name = cleanTag(tagName.value);
   const current = personal.tags[selected.id] ?? [];
-  if (!name || [...(selected.tags ?? []), ...current].some(tag => tagKey(tag) === tagKey(name))) {
+  if (systemTags.has(tagKey(name))) {
+    detailStatus.textContent = 'That name is reserved for a system tag.';
+    return;
+  }
+  if (!name || current.some(tag => tagKey(tag) === tagKey(name))) {
     detailStatus.textContent = name ? 'That tag is already added.' : 'Enter a tag name.';
     return;
   }
