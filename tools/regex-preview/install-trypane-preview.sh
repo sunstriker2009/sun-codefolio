@@ -2,7 +2,7 @@
 set -euo pipefail
 
 site_regex_dir=${1:?Pass the built CodeFolio regex directory}
-trypane_commit=1236f49638e93e8509765b98b173cffda3c96833
+trypane_commit=375e1b5d442f1b77726f994df75f8c2315ef2c7f
 trypane_version=0.1.0-preview.1
 checkout_dir=$(mktemp -d)
 trap 'rm -rf -- "$checkout_dir"' EXIT

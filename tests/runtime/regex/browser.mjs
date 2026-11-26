@@ -93,8 +93,12 @@ try {
   await toast.getByText('Link copied.', { exact: true }).waitFor({ state: 'hidden', timeout: 5000 });
 
   const patternField = await page.locator('.pattern-field').boundingBox();
+  const testingTabs = await page.locator('.regex-detail-tabs').boundingBox();
   const testInput = await input.boundingBox();
-  assert.ok(patternField && testInput && testInput.y - (patternField.y + patternField.height) < 55);
+  assert.ok(patternField && testingTabs && testInput &&
+    testingTabs.y >= patternField.y + patternField.height &&
+    testInput.y >= testingTabs.y + testingTabs.height &&
+    testInput.y - (testingTabs.y + testingTabs.height) < 55);
   const addTag = await page.getByRole('button', { name: 'Add a tag', exact: true }).boundingBox();
   assert.ok(addTag && addTag.height <= 26);
   await assertTryItLayout();
