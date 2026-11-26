@@ -94,7 +94,8 @@ try {
 
   const patternField = await page.locator('.pattern-field').boundingBox();
   const testInput = await input.boundingBox();
-  assert.ok(patternField && testInput && testInput.y - (patternField.y + patternField.height) < 55);
+  const patternToInputGap = patternField && testInput && testInput.y - (patternField.y + patternField.height);
+  assert.ok(patternField && testInput && patternToInputGap < 55, 'Pattern to input gap: ' + patternToInputGap + 'px');
   const addTag = await page.getByRole('button', { name: 'Add a tag', exact: true }).boundingBox();
   assert.ok(addTag && addTag.height <= 26);
   await assertTryItLayout();
