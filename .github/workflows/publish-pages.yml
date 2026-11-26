@@ -53,6 +53,9 @@ jobs:
         with:
           go-version-file: 'tools/regex-preview/.go-version'
           cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Build site
         if: steps.source.outputs.type == 'workflow'
         run: bash tools/regex-preview/build-preview.sh "$RUNNER_TEMP/codefolio-pages"

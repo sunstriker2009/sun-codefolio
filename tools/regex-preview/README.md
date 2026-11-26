@@ -4,11 +4,13 @@ The Regex reference runs C#, JavaScript, Python, PCRE2, and Go in browser worker
 
 Try It defaults to **First match**. Select **Find all** to highlight up to 100 matches in a copy of the input and inspect the numbered and named captures of each match. The preview marks empty matches with `∅`. Partial-character matches reported by an engine appear in the match inspector.
 
+For a TryPane integration preview, open the Regex URL with `?trypane=1`. The C# Try It tab uses TryPane's versioned Regex bundle while CodeFolio continues to own the pattern, test text, examples, and saved cases. Selecting another platform uses CodeFolio's existing runner. Remove the query parameter to return to the normal C# Try It. The site build pins TryPane commit `1236f49638e93e8509765b98b173cffda3c96833` at `0.1.0-preview.1`; the installer builds it from source and copies the bundle into the site. This preview does not replace the default interface. iPhone Safari acceptance is still pending in TryPane's roadmap.
+
 On a custom pattern, open the **Saved test cases** tab and edit the pattern to add up to 20 named cases with input and an expected match or no-match result. **Run cases** uses the selected engine and works while you edit the pattern. Saving the pattern stores its test cases in this browser and includes them in Regex backups. Ordinary Try It input stays in the current page.
 
 ## Build and run
 
-Use the .NET 10 SDK with its WebAssembly workload and the Go SDK version in [`.go-version`](.go-version). The build downloads and verifies the pinned [Pyodide core runtime](https://github.com/pyodide/pyodide/tree/314.0.8) and [PCRE2 WebAssembly package](https://github.com/gudoshnikovn/pcre2-wasm). It builds the Go runtime from source and publishes all runtime assets alongside the site. Build into a fresh output directory and serve it over HTTP.
+Use Node.js 24, the .NET 10 SDK with its WebAssembly workload, and the Go SDK version in [`.go-version`](.go-version). The build downloads and verifies the pinned [Pyodide core runtime](https://github.com/pyodide/pyodide/tree/314.0.8) and [PCRE2 WebAssembly package](https://github.com/gudoshnikovn/pcre2-wasm). It builds the Go runtime and the pinned TryPane bundle from source and publishes all runtime assets alongside the site. Build into a fresh output directory and serve it over HTTP.
 
 ```sh
 dotnet workload install wasm-tools

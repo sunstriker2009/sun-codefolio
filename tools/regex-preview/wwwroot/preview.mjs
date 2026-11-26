@@ -39,6 +39,8 @@ const matchOutput = byId('match-output');
 const highlightedInput = byId('highlighted-input');
 const matchPicker = byId('match-picker');
 const matchResult = byId('match-result');
+const tryPanePreview = new URLSearchParams(location.search).get('trypane') === '1';
+let syncTryPane;
 const backupFile = byId('backup-file');
 const backupStatus = byId('backup-status');
 const runners = Object.fromEntries(Object.keys(platforms).map(key => [key, createRunner(key)]));
@@ -93,6 +95,7 @@ function button(text, act) {
 
 function patternUrl(id, engine) {
   const url = new URL('./', location.href);
+  if (tryPanePreview) url.searchParams.set('trypane', '1');
   if (id) url.searchParams.set('pattern', id);
   if (engine !== 'csharp') url.searchParams.set('platform', engine);
   return url;
@@ -267,6 +270,7 @@ function syncTestButton() {
 
 function clearTest() {
   testVersion++;
+  syncTryPane?.reset();
   testStatus.textContent = '';
   matchOutput.hidden = true;
   currentMatches = undefined;
@@ -422,6 +426,7 @@ function readLocation() {
   linked = Boolean(entry);
   renderDetail(entry ?? patterns[0]);
   renderResults();
+  syncTryPane?.();
 }
 
 search.addEventListener('input', renderResults);
@@ -430,11 +435,13 @@ function changePlatform(engine) {
   platform.value = engine;
   if (draft) {
     renderDraft();
+    syncTryPane?.();
     return;
   }
   history.replaceState(history.state, '', patternUrl(linked ? selected.id : null, engine));
   renderDetail(selected);
   renderResults();
+  syncTryPane?.();
 }
 
 platform.addEventListener('change', () => changePlatform(platform.value));
@@ -675,6 +682,7 @@ function showMatches(result, text) {
 
 byId('try-it').addEventListener('submit', async event => {
   event.preventDefault();
+  if (syncTryPane && platform.value === 'csharp') return;
   if (casePanel.busy) return;
   clearTest();
   const expression = activeExpression();
@@ -775,3 +783,20 @@ byId('share-backup').addEventListener('click', async () => {
 
 updateTagOptions();
 readLocation();
+if (tryPanePreview) {
+  import('./trypane-host.mjs?v=trypane-preview-1').then(({ createTryPanePreview }) => {
+    syncTryPane = createTryPanePreview({
+      pattern: activeExpression,
+      input,
+      mode: matchMode,
+      platform,
+      busy: () => validating || casePanel.busy,
+      root: byId('trypane-preview-root'),
+      runButton: testButton,
+      outcome: byId('test-outcome'),
+    });
+    syncTryPane();
+  }).catch(() => {
+    testStatus.textContent = 'TryPane preview could not load. CodeFolio Try It is available.';
+  });
+}
